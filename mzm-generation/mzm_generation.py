@@ -77,7 +77,7 @@ def measure_x(circuit: QuantumCircuit) -> QuantumCircuit:
     return circuit
 
 
-def measure_edge_correlation(circuit: QuantumCircuit) -> float:
+def measure_edge_correlation(circuit: QuantumCircuit) -> QuantumCircuit:
     circuit = circuit.copy()
     circuit.rx(np.pi / 2, circuit.qubits[0])
     circuit.rx(np.pi / 2, circuit.qubits[-1])
@@ -85,16 +85,15 @@ def measure_edge_correlation(circuit: QuantumCircuit) -> float:
     return circuit
 
 
-def run_measure_edge_correlation(
-    backend, circuit: QuantumCircuit, shots: int
-) -> List[IBMQJob]:
-    measure_circuit = transpile(measure_edge_correlation(circuit), backend)
-    return [backend.run(measure_circuit, shots=shots)]
+def run_job(backend, circuit: QuantumCircuit, shots: int) -> IBMQJob:
+    z_circuit = transpile(measure_z(circuit), backend)
+    x_circuit = transpile(measure_x(circuit), backend)
+    edge_correlation_circuit = transpile(measure_edge_correlation(circuit), backend)
+    return backend.run([z_circuit, x_circuit, edge_correlation_circuit], shots=shots)
 
 
-def compute_measure_edge_correlation(jobs: List[IBMQJob]) -> float:
-    (job,) = jobs
-    counts = job.result().get_counts()
+def compute_measure_edge_correlation(job: IBMQJob) -> float:
+    counts = job.result().get_counts(2)
     shots = sum(counts.values())
     correlation_expectation = 0.0
     for bitstring, count in counts.items():
@@ -104,23 +103,10 @@ def compute_measure_edge_correlation(jobs: List[IBMQJob]) -> float:
     return np.real(correlation_expectation)
 
 
-def run_measure_hamiltonian(
-    backend, circuit: QuantumCircuit, shots: int
-) -> List[IBMQJob]:
+def compute_measure_hamiltonian(job: IBMQJob, hamiltonian: SparsePauliOp) -> float:
     # Assumes Hamiltonian only has X strings and Z strings
-    measure_z_circuit = transpile(measure_z(circuit), backend)
-    measure_x_circuit = transpile(measure_x(circuit), backend)
-    job_z = backend.run(measure_z_circuit, shots=shots)
-    job_x = backend.run(measure_x_circuit, shots=shots)
-    return [job_z, job_x]
-
-
-def compute_measure_hamiltonian(
-    jobs: Sequence[IBMQJob], hamiltonian: SparsePauliOp
-) -> float:
-    job_z, job_x = jobs
-    counts_z = job_z.result().get_counts()
-    counts_x = job_x.result().get_counts()
+    counts_z = job.result().get_counts(0)
+    counts_x = job.result().get_counts(1)
     shots_z = sum(counts_z.values())
     shots_x = sum(counts_x.values())
     hamiltonian_expectation = 0.0
