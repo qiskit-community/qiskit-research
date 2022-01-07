@@ -1,19 +1,54 @@
-import itertools
-from typing import List, Sequence
+import dataclasses
+import json
+import os
+from typing import Dict, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy.sparse.linalg
-from qiskit import IBMQ, Aer, QuantumCircuit, transpile
+from qiskit import QuantumCircuit, transpile
 from qiskit.providers.ibmq import IBMQJob
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.circuit.library import FermionicGaussianState
-from qiskit_nature.converters.second_quantization import QubitConverter
-from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
+
+
+def save(task, data, base_dir: str = "data/", mode="x"):
+    filename = os.path.join(base_dir, f"{task.filename}.json")
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, mode) as f:
+        json.dump(data, f)
+
+
+def load(task, base_dir: str = "data/"):
+    filename = os.path.join(base_dir, f"{task.filename}.json")
+    with open(filename) as f:
+        data = json.load(f)
+    return data
+
+
+@dataclasses.dataclass
+class KitaevHamiltonianTask:
+    experiment_id: str
+    n_modes: int
+    tunneling: float
+    superconducting: float
+    chemical_potential: float
+    occupied_orbitals: Tuple[int]
+    shots: Tuple[int]
+
+    @property
+    def filename(self):
+        return os.path.join(
+            self.experiment_id,
+            f"n{self.n_modes}t{self.tunneling:.2f}_Delta{self.superconducting:.2f}_mu{self.chemical_potential:.2f}",
+            f"shots{self.shots}",
+            str(self.occupied_orbitals),
+        )
+
+    def __hash__(self):
+        return hash((KitaevHamiltonianTask, self.filename))
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -85,15 +120,24 @@ def measure_edge_correlation(circuit: QuantumCircuit) -> QuantumCircuit:
     return circuit
 
 
-def run_job(backend, circuit: QuantumCircuit, shots: int) -> IBMQJob:
+def run_task(backend, task: KitaevHamiltonianTask) -> IBMQJob:
+    hamiltonian_quad = kitaev_hamiltonian(
+        task.n_modes,
+        tunneling=task.tunneling,
+        superconducting=task.superconducting,
+        chemical_potential=task.chemical_potential,
+    )
+    transformation_matrix, _, _ = hamiltonian_quad.diagonalizing_bogoliubov_transform()
+    circuit = FermionicGaussianState(transformation_matrix, task.occupied_orbitals)
     z_circuit = transpile(measure_z(circuit), backend)
     x_circuit = transpile(measure_x(circuit), backend)
     edge_correlation_circuit = transpile(measure_edge_correlation(circuit), backend)
-    return backend.run([z_circuit, x_circuit, edge_correlation_circuit], shots=shots)
+    return backend.run(
+        [z_circuit, x_circuit, edge_correlation_circuit], shots=task.shots
+    )
 
 
-def compute_measure_edge_correlation(job: IBMQJob) -> float:
-    counts = job.result().get_counts(2)
+def compute_measure_edge_correlation(counts: Dict[str, int]) -> float:
     shots = sum(counts.values())
     correlation_expectation = 0.0
     for bitstring, count in counts.items():
@@ -103,10 +147,10 @@ def compute_measure_edge_correlation(job: IBMQJob) -> float:
     return np.real(correlation_expectation)
 
 
-def compute_measure_hamiltonian(job: IBMQJob, hamiltonian: SparsePauliOp) -> float:
+def compute_measure_hamiltonian(
+    counts_z: Dict[str, int], counts_x: Dict[str, int], hamiltonian: SparsePauliOp
+) -> float:
     # Assumes Hamiltonian only has X strings and Z strings
-    counts_z = job.result().get_counts(0)
-    counts_x = job.result().get_counts(1)
     shots_z = sum(counts_z.values())
     shots_x = sum(counts_x.values())
     hamiltonian_expectation = 0.0
