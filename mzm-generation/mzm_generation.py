@@ -33,7 +33,6 @@ def load(task, base_dir: str = "data/"):
 class MeasurementErrorCalibrationTask:
     experiment_id: str
     shots: int
-    calibration_date: str
 
     @property
     def filename(self) -> str:
@@ -41,7 +40,6 @@ class MeasurementErrorCalibrationTask:
             self.experiment_id,
             "measurement_error_calibration",
             f"shots{self.shots}",
-            f"{self.calibration_date}",
         )
 
 
