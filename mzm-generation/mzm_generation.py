@@ -104,6 +104,10 @@ def expectation(operator: np.ndarray, state: np.ndarray) -> complex:
     return np.vdot(state, operator @ state)
 
 
+def variance(operator: np.ndarray, state: np.ndarray) -> complex:
+    return expectation(operator ** 2, state) - expectation(operator, state) ** 2
+
+
 def kitaev_hamiltonian(
     n_modes: int, tunneling: float, superconducting: float, chemical_potential: float
 ) -> QuadraticHamiltonian:
@@ -173,6 +177,26 @@ def run_kitaev_hamiltonian_task(
         for pauli_string in task.pauli_strings()
     ]
     return backend.run(circuits, shots=task.shots)
+
+
+def run_measurement_error_correction(
+    measurement_error_calibration_task: MeasurementErrorCalibrationTask,
+    kitaev_hamiltonian_task: KitaevHamiltonianTask,
+    qubits: List[int],
+    base_dir: str = "data/",
+) -> None:
+    mit = mthree.M3Mitigation()
+    mit.cals_from_file(
+        os.path.join(base_dir, f"{measurement_error_calibration_task.filename}.json")
+    )
+    data = load(kitaev_hamiltonian_task)
+    measurements = data["measurements"]
+    quasis = {
+        pauli_string: mit.apply_correction(counts, qubits)
+        for pauli_string, counts in measurements.items()
+    }
+    data["quasis"] = quasis
+    save(kitaev_hamiltonian_task, data, mode="w")
 
 
 def compute_energy(
@@ -265,3 +289,26 @@ def compute_edge_correlation_measurement_corrected(
     quasi_dist = quasis["y" + "z" * (n_qubits - 2) + "y"]
     correlation_expectation = -quasi_dist.expval()
     return np.real(correlation_expectation)
+
+
+def compute_parity(measurements: Dict["str", Dict["str", int]]) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(measurements)))
+    counts = measurements["z" * n_qubits]
+    shots = sum(counts.values())
+    parity_expectation = 0.0
+    for bitstring, count in counts.items():
+        parity = sum(1 for b in bitstring if b == "1")
+        parity_expectation += (-1) ** parity * count
+    parity_expectation /= shots
+    return np.real(parity_expectation)
+
+
+def compute_parity_measurement_corrected(
+    quasis: Dict["str", Dict["str", float]],
+) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(quasis)))
+    quasi_dist = quasis["z" * n_qubits]
+    parity_expectation = quasi_dist.expval()
+    return np.real(parity_expectation)
