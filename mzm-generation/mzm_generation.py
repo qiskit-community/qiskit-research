@@ -288,7 +288,7 @@ def compute_edge_correlation_measurement_corrected(
     n_qubits = len(next(iter(quasis)))
     quasi_dist = quasis["y" + "z" * (n_qubits - 2) + "y"]
     correlation_expectation = -quasi_dist.expval()
-    return np.real(correlation_expectation)
+    return correlation_expectation
 
 
 def compute_parity(measurements: Dict["str", Dict["str", int]]) -> float:
@@ -301,7 +301,7 @@ def compute_parity(measurements: Dict["str", Dict["str", int]]) -> float:
         parity = sum(1 for b in bitstring if b == "1")
         parity_expectation += (-1) ** parity * count
     parity_expectation /= shots
-    return np.real(parity_expectation)
+    return parity_expectation
 
 
 def compute_parity_measurement_corrected(
@@ -311,4 +311,28 @@ def compute_parity_measurement_corrected(
     n_qubits = len(next(iter(quasis)))
     quasi_dist = quasis["z" * n_qubits]
     parity_expectation = quasi_dist.expval()
-    return np.real(parity_expectation)
+    return parity_expectation
+
+
+def compute_number(measurements: Dict["str", Dict["str", int]]) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(measurements)))
+    counts = measurements["z" * n_qubits]
+    shots = sum(counts.values())
+    number_expectation = 0.0
+    for bitstring, count in counts.items():
+        number = sum(1 for b in bitstring if b == "1")
+        number_expectation += number * count
+    number_expectation /= shots
+    return number_expectation
+
+
+def compute_number_measurement_corrected(
+    quasis: Dict["str", Dict["str", float]],
+) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(quasis)))
+    quasi_dist = quasis["z" * n_qubits]
+    projectors = ["I" * k + "1" + "I" * (n_qubits - k - 1) for k in range(n_qubits)]
+    number_expectation = np.sum(quasi_dist.expval(projectors))
+    return number_expectation
