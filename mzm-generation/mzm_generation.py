@@ -1,11 +1,12 @@
 import dataclasses
 import json
 import os
-from typing import Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
+import mthree
 import numpy as np
 from qiskit import QuantumCircuit, transpile
-from qiskit.providers.ibmq import IBMQJob
+from qiskit.providers.ibmq import IBMQBackend, IBMQJob
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.operators.second_quantization import (
@@ -29,7 +30,22 @@ def load(task, base_dir: str = "data/"):
 
 
 @dataclasses.dataclass
+class MeasurementErrorCalibrationTask:
+    experiment_id: str
+    shots: int
+
+    @property
+    def filename(self) -> str:
+        return os.path.join(
+            self.experiment_id,
+            "measurement_error_calibration",
+            f"shots{self.shots}",
+        )
+
+
+@dataclasses.dataclass
 class KitaevHamiltonianTask:
+    # TODO add (cached) methods to compute Hamiltonian and properties
     experiment_id: str
     n_modes: int
     tunneling: float
@@ -39,7 +55,7 @@ class KitaevHamiltonianTask:
     shots: Tuple[int]
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         return os.path.join(
             self.experiment_id,
             f"n{self.n_modes}t{self.tunneling:.2f}_Delta{self.superconducting:.2f}_mu{self.chemical_potential:.2f}",
@@ -47,8 +63,20 @@ class KitaevHamiltonianTask:
             str(self.occupied_orbitals),
         )
 
+    def pauli_strings(self) -> List[str]:
+        # NOTE these strings are in big endian order (opposite of qiskit)
+        strings = [
+            "x" * self.n_modes,
+            "y" * self.n_modes,
+            "z" * self.n_modes,
+        ]
+        for i in range(self.n_modes - 1):
+            strings.append("y" + "z" * i + "x")
+            strings.append("y" + "z" * i + "y")
+        return strings
+
     def __hash__(self):
-        return hash((KitaevHamiltonianTask, self.filename))
+        return hash((type(self), self.filename))
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -76,6 +104,10 @@ def expectation(operator: np.ndarray, state: np.ndarray) -> complex:
     return np.vdot(state, operator @ state)
 
 
+def variance(operator: np.ndarray, state: np.ndarray) -> complex:
+    return expectation(operator ** 2, state) - expectation(operator, state) ** 2
+
+
 def kitaev_hamiltonian(
     n_modes: int, tunneling: float, superconducting: float, chemical_potential: float
 ) -> QuadraticHamiltonian:
@@ -99,28 +131,35 @@ def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
     )
 
 
-def measure_z(circuit: QuantumCircuit) -> QuantumCircuit:
+def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str):
     circuit = circuit.copy()
+    for q, pauli in zip(circuit.qubits, pauli_string):
+        if pauli.lower() == "x":
+            circuit.h(q)
+        elif pauli.lower() == "y":
+            circuit.rx(np.pi / 2, q)
     circuit.measure_all()
     return circuit
 
 
-def measure_x(circuit: QuantumCircuit) -> QuantumCircuit:
-    circuit = circuit.copy()
-    circuit.h(circuit.qubits)
-    circuit.measure_all()
-    return circuit
+# TODO saving should be done separately but mthree does not support that
+# TODO calibration date needs to be handled better
+# (see https://github.com/Qiskit-Partners/mthree/issues/71)
+def run_measurement_error_calibration_task(
+    task: MeasurementErrorCalibrationTask,
+    backend,
+    qubits: List[int],
+    base_dir: str = "data/",
+) -> None:
+    filename = os.path.join(base_dir, f"{task.filename}.json")
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    mit = mthree.M3Mitigation(backend)
+    mit.cals_from_system(qubits, shots=task.shots, cals_file=filename)
 
 
-def measure_edge_correlation(circuit: QuantumCircuit) -> QuantumCircuit:
-    circuit = circuit.copy()
-    circuit.rx(np.pi / 2, circuit.qubits[0])
-    circuit.rx(np.pi / 2, circuit.qubits[-1])
-    circuit.measure_all()
-    return circuit
-
-
-def run_task(backend, task: KitaevHamiltonianTask) -> IBMQJob:
+def run_kitaev_hamiltonian_task(
+    task: KitaevHamiltonianTask, backend, qubits
+) -> IBMQJob:
     hamiltonian_quad = kitaev_hamiltonian(
         task.n_modes,
         tunneling=task.tunneling,
@@ -129,33 +168,57 @@ def run_task(backend, task: KitaevHamiltonianTask) -> IBMQJob:
     )
     transformation_matrix, _, _ = hamiltonian_quad.diagonalizing_bogoliubov_transform()
     circuit = FermionicGaussianState(transformation_matrix, task.occupied_orbitals)
-    z_circuit = transpile(measure_z(circuit), backend)
-    x_circuit = transpile(measure_x(circuit), backend)
-    edge_correlation_circuit = transpile(measure_edge_correlation(circuit), backend)
-    return backend.run(
-        [z_circuit, x_circuit, edge_correlation_circuit], shots=task.shots
+    circuits = [
+        transpile(
+            measure_pauli_string(circuit, pauli_string),
+            backend,
+            initial_layout=qubits,
+        )
+        for pauli_string in task.pauli_strings()
+    ]
+    return backend.run(circuits, shots=task.shots)
+
+
+def run_measurement_error_correction(
+    measurement_error_calibration_task: MeasurementErrorCalibrationTask,
+    kitaev_hamiltonian_task: KitaevHamiltonianTask,
+    qubits: List[int],
+    base_dir: str = "data/",
+) -> None:
+    mit = mthree.M3Mitigation()
+    mit.cals_from_file(
+        os.path.join(base_dir, f"{measurement_error_calibration_task.filename}.json")
     )
+    data = load(kitaev_hamiltonian_task)
+    measurements = data["measurements"]
+    quasis = {
+        pauli_string: mit.apply_correction(counts, qubits)
+        for pauli_string, counts in measurements.items()
+    }
+    data["quasis"] = quasis
+    save(kitaev_hamiltonian_task, data, mode="w")
 
 
-def compute_measure_edge_correlation(counts: Dict[str, int]) -> float:
-    shots = sum(counts.values())
-    correlation_expectation = 0.0
-    for bitstring, count in counts.items():
-        parity = sum(1 for b in bitstring if b == "1")
-        correlation_expectation -= (-1) ** parity * count
-    correlation_expectation /= shots
-    return np.real(correlation_expectation)
-
-
-def compute_measure_hamiltonian(
-    counts_z: Dict[str, int], counts_x: Dict[str, int], hamiltonian: SparsePauliOp
+def compute_energy(
+    measurements: Dict["str", Dict["str", int]],
+    hamiltonian: SparsePauliOp,
 ) -> float:
-    # Assumes Hamiltonian only has X strings and Z strings
-    shots_z = sum(counts_z.values())
+    # TODO estimate standard deviation
+    # Assumes Hamiltonian only has X strings, Y strings, and Z strings
+    counts_x = measurements["x" * hamiltonian.num_qubits]
+    counts_y = measurements["y" * hamiltonian.num_qubits]
+    counts_z = measurements["z" * hamiltonian.num_qubits]
     shots_x = sum(counts_x.values())
+    shots_y = sum(counts_y.values())
+    shots_z = sum(counts_z.values())
     hamiltonian_expectation = 0.0
     for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
-        if np.any(term.z):
+        term_y = np.logical_and(term.z, term.x)
+        if np.any(term_y):
+            counts = counts_y
+            shots = shots_y
+            pauli_string = term_y
+        elif np.any(term.z):
             counts = counts_z
             shots = shots_z
             pauli_string = term.z
@@ -175,3 +238,77 @@ def compute_measure_hamiltonian(
         term_expectation /= shots
         hamiltonian_expectation += coeff * term_expectation
     return np.real(hamiltonian_expectation)
+
+
+def compute_energy_measurement_corrected(
+    quasis: Dict["str", Dict["str", float]], hamiltonian: SparsePauliOp
+) -> float:
+    # TODO estimate standard deviation
+    quasis_x = quasis["x" * hamiltonian.num_qubits]
+    quasis_y = quasis["y" * hamiltonian.num_qubits]
+    quasis_z = quasis["z" * hamiltonian.num_qubits]
+    hamiltonian_expectation = 0.0
+    for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
+        term_y = np.logical_and(term.z, term.x)
+        if np.any(term_y):
+            quasi_dist = quasis_y
+            pauli_string = term_y
+        elif np.any(term.z):
+            quasi_dist = quasis_z
+            pauli_string = term.z
+        elif np.any(term.x):
+            quasi_dist = quasis_x
+            pauli_string = term.x
+        else:
+            hamiltonian_expectation += coeff
+            continue
+        operator = "".join("Z" if b else "I" for b in pauli_string)
+        term_expectation = quasi_dist.expval(operator)
+        hamiltonian_expectation += coeff * term_expectation
+    return np.real(hamiltonian_expectation)
+
+
+def compute_edge_correlation(measurements: Dict["str", Dict["str", int]]) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(measurements)))
+    counts = measurements["y" + "z" * (n_qubits - 2) + "y"]
+    shots = sum(counts.values())
+    correlation_expectation = 0.0
+    for bitstring, count in counts.items():
+        parity = sum(1 for b in bitstring if b == "1")
+        correlation_expectation -= (-1) ** parity * count
+    correlation_expectation /= shots
+    return np.real(correlation_expectation)
+
+
+def compute_edge_correlation_measurement_corrected(
+    quasis: Dict["str", Dict["str", float]],
+) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(quasis)))
+    quasi_dist = quasis["y" + "z" * (n_qubits - 2) + "y"]
+    correlation_expectation = -quasi_dist.expval()
+    return np.real(correlation_expectation)
+
+
+def compute_parity(measurements: Dict["str", Dict["str", int]]) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(measurements)))
+    counts = measurements["z" * n_qubits]
+    shots = sum(counts.values())
+    parity_expectation = 0.0
+    for bitstring, count in counts.items():
+        parity = sum(1 for b in bitstring if b == "1")
+        parity_expectation += (-1) ** parity * count
+    parity_expectation /= shots
+    return np.real(parity_expectation)
+
+
+def compute_parity_measurement_corrected(
+    quasis: Dict["str", Dict["str", float]],
+) -> float:
+    # TODO estimate standard deviation
+    n_qubits = len(next(iter(quasis)))
+    quasi_dist = quasis["z" * n_qubits]
+    parity_expectation = quasi_dist.expval()
+    return np.real(parity_expectation)
