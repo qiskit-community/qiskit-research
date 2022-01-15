@@ -1,7 +1,7 @@
 import dataclasses
 import json
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple
 
 import mthree
 import numpy as np
@@ -30,6 +30,34 @@ def load(task, base_dir: str = "data/"):
 
 
 @dataclasses.dataclass
+class FermionicGaussianStateParameters:
+    n_modes: int
+    tunneling: float
+    superconducting: float
+    chemical_potential: float
+    occupied_orbitals: Tuple[int]
+
+
+@dataclasses.dataclass
+class FermionicGaussianStateTask:
+    experiment_id: str
+    shots: Tuple[int]
+    state_params: FermionicGaussianStateParameters
+
+    @property
+    def filename(self) -> str:
+        return os.path.join(
+            self.experiment_id,
+            f"shots{self.shots}",
+            f"n{self.state_params.n_modes}",
+            f"t{self.state_params.tunneling:.2f}"
+            f"_Delta{self.state_params.superconducting:.2f}"
+            f"_mu{self.state_params.chemical_potential:.2f}",
+            str(self.state_params.occupied_orbitals),
+        )
+
+
+@dataclasses.dataclass
 class MeasurementErrorCalibrationTask:
     experiment_id: str
     shots: int
@@ -41,42 +69,6 @@ class MeasurementErrorCalibrationTask:
             "measurement_error_calibration",
             f"shots{self.shots}",
         )
-
-
-@dataclasses.dataclass
-class KitaevHamiltonianTask:
-    # TODO add (cached) methods to compute Hamiltonian and properties
-    experiment_id: str
-    n_modes: int
-    tunneling: float
-    superconducting: float
-    chemical_potential: float
-    occupied_orbitals: Tuple[int]
-    shots: Tuple[int]
-
-    @property
-    def filename(self) -> str:
-        return os.path.join(
-            self.experiment_id,
-            f"n{self.n_modes}t{self.tunneling:.2f}_Delta{self.superconducting:.2f}_mu{self.chemical_potential:.2f}",
-            f"shots{self.shots}",
-            str(self.occupied_orbitals),
-        )
-
-    def pauli_strings(self) -> List[str]:
-        # NOTE these strings are in big endian order (opposite of qiskit)
-        strings = [
-            "x" * self.n_modes,
-            "y" * self.n_modes,
-            "z" * self.n_modes,
-        ]
-        for i in range(self.n_modes - 1):
-            strings.append("y" + "z" * i + "x")
-            strings.append("y" + "z" * i + "y")
-        return strings
-
-    def __hash__(self):
-        return hash((type(self), self.filename))
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -119,6 +111,19 @@ def kitaev_hamiltonian(
     return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
 
 
+def state_preparation_circuit(
+    params: FermionicGaussianStateParameters,
+) -> FermionicGaussianState:
+    hamiltonian = kitaev_hamiltonian(
+        params.n_modes,
+        tunneling=params.tunneling,
+        superconducting=params.superconducting,
+        chemical_potential=params.chemical_potential,
+    )
+    transformation_matrix, _, _ = hamiltonian.diagonalizing_bogoliubov_transform()
+    return FermionicGaussianState(transformation_matrix, params.occupied_orbitals)
+
+
 def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
     return np.block(
         [
@@ -129,6 +134,16 @@ def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
             [hamiltonian.antisymmetric_part, hamiltonian.hermitian_part],
         ]
     )
+
+
+def measurement_pauli_strings(n_qubits: int) -> Iterable[str]:
+    # NOTE these strings are in big endian order (opposite of qiskit)
+    yield "x" * n_qubits
+    yield "y" * n_qubits
+    yield "z" * n_qubits
+    for i in range(n_qubits - 1):
+        yield "y" + "z" * i + "x"
+        yield "y" + "z" * i + "y"
 
 
 def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str):
@@ -157,31 +172,24 @@ def run_measurement_error_calibration_task(
     mit.cals_from_system(qubits, shots=task.shots, cals_file=filename)
 
 
-def run_kitaev_hamiltonian_task(
-    task: KitaevHamiltonianTask, backend, qubits
+def run_fermionic_gaussian_state_task(
+    task: FermionicGaussianStateTask, backend, qubits: List[int]
 ) -> IBMQJob:
-    hamiltonian_quad = kitaev_hamiltonian(
-        task.n_modes,
-        tunneling=task.tunneling,
-        superconducting=task.superconducting,
-        chemical_potential=task.chemical_potential,
+    circuit = state_preparation_circuit(task.state_params)
+    pauli_measurement_circuits = (
+        measure_pauli_string(circuit, pauli_string)
+        for pauli_string in measurement_pauli_strings(task.state_params.n_modes)
     )
-    transformation_matrix, _, _ = hamiltonian_quad.diagonalizing_bogoliubov_transform()
-    circuit = FermionicGaussianState(transformation_matrix, task.occupied_orbitals)
-    circuits = [
-        transpile(
-            measure_pauli_string(circuit, pauli_string),
-            backend,
-            initial_layout=qubits,
-        )
-        for pauli_string in task.pauli_strings()
+    pauli_measurement_circuits_transpiled = [
+        transpile(circ, backend, initial_layout=qubits)
+        for circ in pauli_measurement_circuits
     ]
-    return backend.run(circuits, shots=task.shots)
+    return backend.run(pauli_measurement_circuits_transpiled, shots=task.shots)
 
 
 def run_measurement_error_correction(
     measurement_error_calibration_task: MeasurementErrorCalibrationTask,
-    kitaev_hamiltonian_task: KitaevHamiltonianTask,
+    fermionic_gaussian_state_task: FermionicGaussianStateTask,
     qubits: List[int],
     base_dir: str = "data/",
 ) -> None:
@@ -189,14 +197,14 @@ def run_measurement_error_correction(
     mit.cals_from_file(
         os.path.join(base_dir, f"{measurement_error_calibration_task.filename}.json")
     )
-    data = load(kitaev_hamiltonian_task)
+    data = load(fermionic_gaussian_state_task)
     measurements = data["measurements"]
     quasis = {
         pauli_string: mit.apply_correction(counts, qubits)
         for pauli_string, counts in measurements.items()
     }
     data["quasis"] = quasis
-    save(kitaev_hamiltonian_task, data, mode="w")
+    save(fermionic_gaussian_state_task, data, mode="w")
 
 
 def compute_energy(
