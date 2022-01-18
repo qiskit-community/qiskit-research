@@ -6,6 +6,8 @@ from typing import Any, Dict, Iterable, List, Tuple
 import mthree
 import numpy as np
 from qiskit import QuantumCircuit, transpile
+from qiskit.circuit import Gate, Qubit
+from qiskit.circuit.library import XYGate
 from qiskit.providers.ibmq import IBMQBackend, IBMQJob
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.circuit.library import FermionicGaussianState
@@ -13,6 +15,7 @@ from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
+from yx_plus_xy_interaction import YXPlusXYInteractionGate
 
 
 def save(task, data, base_dir: str = "data/", mode="x"):
@@ -121,7 +124,9 @@ def state_preparation_circuit(
         chemical_potential=params.chemical_potential,
     )
     transformation_matrix, _, _ = hamiltonian.diagonalizing_bogoliubov_transform()
-    return FermionicGaussianState(transformation_matrix, params.occupied_orbitals)
+    return FermionicGaussianState(
+        transformation_matrix, params.occupied_orbitals, name=repr(params)
+    )
 
 
 def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
@@ -146,8 +151,9 @@ def measurement_pauli_strings(n_qubits: int) -> Iterable[str]:
         yield "y" + "z" * i + "y"
 
 
-def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str):
-    circuit = circuit.copy()
+def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumCircuit:
+    name = f"{circuit.name}_paulistring_{pauli_string}"
+    circuit = circuit.copy(name=name)
     for q, pauli in zip(circuit.qubits, pauli_string):
         if pauli.lower() == "x":
             circuit.h(q)
@@ -155,6 +161,36 @@ def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str):
             circuit.rx(np.pi / 2, q)
     circuit.measure_all()
     return circuit
+
+
+def measure_pauli_strings(
+    circuit: QuantumCircuit, pauli_strings: Iterable[str]
+) -> Iterable[QuantumCircuit]:
+    for pauli in pauli_strings:
+        yield measure_pauli_string(circuit, pauli)
+
+
+def measure_tunneling_ops(circuit: QuantumCircuit) -> Iterable[QuantumCircuit]:
+    # TODO add circuit name or metadata
+    for start_index in (0, 1):
+        for i in range(start_index, circuit.num_qubits - 1, 2):
+            # measure tunneling op between modes i and i + 1
+            name = f"{circuit.name}_tunneling_{i}_{i + 1}"
+            circ = circuit.copy(name=name)
+            circ.append(XYGate(np.pi / 2, -np.pi / 2), (i, i + 1))
+            circ.measure_all()
+            yield circ
+
+
+def measure_superconducting_ops(circuit: QuantumCircuit) -> Iterable[QuantumCircuit]:
+    for start_index in (0, 1):
+        for i in range(start_index, circuit.num_qubits - 1, 2):
+            # measure superconducting op between modes i and i + 1
+            name = f"{circuit.name}_superconducting_{i}_{i + 1}"
+            circ = circuit.copy(name=name)
+            circ.append(YXPlusXYInteractionGate(-np.pi / 4), (i, i + 1))
+            circ.measure_all()
+            yield circ
 
 
 # TODO saving should be done separately but mthree does not support that
@@ -176,15 +212,21 @@ def run_fermionic_gaussian_state_task(
     task: FermionicGaussianStateTask, backend, qubits: List[int]
 ) -> IBMQJob:
     circuit = state_preparation_circuit(task.state_params)
-    pauli_measurement_circuits = (
-        measure_pauli_string(circuit, pauli_string)
-        for pauli_string in measurement_pauli_strings(task.state_params.n_modes)
+    pauli_measurement_circuits = measure_pauli_strings(
+        circuit, measurement_pauli_strings(circuit.num_qubits)
     )
-    pauli_measurement_circuits_transpiled = [
-        transpile(circ, backend, initial_layout=qubits)
-        for circ in pauli_measurement_circuits
+    tunneling_measurement_circuits = measure_tunneling_ops(circuit)
+    superconducting_measurement_circuits = measure_superconducting_ops(circuit)
+    all_measurement_circuits = [
+        *pauli_measurement_circuits,
+        *tunneling_measurement_circuits,
+        *superconducting_measurement_circuits,
     ]
-    return backend.run(pauli_measurement_circuits_transpiled, shots=task.shots)
+    all_measurement_circuits_transpiled = [
+        transpile(circ, backend, initial_layout=qubits)
+        for circ in all_measurement_circuits
+    ]
+    return backend.run(all_measurement_circuits_transpiled, shots=task.shots)
 
 
 def run_measurement_error_correction(
