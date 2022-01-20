@@ -242,7 +242,9 @@ def run_measurement_error_correction(
     data = load(fermionic_gaussian_state_task)
     measurements = data["measurements"]
     quasis = {
-        pauli_string: mit.apply_correction(counts, qubits)
+        pauli_string: mit.apply_correction(
+            counts, qubits, return_mitigation_overhead=True
+        )
         for pauli_string, counts in measurements.items()
     }
     data["quasis"] = quasis
@@ -252,8 +254,8 @@ def run_measurement_error_correction(
 def compute_energy(
     measurements: Dict["str", Dict["str", int]],
     hamiltonian: SparsePauliOp,
-) -> float:
-    # TODO estimate standard deviation
+) -> Tuple[float, float]:
+    # TODO standard deviation estimate needs to include covariances
     # Assumes Hamiltonian only has X strings, Y strings, and Z strings
     counts_x = measurements["x" * hamiltonian.num_qubits]
     counts_y = measurements["y" * hamiltonian.num_qubits]
@@ -262,6 +264,7 @@ def compute_energy(
     shots_y = sum(counts_y.values())
     shots_z = sum(counts_z.values())
     hamiltonian_expectation = 0.0
+    hamiltonian_var = 0.0
     for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
         term_y = np.logical_and(term.z, term.x)
         if np.any(term_y):
@@ -279,25 +282,30 @@ def compute_energy(
         else:
             hamiltonian_expectation += coeff
             continue
-        term_expectation = 0.0
+        parities = {1: 0.0, -1: 0.0}
         for bitstring, count in counts.items():
-            parity = sum(
+            parity = (-1) ** sum(
                 1 for i, b in enumerate(bitstring) if pauli_string[i] and b == "1"
             )
-            term_expectation += (-1) ** parity * count
-        term_expectation /= shots
+            parities[parity] += count
+        term_expectation = sum(p * count for p, count in parities.items()) / shots
+        term_var = sum(
+            (p - term_expectation) ** 2 * count for p, count in parities.items()
+        ) / (shots - 1)
         hamiltonian_expectation += coeff * term_expectation
-    return np.real(hamiltonian_expectation)
+        hamiltonian_var += abs(coeff) ** 2 * term_var / shots
+    return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
 
 
 def compute_energy_measurement_corrected(
     quasis: Dict["str", Dict["str", float]], hamiltonian: SparsePauliOp
-) -> float:
-    # TODO estimate standard deviation
+) -> Tuple[float, float]:
+    # TODO standard deviation estimate needs to include covariances
     quasis_x = quasis["x" * hamiltonian.num_qubits]
     quasis_y = quasis["y" * hamiltonian.num_qubits]
     quasis_z = quasis["z" * hamiltonian.num_qubits]
     hamiltonian_expectation = 0.0
+    hamiltonian_var = 0.0
     for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
         term_y = np.logical_and(term.z, term.x)
         if np.any(term_y):
@@ -313,9 +321,10 @@ def compute_energy_measurement_corrected(
             hamiltonian_expectation += coeff
             continue
         operator = "".join("Z" if b else "I" for b in pauli_string)
-        term_expectation = quasi_dist.expval(operator)
+        term_expectation, term_stddev = quasi_dist.expval_and_stddev(operator)
         hamiltonian_expectation += coeff * term_expectation
-    return np.real(hamiltonian_expectation)
+        hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
+    return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
 
 
 def compute_edge_correlation(measurements: Dict["str", Dict["str", int]]) -> float:
