@@ -19,6 +19,9 @@ from qiskit_nature.operators.second_quantization import (
 from yx_plus_xy_interaction import YXPlusXYInteractionGate
 
 
+RESOLVERS = {"mthree.classes.QuasiDistribution": mthree.classes.QuasiDistribution}
+
+
 def save(task, data, base_dir: str = "data/", mode="x"):
     filename = os.path.join(base_dir, f"{task.filename}.json")
     os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -31,6 +34,23 @@ def load(task, base_dir: str = "data/"):
     with open(filename) as f:
         data = json.load(f)
     return data
+
+
+def to_json_dict(obj: Any) -> Dict:
+    if isinstance(obj, mthree.classes.QuasiDistribution):
+        return {
+            "qiskit_type": "mthree.classes.QuasiDistribution",
+            "data": obj,
+            "shots": obj.shots,
+            "mitigation_overhead": obj.mitigation_overhead,
+        }
+    raise NotImplementedError
+
+
+def from_json_dict(d: Dict):
+    cls = RESOLVERS[d["qiskit_type"]]
+    del d["qiskit_type"]
+    return cls(**d)
 
 
 @dataclasses.dataclass
@@ -191,9 +211,9 @@ def measure_superconducting_ops(circuit: QuantumCircuit) -> Iterable[QuantumCirc
             yield circ
 
 
-# TODO saving should be done separately but mthree does not support that
-# TODO calibration date needs to be handled better
-# (see https://github.com/Qiskit-Partners/mthree/issues/71)
+# TODO do this asynchronously now that mthree supports it
+# TODO saving should be done separately now that mthree supports it
+# See https://github.com/Qiskit-Partners/mthree/issues/71
 def run_measurement_error_calibration_task(
     task: MeasurementErrorCalibrationTask,
     backend,
@@ -244,14 +264,13 @@ def run_measurement_error_correction(
     )
     data = load(fermionic_gaussian_state_task)
     measurements = data["measurements"]
-    # TODO save mitigation overhead
-    quasis = {
-        pauli_string: mit.apply_correction(
-            counts, qubits, return_mitigation_overhead=True
+    quasi_dists = {
+        pauli_string: to_json_dict(
+            mit.apply_correction(counts, qubits, return_mitigation_overhead=True)
         )
         for pauli_string, counts in measurements.items()
     }
-    data["quasis"] = quasis
+    data["quasi_dists"] = quasi_dists
     save(fermionic_gaussian_state_task, data, mode="w")
 
 
