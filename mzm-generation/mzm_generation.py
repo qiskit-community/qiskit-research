@@ -1,7 +1,7 @@
 import dataclasses
 import json
 import os
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import mthree
 import numpy as np
@@ -9,6 +9,7 @@ from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Gate, Qubit
 from qiskit.circuit.library import XYGate
 from qiskit.providers.ibmq import IBMQBackend, IBMQJob
+from qiskit.providers.aer import AerJob
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.operators.second_quantization import (
@@ -152,8 +153,7 @@ def measurement_pauli_strings(n_qubits: int) -> Iterable[str]:
 
 
 def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumCircuit:
-    name = f"{circuit.name}_paulistring_{pauli_string}"
-    circuit = circuit.copy(name=name)
+    circuit = circuit.copy(name=pauli_string)
     for q, pauli in zip(circuit.qubits, pauli_string):
         if pauli.lower() == "x":
             circuit.h(q)
@@ -175,8 +175,7 @@ def measure_tunneling_ops(circuit: QuantumCircuit) -> Iterable[QuantumCircuit]:
     for start_index in (0, 1):
         for i in range(start_index, circuit.num_qubits - 1, 2):
             # measure tunneling op between modes i and i + 1
-            name = f"{circuit.name}_tunneling_{i}_{i + 1}"
-            circ = circuit.copy(name=name)
+            circ = circuit.copy(name=f"tunneling_{i}_{i + 1}")
             circ.append(XYGate(np.pi / 2, -np.pi / 2), (i, i + 1))
             circ.measure_all()
             yield circ
@@ -186,8 +185,7 @@ def measure_superconducting_ops(circuit: QuantumCircuit) -> Iterable[QuantumCirc
     for start_index in (0, 1):
         for i in range(start_index, circuit.num_qubits - 1, 2):
             # measure superconducting op between modes i and i + 1
-            name = f"{circuit.name}_superconducting_{i}_{i + 1}"
-            circ = circuit.copy(name=name)
+            circ = circuit.copy(name=f"superconducting_{i}_{i + 1}")
             circ.append(YXPlusXYInteractionGate(-np.pi / 4), (i, i + 1))
             circ.measure_all()
             yield circ
@@ -210,7 +208,7 @@ def run_measurement_error_calibration_task(
 
 def run_fermionic_gaussian_state_task(
     task: FermionicGaussianStateTask, backend, qubits: List[int]
-) -> IBMQJob:
+) -> Union[AerJob, IBMQJob]:
     circuit = state_preparation_circuit(task.state_params)
     pauli_measurement_circuits = measure_pauli_strings(
         circuit, measurement_pauli_strings(circuit.num_qubits)
@@ -226,7 +224,12 @@ def run_fermionic_gaussian_state_task(
         transpile(circ, backend, initial_layout=qubits)
         for circ in all_measurement_circuits
     ]
-    return backend.run(all_measurement_circuits_transpiled, shots=task.shots)
+    job = backend.run(all_measurement_circuits_transpiled, shots=task.shots)
+    # HACK AerJob has no circuits method
+    # See https://github.com/Qiskit/qiskit-aer/issues/1431
+    if isinstance(job, AerJob):
+        job.circuits = lambda: all_measurement_circuits_transpiled
+    return job
 
 
 def run_measurement_error_correction(
@@ -241,6 +244,7 @@ def run_measurement_error_correction(
     )
     data = load(fermionic_gaussian_state_task)
     measurements = data["measurements"]
+    # TODO save mitigation overhead
     quasis = {
         pauli_string: mit.apply_correction(
             counts, qubits, return_mitigation_overhead=True
