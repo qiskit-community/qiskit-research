@@ -191,7 +191,6 @@ def measure_pauli_strings(
 
 
 def measure_tunneling_ops(circuit: QuantumCircuit) -> Iterable[QuantumCircuit]:
-    # TODO add circuit name or metadata
     for start_index in (0, 1):
         for i in range(start_index, circuit.num_qubits - 1, 2):
             # measure tunneling op between modes i and i + 1
@@ -211,19 +210,12 @@ def measure_superconducting_ops(circuit: QuantumCircuit) -> Iterable[QuantumCirc
             yield circ
 
 
-# TODO do this asynchronously now that mthree supports it
-# TODO saving should be done separately now that mthree supports it
-# See https://github.com/Qiskit-Partners/mthree/issues/71
 def run_measurement_error_calibration_task(
-    task: MeasurementErrorCalibrationTask,
-    backend,
-    qubits: List[int],
-    base_dir: str = "data/",
-) -> None:
-    filename = os.path.join(base_dir, f"{task.filename}.json")
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    task: MeasurementErrorCalibrationTask, backend, qubits: List[int]
+) -> mthree.M3Mitigation:
     mit = mthree.M3Mitigation(backend)
-    mit.cals_from_system(qubits, shots=task.shots, cals_file=filename)
+    mit.cals_from_system(qubits, shots=task.shots)
+    return mit
 
 
 def run_fermionic_gaussian_state_task(
