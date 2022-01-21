@@ -1,4 +1,3 @@
-# qiskit-research-reviews
-this is where we'll replicate research papers using the latest and greatest Qiskit
+# Qiskit Research
 
-let's put some links and whatnot here eventually
+Research using Qiskit, demonstrating best practices for running quantum computing experiments.
