@@ -98,11 +98,11 @@ class MeasurementErrorCalibrationTask:
 def majorana_op(index: int, action: int) -> FermionicOp:
     if action == 0:
         return FermionicOp(f"-_{index}") + FermionicOp(f"+_{index}")
-    return 1j * (FermionicOp(f"-_{index}") - FermionicOp(f"+_{index}"))
+    return -1j * (FermionicOp(f"-_{index}") - FermionicOp(f"+_{index}"))
 
 
 def edge_correlation_op(n_modes: int) -> FermionicOp:
-    return 1j * majorana_op(0, 0) @ majorana_op(n_modes - 1, 1)
+    return -1j * majorana_op(0, 0) @ majorana_op(n_modes - 1, 1)
 
 
 def parity_op(n_modes: int) -> FermionicOp:
@@ -266,7 +266,7 @@ def run_measurement_error_correction(
     save(fermionic_gaussian_state_task, data, mode="w")
 
 
-def compute_energy(
+def compute_energy_pauli(
     measurements: Dict["str", Dict["str", int]],
     hamiltonian: SparsePauliOp,
 ) -> Tuple[float, float]:
@@ -312,7 +312,7 @@ def compute_energy(
     return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
 
 
-def compute_energy_measurement_corrected(
+def compute_energy_pauli_measurement_corrected(
     quasis: Dict["str", Dict["str", float]], hamiltonian: SparsePauliOp
 ) -> Tuple[float, float]:
     # TODO standard deviation estimate needs to include covariances
@@ -340,6 +340,13 @@ def compute_energy_measurement_corrected(
         hamiltonian_expectation += coeff * term_expectation
         hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
     return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
+
+
+def compute_covariance_matrix(
+    measurements: Dict["str", Dict["str", int]],
+    hamiltonian: QuadraticHamiltonian,
+) -> np.ndarray:
+    pass
 
 
 def compute_edge_correlation(measurements: Dict["str", Dict["str", int]]) -> float:
