@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import json
 import os
 from typing import Any, Dict, Iterable, List, Tuple, Union
@@ -116,14 +117,17 @@ def number_op(n_modes: int) -> FermionicOp:
     return sum(FermionicOp(f"N_{i}") for i in range(n_modes))
 
 
+# TODO operator could be scipy sparse matrix
 def expectation(operator: np.ndarray, state: np.ndarray) -> complex:
     return np.vdot(state, operator @ state)
 
 
+# TODO operator could be scipy sparse matrix
 def variance(operator: np.ndarray, state: np.ndarray) -> complex:
     return expectation(operator ** 2, state) - expectation(operator, state) ** 2
 
 
+@functools.lru_cache
 def kitaev_hamiltonian(
     n_modes: int, tunneling: float, superconducting: float, chemical_potential: float
 ) -> QuadraticHamiltonian:
@@ -173,7 +177,7 @@ def measurement_pauli_strings(n_qubits: int) -> Iterable[str]:
 
 
 def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumCircuit:
-    circuit = circuit.copy(name=pauli_string)
+    circuit = circuit.copy()
     for q, pauli in zip(circuit.qubits, pauli_string):
         if pauli.lower() == "x":
             circuit.h(q)
