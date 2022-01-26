@@ -43,7 +43,15 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         experiment_id = experiment.experiment_id
 
         # put data into dictionary for easier handling
-        data = dict(zip(experiment.circuit_parameters(), experiment_data.data()))
+        data = {}
+        for result in experiment_data.data():
+            params = CircuitParameters(
+                *(
+                    tuple(p) if isinstance(p, list) else p
+                    for p in result["metadata"]["params"]
+                )
+            )
+            data[params] = result
 
         # load readout calibration
         mit = mthree.M3Mitigation()

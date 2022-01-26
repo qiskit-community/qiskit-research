@@ -14,6 +14,7 @@ from mzm_generation import (
     measurement_pauli_strings,
 )
 
+
 CircuitParameters = namedtuple(
     "CircuitParameters",
     [
