@@ -1,7 +1,8 @@
 import functools
 import itertools
 from collections import namedtuple
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from openfermion import tunneling_operator
 
 from qiskit import QuantumCircuit
 from qiskit.providers import Backend
@@ -39,15 +40,27 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         superconducting_values: float,
         chemical_potential_values: float,
         occupied_orbitals_list: Sequence[Tuple[int]],
-        backend: Optional[Backend] = None,
     ) -> None:
         self.experiment_id = experiment_id
+        # TODO qubits should be set in parent class
+        # see https://github.com/Qiskit/qiskit-experiments/issues/627
+        self.qubits = qubits
         self.n_modes = len(qubits)
         self.tunneling_values = tunneling_values
         self.superconducting_values = superconducting_values
         self.chemical_potential_values = chemical_potential_values
         self.occupied_orbitals_list = occupied_orbitals_list
-        super().__init__(qubits=qubits, backend=backend)
+        super().__init__(qubits=qubits)
+
+    def _additional_metadata(self) -> Dict:
+        return {
+            "experiment_id": self.experiment_id,
+            "qubits": self.qubits,
+            "tunneling_values": self.tunneling_values,
+            "superconducting_values": self.superconducting_values,
+            "chemical_potential_values": self.chemical_potential_values,
+            "occupied_orbitals_list": self.occupied_orbitals_list,
+        }
 
     def circuits(self) -> List[QuantumCircuit]:
         return list(self._circuits())
