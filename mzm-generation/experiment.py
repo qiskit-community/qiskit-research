@@ -10,7 +10,6 @@ from qiskit_nature.circuit.library import FermionicGaussianState
 from mzm_generation import (
     kitaev_hamiltonian,
     measure_pauli_string,
-    measurement_pauli_strings,
 )
 
 
@@ -110,7 +109,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             self.chemical_potential_values,
             self.occupied_orbitals_list,
         ):
-            for pauli_string in measurement_pauli_strings(self.n_modes):
+            for pauli_string in self.measurement_pauli_strings():
                 yield CircuitParameters(
                     tunneling=tunneling,
                     superconducting=superconducting,
@@ -119,3 +118,12 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                     measurement_basis="pauli",
                     measurement_label=pauli_string,
                 )
+
+    def measurement_pauli_strings(self) -> Iterable[str]:
+        # NOTE these strings are in big endian order (opposite of qiskit)
+        yield "x" * self.n_modes
+        yield "y" * self.n_modes
+        yield "z" * self.n_modes
+        for i in range(self.n_modes - 1):
+            yield "y" + "z" * i + "x"
+            yield "y" + "z" * i + "y"

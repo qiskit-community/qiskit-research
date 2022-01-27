@@ -5,6 +5,7 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 import mthree
 import numpy as np
 from matplotlib.figure import Figure
+from openfermion import tunneling_operator
 from qiskit import Aer
 from qiskit_experiments.framework import (
     AnalysisResultData,
@@ -28,7 +29,6 @@ from mzm_generation import (
     edge_correlation_op,
     expectation,
     kitaev_hamiltonian,
-    measurement_pauli_strings,
     number_op,
 )
 
@@ -39,6 +39,27 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _run_analysis(
         self, experiment_data: ExperimentData
     ) -> Tuple[List[AnalysisResultData], List[Figure]]:
+        # reconstruct experiment
+        experiment_id = experiment_data.metadata["experiment_id"]
+        qubits = experiment_data.metadata["qubits"]
+        tunneling_values = experiment_data.metadata["tunneling_values"]
+        superconducting_values = experiment_data.metadata["superconducting_values"]
+        chemical_potential_values = experiment_data.metadata[
+            "chemical_potential_values"
+        ]
+        occupied_orbitals_list = [
+            tuple(occupied_orbitals)
+            for occupied_orbitals in experiment_data.metadata["occupied_orbitals_list"]
+        ]
+        experiment = KitaevHamiltonianExperiment(
+            experiment_id=experiment_id,
+            qubits=qubits,
+            tunneling_values=tunneling_values,
+            superconducting_values=superconducting_values,
+            chemical_potential_values=chemical_potential_values,
+            occupied_orbitals_list=occupied_orbitals_list,
+        )
+
         # put data into dictionary for easier handling
         data = {}
         for result in experiment_data.data():
@@ -53,16 +74,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         # load readout calibration
         mit = mthree.M3Mitigation()
         mit.cals_from_file(
-            os.path.join(
-                "data",
-                experiment_data.metadata["experiment_id"],
-                f"readout_calibration.json",
-            )
+            os.path.join("data", experiment_id, f"readout_calibration.json")
         )
 
         # get results
         qubits = experiment_data.metadata["qubits"]
-        n_modes = len(qubits)
         chemical_potential_values = experiment_data.metadata[
             "chemical_potential_values"
         ]
@@ -70,24 +86,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             tuple(occupied_orbitals)
             for occupied_orbitals in experiment_data.metadata["occupied_orbitals_list"]
         ]
-        results = list(
-            self._compute_analysis_results(
-                qubits,
-                n_modes,
-                chemical_potential_values,
-                occupied_orbitals_list,
-                data,
-                mit,
-            )
-        )
+        results = list(self._compute_analysis_results(experiment, data, mit))
         return results, []
 
     def _compute_analysis_results(
         self,
-        qubits: Sequence[int],
-        n_modes: int,
-        chemical_potential_values: float,
-        occupied_orbitals_list: Sequence[Tuple[int]],
+        experiment: KitaevHamiltonianExperiment,
         data: Dict[CircuitParameters, Dict],
         mit: mthree.M3Mitigation,
     ) -> Iterable[AnalysisResultData]:
@@ -99,11 +103,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         superconducting = 1.0
 
         # construct operators
-        edge_correlation = edge_correlation_op(n_modes)
+        edge_correlation = edge_correlation_op(experiment.n_modes)
         edge_correlation_jw = converter.convert(edge_correlation)
         # TODO should probably use sparse matrix here
         edge_correlation_dense = edge_correlation_jw.to_matrix()
-        number = number_op(n_modes)
+        number = number_op(experiment.n_modes)
         number_jw = converter.convert(number)
         # TODO should probably use sparse matrix here
         number_dense = number_jw.to_matrix()
@@ -127,10 +131,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         number_raw = defaultdict(list)
         number_mem = defaultdict(list)
 
-        for chemical_potential in chemical_potential_values:
+        for chemical_potential in experiment.chemical_potential_values:
             # create Hamiltonian
             hamiltonian_quad = kitaev_hamiltonian(
-                n_modes,
+                experiment.n_modes,
                 tunneling=tunneling,
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
@@ -145,12 +149,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             ) = hamiltonian_quad.diagonalizing_bogoliubov_transform()
             energy_shift = -0.5 * np.sum(orbital_energies) - constant
             # compute parity
-            W1 = transformation_matrix[:, :n_modes]
-            W2 = transformation_matrix[:, n_modes:]
+            W1 = transformation_matrix[:, : experiment.n_modes]
+            W2 = transformation_matrix[:, experiment.n_modes :]
             full_transformation = np.block([[W1, W2], [W2.conj(), W1.conj()]])
             hamiltonian_parity = np.real(np.sign(np.linalg.det(full_transformation)))
             # compute exact and experimental values
-            for occupied_orbitals in occupied_orbitals_list:
+            for occupied_orbitals in experiment.occupied_orbitals_list:
                 measurements = {
                     pauli_string: data[
                         CircuitParameters(
@@ -162,12 +166,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                             pauli_string,
                         )
                     ]["counts"]
-                    for pauli_string in measurement_pauli_strings(n_modes)
+                    for pauli_string in experiment.measurement_pauli_strings()
                 }
                 quasis = {
                     pauli_string: mit.apply_correction(
                         counts,
-                        qubits,
+                        experiment.qubits,
                         return_mitigation_overhead=True,
                     )
                     for pauli_string, counts in measurements.items()

@@ -67,16 +67,6 @@ def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
     )
 
 
-def measurement_pauli_strings(n_qubits: int) -> Iterable[str]:
-    # NOTE these strings are in big endian order (opposite of qiskit)
-    yield "x" * n_qubits
-    yield "y" * n_qubits
-    yield "z" * n_qubits
-    for i in range(n_qubits - 1):
-        yield "y" + "z" * i + "x"
-        yield "y" + "z" * i + "y"
-
-
 def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumCircuit:
     circuit = circuit.copy()
     for q, pauli in zip(circuit.qubits, pauli_string):
@@ -86,13 +76,6 @@ def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumC
             circuit.rx(np.pi / 2, q)
     circuit.measure_all()
     return circuit
-
-
-def measure_pauli_strings(
-    circuit: QuantumCircuit, pauli_strings: Iterable[str]
-) -> Iterable[QuantumCircuit]:
-    for pauli in pauli_strings:
-        yield measure_pauli_string(circuit, pauli)
 
 
 def measure_tunneling_ops(circuit: QuantumCircuit) -> Iterable[QuantumCircuit]:
