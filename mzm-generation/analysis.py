@@ -74,18 +74,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         # load readout calibration
         mit = mthree.M3Mitigation()
         mit.cals_from_file(
-            os.path.join("data", experiment_id, f"readout_calibration.json")
+            os.path.join("data", experiment.experiment_id, f"readout_calibration.json")
         )
 
         # get results
-        qubits = experiment_data.metadata["qubits"]
-        chemical_potential_values = experiment_data.metadata[
-            "chemical_potential_values"
-        ]
-        occupied_orbitals_list = [
-            tuple(occupied_orbitals)
-            for occupied_orbitals in experiment_data.metadata["occupied_orbitals_list"]
-        ]
         results = list(self._compute_analysis_results(experiment, data, mit))
         return results, []
 
