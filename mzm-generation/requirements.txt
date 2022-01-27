@@ -1,1 +1,0 @@
-git+https://github.com/kevinsung/qiskit-nature@slater-determinants#egg=qiskit-nature

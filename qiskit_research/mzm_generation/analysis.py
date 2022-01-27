@@ -1,11 +1,10 @@
 import os
 from collections import defaultdict
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 import mthree
 import numpy as np
 from matplotlib.figure import Figure
-from openfermion import tunneling_operator
 from qiskit import Aer
 from qiskit_experiments.framework import (
     AnalysisResultData,
@@ -16,8 +15,11 @@ from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.converters.second_quantization.qubit_converter import QubitConverter
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 
-from experiment import CircuitParameters, KitaevHamiltonianExperiment
-from mzm_generation import (
+from qiskit_research.mzm_generation.experiment import (
+    CircuitParameters,
+    KitaevHamiltonianExperiment,
+)
+from qiskit_research.mzm_generation.utils import (
     compute_edge_correlation,
     compute_edge_correlation_measurement_corrected,
     compute_energy_pauli,

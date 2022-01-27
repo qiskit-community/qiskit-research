@@ -7,7 +7,7 @@ from qiskit import QuantumCircuit
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
 
-from mzm_generation import (
+from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
     measure_pauli_string,
 )

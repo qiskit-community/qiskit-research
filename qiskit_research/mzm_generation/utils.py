@@ -9,7 +9,6 @@ from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
-from yx_plus_xy_interaction import YXPlusXYInteractionGate
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
