@@ -1,11 +1,9 @@
 import functools
 import itertools
 from collections import namedtuple
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
-from openfermion import tunneling_operator
+from typing import Dict, Iterable, List, Sequence, Tuple
 
 from qiskit import QuantumCircuit
-from qiskit.providers import Backend
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
 

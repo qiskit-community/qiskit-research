@@ -1,99 +1,15 @@
-import dataclasses
 import functools
-import json
-import os
-from typing import Any, Dict, Iterable, List, Tuple, Union
+from typing import Dict, Iterable, Tuple
 
-import mthree
 import numpy as np
-from qiskit import QuantumCircuit, transpile
-from qiskit.circuit import Gate, Qubit
+from qiskit import QuantumCircuit
 from qiskit.circuit.library import XYGate
-from qiskit.providers.ibmq import IBMQBackend, IBMQJob
-from qiskit.providers.aer import AerJob
 from qiskit.quantum_info import SparsePauliOp
-from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
 from yx_plus_xy_interaction import YXPlusXYInteractionGate
-
-
-RESOLVERS = {"mthree.classes.QuasiDistribution": mthree.classes.QuasiDistribution}
-
-
-def save(task, data, base_dir: str = "data/", mode="x"):
-    filename = os.path.join(base_dir, f"{task.filename}.json")
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    with open(filename, mode) as f:
-        json.dump(data, f)
-
-
-def load(task, base_dir: str = "data/"):
-    filename = os.path.join(base_dir, f"{task.filename}.json")
-    with open(filename) as f:
-        data = json.load(f)
-    return data
-
-
-def to_json_dict(obj: Any) -> Dict:
-    if isinstance(obj, mthree.classes.QuasiDistribution):
-        return {
-            "qiskit_type": "mthree.classes.QuasiDistribution",
-            "data": obj,
-            "shots": obj.shots,
-            "mitigation_overhead": obj.mitigation_overhead,
-        }
-    raise NotImplementedError
-
-
-def from_json_dict(d: Dict):
-    cls = RESOLVERS[d["qiskit_type"]]
-    del d["qiskit_type"]
-    return cls(**d)
-
-
-@dataclasses.dataclass
-class FermionicGaussianStateParameters:
-    n_modes: int
-    tunneling: float
-    superconducting: float
-    chemical_potential: float
-    occupied_orbitals: Tuple[int]
-
-
-@dataclasses.dataclass
-class FermionicGaussianStateTask:
-    experiment_id: str
-    shots: Tuple[int]
-    state_params: FermionicGaussianStateParameters
-
-    @property
-    def filename(self) -> str:
-        return os.path.join(
-            self.experiment_id,
-            f"shots{self.shots}",
-            f"n{self.state_params.n_modes}",
-            f"t{self.state_params.tunneling:.2f}"
-            f"_Delta{self.state_params.superconducting:.2f}"
-            f"_mu{self.state_params.chemical_potential:.2f}",
-            str(self.state_params.occupied_orbitals),
-        )
-
-
-@dataclasses.dataclass
-class MeasurementErrorCalibrationTask:
-    experiment_id: str
-    shots: int
-
-    @property
-    def filename(self) -> str:
-        return os.path.join(
-            self.experiment_id,
-            "measurement_error_calibration",
-            f"shots{self.shots}",
-        )
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -137,21 +53,6 @@ def kitaev_hamiltonian(
     hermitian_part = -tunneling * (upper_diag + lower_diag) + chemical_potential * eye
     antisymmetric_part = superconducting * (upper_diag - lower_diag)
     return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
-
-
-def state_preparation_circuit(
-    params: FermionicGaussianStateParameters,
-) -> FermionicGaussianState:
-    hamiltonian = kitaev_hamiltonian(
-        params.n_modes,
-        tunneling=params.tunneling,
-        superconducting=params.superconducting,
-        chemical_potential=params.chemical_potential,
-    )
-    transformation_matrix, _, _ = hamiltonian.diagonalizing_bogoliubov_transform()
-    return FermionicGaussianState(
-        transformation_matrix, params.occupied_orbitals, name=repr(params)
-    )
 
 
 def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
@@ -212,62 +113,6 @@ def measure_superconducting_ops(circuit: QuantumCircuit) -> Iterable[QuantumCirc
             circ.append(YXPlusXYInteractionGate(-np.pi / 4), (i, i + 1))
             circ.measure_all()
             yield circ
-
-
-def run_measurement_error_calibration_task(
-    task: MeasurementErrorCalibrationTask, backend, qubits: List[int]
-) -> mthree.M3Mitigation:
-    mit = mthree.M3Mitigation(backend)
-    mit.cals_from_system(qubits, shots=task.shots)
-    return mit
-
-
-def run_fermionic_gaussian_state_task(
-    task: FermionicGaussianStateTask, backend, qubits: List[int]
-) -> Union[AerJob, IBMQJob]:
-    circuit = state_preparation_circuit(task.state_params)
-    pauli_measurement_circuits = measure_pauli_strings(
-        circuit, measurement_pauli_strings(circuit.num_qubits)
-    )
-    tunneling_measurement_circuits = measure_tunneling_ops(circuit)
-    superconducting_measurement_circuits = measure_superconducting_ops(circuit)
-    all_measurement_circuits = [
-        *pauli_measurement_circuits,
-        *tunneling_measurement_circuits,
-        *superconducting_measurement_circuits,
-    ]
-    all_measurement_circuits_transpiled = [
-        transpile(circ, backend, initial_layout=qubits)
-        for circ in all_measurement_circuits
-    ]
-    job = backend.run(all_measurement_circuits_transpiled, shots=task.shots)
-    # HACK AerJob has no circuits method
-    # See https://github.com/Qiskit/qiskit-aer/issues/1431
-    if isinstance(job, AerJob):
-        job.circuits = lambda: all_measurement_circuits_transpiled
-    return job
-
-
-def run_measurement_error_correction(
-    measurement_error_calibration_task: MeasurementErrorCalibrationTask,
-    fermionic_gaussian_state_task: FermionicGaussianStateTask,
-    qubits: List[int],
-    base_dir: str = "data/",
-) -> None:
-    mit = mthree.M3Mitigation()
-    mit.cals_from_file(
-        os.path.join(base_dir, f"{measurement_error_calibration_task.filename}.json")
-    )
-    data = load(fermionic_gaussian_state_task)
-    measurements = data["measurements"]
-    quasi_dists = {
-        pauli_string: to_json_dict(
-            mit.apply_correction(counts, qubits, return_mitigation_overhead=True)
-        )
-        for pauli_string, counts in measurements.items()
-    }
-    data["quasi_dists"] = quasi_dists
-    save(fermionic_gaussian_state_task, data, mode="w")
 
 
 def compute_energy_pauli(
