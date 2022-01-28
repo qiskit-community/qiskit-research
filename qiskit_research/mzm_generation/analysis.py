@@ -34,6 +34,7 @@ from qiskit_research.mzm_generation.experiment import (
 from qiskit_research.mzm_generation.utils import (
     compute_edge_correlation,
     compute_edge_correlation_measurement_corrected,
+    compute_energy_parity_basis,
     compute_energy_pauli,
     compute_energy_pauli_measurement_corrected,
     compute_number,
@@ -119,6 +120,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         number_dense = number_jw.to_matrix()
 
         # data storage objects
+        # TODO add stddev and type annotations to all the following dictionaries
         energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         energy_raw = defaultdict(
             list
@@ -126,7 +128,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         energy_mem = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
-        # TODO add stddev and type annotations
+        energy_parity_basis_raw = defaultdict(list)
         edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         edge_correlation_raw = defaultdict(list)
         edge_correlation_mem = defaultdict(list)
@@ -161,26 +163,36 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             hamiltonian_parity = np.real(np.sign(np.linalg.det(full_transformation)))
             # compute exact and experimental values
             for occupied_orbitals in experiment.occupied_orbitals_list:
-                measurements = {
-                    pauli_string: data[
-                        CircuitParameters(
-                            tunneling,
-                            superconducting,
-                            chemical_potential,
-                            occupied_orbitals,
-                            "pauli",
-                            pauli_string,
-                        )
-                    ]["counts"]
-                    for pauli_string in experiment.measurement_pauli_strings()
-                }
+                measurements = {}  # Dict[str, Dict[str, int]]
+                for pauli_string in experiment.measurement_pauli_strings():
+                    params = CircuitParameters(
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        "pauli",
+                        pauli_string,
+                    )
+                    measurements[pauli_string] = data[params]["counts"]
+                for (
+                    interaction_op_label
+                ) in experiment.measurement_interaction_op_labels():
+                    params = CircuitParameters(
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        "parity",
+                        interaction_op_label,
+                    )
+                    measurements[interaction_op_label] = data[params]["counts"]
                 quasis = {
-                    pauli_string: mit.apply_correction(
+                    label: mit.apply_correction(
                         counts,
                         experiment.qubits,
                         return_mitigation_overhead=True,
                     )
-                    for pauli_string, counts in measurements.items()
+                    for label, counts in measurements.items()
                 }
                 # exact values
                 circuit = FermionicGaussianState(
@@ -206,6 +218,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 raw_edge_correlation = compute_edge_correlation(measurements)
                 raw_parity = compute_parity(measurements)
                 raw_number = compute_number(measurements)
+                raw_energy_parity_basis = compute_energy_parity_basis(
+                    measurements, hamiltonian_quad
+                )
                 # measurement error corrected values
                 (
                     mem_energy,
@@ -234,6 +249,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 number_exact[occupied_orbitals].append(exact_number)
                 number_raw[occupied_orbitals].append(raw_number)
                 number_mem[occupied_orbitals].append(mem_number)
+                energy_parity_basis_raw[occupied_orbitals].append(
+                    raw_energy_parity_basis + energy_shift
+                )
 
         yield AnalysisResultData("energy_exact", energy_exact)
         yield AnalysisResultData("energy_raw", energy_raw)
@@ -247,3 +265,4 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("number_exact", number_exact)
         yield AnalysisResultData("number_raw", number_raw)
         yield AnalysisResultData("number_mem", number_mem)
+        yield AnalysisResultData("energy_parity_basis_raw", energy_parity_basis_raw)

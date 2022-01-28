@@ -12,6 +12,7 @@
 
 import functools
 from typing import Dict, Tuple
+from cirq import validate_density_matrix
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -93,16 +94,16 @@ def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumC
 def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircuit:
     """Measure fermionic interaction with a circuit that preserves parity."""
     if label.startswith("tunneling_plus"):
-        # this gate transforms a^\dagger_i a_j + h.c into IZ - ZI
+        # this gate transforms a^\dagger_i a_j + h.c into (IZ - ZI) / 2
         gate = XYGate(np.pi / 2, -np.pi / 2)
     elif label.startswith("tunneling_minus"):
-        # this gate transforms a^\dagger_i a_j - h.c into i * (IZ - ZI)
+        # this gate transforms -i * (a^\dagger_i a_j - h.c) into (IZ - ZI) / 2
         gate = XYGate(np.pi / 2, -np.pi)
     elif label.startswith("superconducting_plus"):
-        # this gate transforms a^\dagger_i a^_\dagger_j + h.c into IZ + ZI
+        # this gate transforms a^\dagger_i a^_\dagger_j + h.c into (IZ + ZI) / 2
         gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi / 2)
     else:  # label.startswith("superconducting_minus")
-        # this gate transforms a^\dagger_i a^_\dagger_j - h.c into i * (IZ + ZI)
+        # this gate transforms -i * (a^\dagger_i a^_\dagger_j - h.c) into (IZ + ZI) / 2
         gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi)
 
     if label.endswith("even"):
@@ -115,11 +116,12 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
         # measure interaction between qubits i and i + 1
         circuit.append(gate, [i, i + 1])
     circuit.measure_all()
+
     return circuit
 
 
 def compute_energy_pauli(
-    measurements: Dict["str", Dict["str", int]],
+    measurements: Dict[str, Dict[str, int]],
     hamiltonian: SparsePauliOp,
 ) -> Tuple[float, float]:
     # TODO standard deviation estimate needs to include covariances
@@ -151,8 +153,11 @@ def compute_energy_pauli(
             continue
         parities = {1: 0.0, -1: 0.0}
         for bitstring, count in counts.items():
+            # reverse bitstrings because Qiskit uses little endian
             parity = (-1) ** sum(
-                1 for i, b in enumerate(bitstring) if pauli_string[i] and b == "1"
+                1
+                for i, b in enumerate(reversed(bitstring))
+                if pauli_string[i] and b == "1"
             )
             parities[parity] += count
         term_expectation = sum(p * count for p, count in parities.items()) / shots
@@ -165,7 +170,7 @@ def compute_energy_pauli(
 
 
 def compute_energy_pauli_measurement_corrected(
-    quasis: Dict["str", Dict["str", float]], hamiltonian: SparsePauliOp
+    quasis: Dict[str, Dict[str, float]], hamiltonian: SparsePauliOp
 ) -> Tuple[float, float]:
     # TODO standard deviation estimate needs to include covariances
     quasis_x = quasis["x" * hamiltonian.num_qubits]
@@ -187,25 +192,82 @@ def compute_energy_pauli_measurement_corrected(
         else:
             hamiltonian_expectation += coeff
             continue
-        operator = "".join("Z" if b else "I" for b in pauli_string)
+        # reverse pauli string because Qiskit uses little endian
+        operator = "".join("Z" if b else "I" for b in reversed(pauli_string))
         term_expectation, term_stddev = quasi_dist.expval_and_stddev(operator)
         hamiltonian_expectation += coeff * term_expectation
         hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
     return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
 
 
-def compute_energy_parity_basis():
-    pass
-
-
-def compute_covariance_matrix(
-    measurements: Dict["str", Dict["str", int]],
-    hamiltonian: QuadraticHamiltonian,
+def compute_interaction_matrix(
+    measurements: Dict[str, Dict[str, int]], label: str
 ) -> np.ndarray:
-    pass
+    n_qubits = len(next(iter(next(iter(measurements.values())))))
+
+    if label == "tunneling_plus":
+        sign = -1
+        symmetry = 1
+    elif label == "tunneling_minus":
+        sign = -1
+        symmetry = -1
+    elif label == "superconducting_plus":
+        sign = 1
+        symmetry = -1
+    else:  # label == "superconducting_minus"
+        sign = 1
+        symmetry = -1
+
+    even_counts = measurements[f"{label}_even"]
+    odd_counts = measurements[f"{label}_odd"]
+    z_counts = measurements["z" * n_qubits]
+    even_shots = sum(even_counts.values())
+    odd_shots = sum(odd_counts.values())
+    z_shots = sum(z_counts.values())
+
+    mat = np.zeros((n_qubits, n_qubits))
+    # diagonal terms
+    if label == "tunneling_plus":
+        for bitstring, count in z_counts.items():
+            # reverse bitstring because Qiskit uses little endian
+            bitstring = bitstring[::-1]
+            for i, b in enumerate(bitstring):
+                mat[i, i] += (1 - (-1) ** (b == "1")) * count / z_shots
+    # off-diagonal terms
+    for start_index in [0, 1]:
+        counts = odd_counts if start_index else even_counts
+        shots = odd_shots if start_index else even_shots
+        for bitstring, count in counts.items():
+            # reverse bitstring because Qiskit uses little endian
+            bitstring = bitstring[::-1]
+            for i in range(start_index, n_qubits - 1, 2):
+                z0 = (-1) ** (bitstring[i] == "1")
+                z1 = (-1) ** (bitstring[i + 1] == "1")
+                val = 0.5 * (z1 + sign * z0) * count / shots
+                mat[i, i + 1] += val
+                mat[i + 1, i] += symmetry * val
+
+    return mat
 
 
-def compute_edge_correlation(measurements: Dict["str", Dict["str", int]]) -> float:
+def compute_energy_parity_basis(
+    measurements: Dict[str, Dict[str, int]], hamiltonian: QuadraticHamiltonian
+) -> float:
+    tunneling_plus = compute_interaction_matrix(measurements, "tunneling_plus")
+    superconducting_plus = compute_interaction_matrix(
+        measurements, "superconducting_plus"
+    )
+    return (
+        0.5
+        * np.sum(
+            hamiltonian.hermitian_part * tunneling_plus
+            + hamiltonian.antisymmetric_part * superconducting_plus
+        )
+        + hamiltonian.constant
+    )
+
+
+def compute_edge_correlation(measurements: Dict[str, Dict[str, int]]) -> float:
     # TODO estimate standard deviation
     n_qubits = len(next(iter(measurements)))
     counts = measurements["y" + "z" * (n_qubits - 2) + "y"]
@@ -219,7 +281,7 @@ def compute_edge_correlation(measurements: Dict["str", Dict["str", int]]) -> flo
 
 
 def compute_edge_correlation_measurement_corrected(
-    quasis: Dict["str", Dict["str", float]],
+    quasis: Dict[str, Dict[str, float]],
 ) -> float:
     # TODO estimate standard deviation
     n_qubits = len(next(iter(quasis)))
@@ -228,7 +290,7 @@ def compute_edge_correlation_measurement_corrected(
     return correlation_expectation
 
 
-def compute_parity(measurements: Dict["str", Dict["str", int]]) -> float:
+def compute_parity(measurements: Dict[str, Dict[str, int]]) -> float:
     # TODO estimate standard deviation
     n_qubits = len(next(iter(measurements)))
     counts = measurements["z" * n_qubits]
@@ -242,7 +304,7 @@ def compute_parity(measurements: Dict["str", Dict["str", int]]) -> float:
 
 
 def compute_parity_measurement_corrected(
-    quasis: Dict["str", Dict["str", float]],
+    quasis: Dict[str, Dict[str, float]],
 ) -> float:
     # TODO estimate standard deviation
     n_qubits = len(next(iter(quasis)))
@@ -251,7 +313,7 @@ def compute_parity_measurement_corrected(
     return parity_expectation
 
 
-def compute_number(measurements: Dict["str", Dict["str", int]]) -> float:
+def compute_number(measurements: Dict[str, Dict[str, int]]) -> float:
     # TODO estimate standard deviation
     n_qubits = len(next(iter(measurements)))
     counts = measurements["z" * n_qubits]
@@ -265,7 +327,7 @@ def compute_number(measurements: Dict["str", Dict["str", int]]) -> float:
 
 
 def compute_number_measurement_corrected(
-    quasis: Dict["str", Dict["str", float]],
+    quasis: Dict[str, Dict[str, float]],
 ) -> float:
     # TODO estimate standard deviation
     n_qubits = len(next(iter(quasis)))

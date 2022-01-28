@@ -155,9 +155,5 @@ class KitaevHamiltonianExperiment(BaseExperiment):
     def measurement_interaction_op_labels(self) -> Iterable[str]:
         yield "tunneling_plus_even"
         yield "tunneling_plus_odd"
-        yield "tunneling_minus_even"
-        yield "tunneling_minus_odd"
         yield "superconducting_plus_even"
         yield "superconducting_plus_odd"
-        yield "superconducting_minus_even"
-        yield "superconducting_minus_odd"
