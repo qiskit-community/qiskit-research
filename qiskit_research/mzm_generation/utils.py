@@ -11,7 +11,7 @@
 # that they have been altered from the originals.
 
 import functools
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -21,6 +21,7 @@ from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
+from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -89,24 +90,32 @@ def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumC
     return circuit
 
 
-def measure_tunneling_ops(circuit: QuantumCircuit) -> Iterable[QuantumCircuit]:
-    for start_index in (0, 1):
-        for i in range(start_index, circuit.num_qubits - 1, 2):
-            # measure tunneling op between modes i and i + 1
-            circ = circuit.copy(name=f"tunneling_{i}_{i + 1}")
-            circ.append(XYGate(np.pi / 2, -np.pi / 2), (i, i + 1))
-            circ.measure_all()
-            yield circ
+def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircuit:
+    """Measure fermionic interaction with a circuit that preserves parity."""
+    if label.startswith("tunneling_plus"):
+        # this gate transforms a^\dagger_i a_j + h.c into IZ - ZI
+        gate = XYGate(np.pi / 2, -np.pi / 2)
+    elif label.startswith("tunneling_minus"):
+        # this gate transforms a^\dagger_i a_j - h.c into i * (IZ - ZI)
+        gate = XYGate(np.pi / 2, -np.pi)
+    elif label.startswith("superconducting_plus"):
+        # this gate transforms a^\dagger_i a^_\dagger_j + h.c into IZ + ZI
+        gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi / 2)
+    else:  # label.startswith("superconducting_minus")
+        # this gate transforms a^\dagger_i a^_\dagger_j - h.c into i * (IZ + ZI)
+        gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi)
 
+    if label.endswith("even"):
+        start_index = 0
+    else:  # label.endswith('odd')
+        start_index = 1
 
-def measure_superconducting_ops(circuit: QuantumCircuit) -> Iterable[QuantumCircuit]:
-    for start_index in (0, 1):
-        for i in range(start_index, circuit.num_qubits - 1, 2):
-            # measure superconducting op between modes i and i + 1
-            circ = circuit.copy(name=f"superconducting_{i}_{i + 1}")
-            circ.append(YXPlusXYInteractionGate(-np.pi / 4), (i, i + 1))
-            circ.measure_all()
-            yield circ
+    circuit = circuit.copy()
+    for i in range(start_index, circuit.num_qubits - 1, 2):
+        # measure interaction between qubits i and i + 1
+        circuit.append(gate, [i, i + 1])
+    circuit.measure_all()
+    return circuit
 
 
 def compute_energy_pauli(
@@ -183,6 +192,10 @@ def compute_energy_pauli_measurement_corrected(
         hamiltonian_expectation += coeff * term_expectation
         hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
     return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
+
+
+def compute_energy_parity_basis():
+    pass
 
 
 def compute_covariance_matrix(

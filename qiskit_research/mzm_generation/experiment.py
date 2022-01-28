@@ -18,12 +18,11 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 from qiskit import QuantumCircuit
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
-
 from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
+    measure_interaction_op,
     measure_pauli_string,
 )
-
 
 CircuitParameters = namedtuple(
     "CircuitParameters",
@@ -85,12 +84,16 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             circuit_params.chemical_potential,
             circuit_params.occupied_orbitals,
         )
-        if circuit_params.measurement_basis == "pauli":
+        if circuit_params.measurement_basis == "parity":
+            circuit = measure_interaction_op(
+                base_circuit, circuit_params.measurement_label
+            )
+        else:  # circuit_params.measurement_basis == "pauli"
             circuit = measure_pauli_string(
                 base_circuit, circuit_params.measurement_label
             )
-            circuit.metadata = {"params": circuit_params}
-            return circuit
+        circuit.metadata = {"params": circuit_params}
+        return circuit
 
     @functools.lru_cache
     def _base_circuit(
@@ -130,6 +133,15 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                     measurement_basis="pauli",
                     measurement_label=pauli_string,
                 )
+            for interaction_op_label in self.measurement_interaction_op_labels():
+                yield CircuitParameters(
+                    tunneling=tunneling,
+                    superconducting=superconducting,
+                    chemical_potential=chemical_potential,
+                    occupied_orbitals=occupied_orbitals,
+                    measurement_basis="parity",
+                    measurement_label=interaction_op_label,
+                )
 
     def measurement_pauli_strings(self) -> Iterable[str]:
         # NOTE these strings are in big endian order (opposite of qiskit)
@@ -139,3 +151,13 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         for i in range(self.n_modes - 1):
             yield "y" + "z" * i + "x"
             yield "y" + "z" * i + "y"
+
+    def measurement_interaction_op_labels(self) -> Iterable[str]:
+        yield "tunneling_plus_even"
+        yield "tunneling_plus_odd"
+        yield "tunneling_minus_even"
+        yield "tunneling_minus_odd"
+        yield "superconducting_plus_even"
+        yield "superconducting_plus_odd"
+        yield "superconducting_minus_even"
+        yield "superconducting_minus_odd"
