@@ -48,11 +48,13 @@ def number_op(n_modes: int) -> FermionicOp:
 
 # TODO operator could be scipy sparse matrix
 def expectation(operator: np.ndarray, state: np.ndarray) -> complex:
+    """Expectation value of operator with state."""
     return np.vdot(state, operator @ state)
 
 
 # TODO operator could be scipy sparse matrix
 def variance(operator: np.ndarray, state: np.ndarray) -> complex:
+    """Variance of operator with state."""
     return expectation(operator ** 2, state) - expectation(operator, state) ** 2
 
 
@@ -60,6 +62,7 @@ def variance(operator: np.ndarray, state: np.ndarray) -> complex:
 def kitaev_hamiltonian(
     n_modes: int, tunneling: float, superconducting: float, chemical_potential: float
 ) -> QuadraticHamiltonian:
+    """Create Kitaev model Hamiltonian."""
     eye = np.eye(n_modes)
     upper_diag = np.diag(np.ones(n_modes - 1), k=1)
     lower_diag = np.diag(np.ones(n_modes - 1), k=-1)
@@ -81,6 +84,7 @@ def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
 
 
 def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumCircuit:
+    """Measure a Pauli string."""
     circuit = circuit.copy()
     for q, pauli in zip(circuit.qubits, pauli_string):
         if pauli.lower() == "x":
@@ -124,6 +128,7 @@ def compute_energy_pauli(
     measurements: Dict[str, Dict[str, int]],
     hamiltonian: SparsePauliOp,
 ) -> Tuple[float, float]:
+    """Compute energy given measurements of Pauli strings."""
     # TODO standard deviation estimate needs to include covariances
     # Assumes Hamiltonian only has X strings, Y strings, and Z strings
     counts_x = measurements["x" * hamiltonian.num_qubits]
@@ -172,6 +177,7 @@ def compute_energy_pauli(
 def compute_energy_pauli_mem(
     quasis: Dict[str, Dict[str, float]], hamiltonian: SparsePauliOp
 ) -> Tuple[float, float]:
+    """Compute energy given measurement-error-mitigated quasiprobabilities of Pauli strings."""
     # TODO standard deviation estimate needs to include covariances
     quasis_x = quasis["x" * hamiltonian.num_qubits]
     quasis_y = quasis["y" * hamiltonian.num_qubits]
@@ -203,6 +209,7 @@ def compute_energy_pauli_mem(
 def compute_interaction_matrix(
     measurements: Dict[str, Dict[str, int]], label: str
 ) -> np.ndarray:
+    """Compute interaction operators given measurements."""
     n_qubits = len(next(iter(next(iter(measurements.values())))))
 
     if label == "tunneling_plus":
@@ -253,6 +260,7 @@ def compute_interaction_matrix(
 def compute_interaction_matrix_mem(
     quasis: Dict[str, Dict[str, float]], label: str
 ) -> np.ndarray:
+    """Compute interaction operators given measurement-error mitigated quasiprobabilities."""
     n_qubits = len(next(iter(next(iter(quasis.values())))))
 
     if label == "tunneling_plus":
@@ -299,6 +307,7 @@ def compute_interaction_matrix_mem(
 def compute_energy_parity_basis(
     measurements: Dict[str, Dict[str, int]], hamiltonian: QuadraticHamiltonian
 ) -> float:
+    """Compute energy given measurements."""
     tunneling_plus = compute_interaction_matrix(measurements, "tunneling_plus")
     superconducting_plus = compute_interaction_matrix(
         measurements, "superconducting_plus"
@@ -316,6 +325,7 @@ def compute_energy_parity_basis(
 def compute_energy_parity_basis_mem(
     quasis: Dict[str, Dict[str, float]], hamiltonian: QuadraticHamiltonian
 ) -> float:
+    """Compute energy given measurement-error mitigated quasiprobabilities."""
     tunneling_plus = compute_interaction_matrix_mem(quasis, "tunneling_plus")
     superconducting_plus = compute_interaction_matrix_mem(
         quasis, "superconducting_plus"
