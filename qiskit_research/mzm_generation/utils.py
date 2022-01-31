@@ -192,8 +192,8 @@ def compute_energy_pauli_measurement_corrected(
         else:
             hamiltonian_expectation += coeff
             continue
-        # reverse pauli string because Qiskit uses little endian
-        operator = "".join("Z" if b else "I" for b in reversed(pauli_string))
+        # don't reverse pauli string because M3 does it internally!
+        operator = "".join("Z" if b else "I" for b in pauli_string)
         term_expectation, term_stddev = quasi_dist.expval_and_stddev(operator)
         hamiltonian_expectation += coeff * term_expectation
         hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
@@ -250,12 +250,77 @@ def compute_interaction_matrix(
     return mat
 
 
+def compute_interaction_matrix_measurement_corrected(
+    quasis: Dict[str, Dict[str, float]], label: str
+) -> np.ndarray:
+    n_qubits = len(next(iter(next(iter(quasis.values())))))
+
+    if label == "tunneling_plus":
+        sign = -1
+        symmetry = 1
+    elif label == "tunneling_minus":
+        sign = -1
+        symmetry = -1
+    elif label == "superconducting_plus":
+        sign = 1
+        symmetry = -1
+    else:  # label == "superconducting_minus"
+        sign = 1
+        symmetry = -1
+
+    even_quasis = quasis[f"{label}_even"]
+    odd_quasis = quasis[f"{label}_odd"]
+    z_quasis = quasis["z" * n_qubits]
+
+    mat = np.zeros((n_qubits, n_qubits))
+    # diagonal terms
+    if label == "tunneling_plus":
+        for i in range(n_qubits):
+            # don't reverse pauli string because M3 does it internally!
+            num = "I" * i + "1" + "I" * (n_qubits - i - 1)
+            expval, stddev = z_quasis.expval_and_stddev(num)
+            mat[i, i] = 2 * expval
+    # off-diagonal terms
+    for start_index in [0, 1]:
+        quasi_dist = odd_quasis if start_index else even_quasis
+        for i in range(start_index, n_qubits - 1, 2):
+            # don't reverse pauli string because M3 does it internally!
+            z0 = "I" * i + "Z" + "I" * (n_qubits - i - 1)
+            z1 = "I" * (i + 1) + "Z" + "I" * (n_qubits - i - 2)
+            z0_expval, z0_stddev = quasi_dist.expval_and_stddev(z0)
+            z1_expval, z1_stddev = quasi_dist.expval_and_stddev(z1)
+            val = 0.5 * (z1_expval + sign * z0_expval)
+            mat[i, i + 1] = val
+            mat[i + 1, i] = symmetry * val
+
+    return mat
+
+
 def compute_energy_parity_basis(
     measurements: Dict[str, Dict[str, int]], hamiltonian: QuadraticHamiltonian
 ) -> float:
     tunneling_plus = compute_interaction_matrix(measurements, "tunneling_plus")
     superconducting_plus = compute_interaction_matrix(
         measurements, "superconducting_plus"
+    )
+    return (
+        0.5
+        * np.sum(
+            hamiltonian.hermitian_part * tunneling_plus
+            + hamiltonian.antisymmetric_part * superconducting_plus
+        )
+        + hamiltonian.constant
+    )
+
+
+def compute_energy_parity_basis_measurement_corrected(
+    quasis: Dict[str, Dict[str, float]], hamiltonian: QuadraticHamiltonian
+) -> float:
+    tunneling_plus = compute_interaction_matrix_measurement_corrected(
+        quasis, "tunneling_plus"
+    )
+    superconducting_plus = compute_interaction_matrix_measurement_corrected(
+        quasis, "superconducting_plus"
     )
     return (
         0.5

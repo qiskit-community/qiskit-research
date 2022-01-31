@@ -35,6 +35,7 @@ from qiskit_research.mzm_generation.utils import (
     compute_edge_correlation,
     compute_edge_correlation_measurement_corrected,
     compute_energy_parity_basis,
+    compute_energy_parity_basis_measurement_corrected,
     compute_energy_pauli,
     compute_energy_pauli_measurement_corrected,
     compute_number,
@@ -129,6 +130,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
         energy_parity_basis_raw = defaultdict(list)
+        energy_parity_basis_mem = defaultdict(list)
         edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         edge_correlation_raw = defaultdict(list)
         edge_correlation_mem = defaultdict(list)
@@ -229,6 +231,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 mem_correlation = compute_edge_correlation_measurement_corrected(quasis)
                 mem_parity = compute_parity_measurement_corrected(quasis)
                 mem_number = compute_number_measurement_corrected(quasis)
+                mem_energy_parity_basis = (
+                    compute_energy_parity_basis_measurement_corrected(
+                        quasis, hamiltonian_quad
+                    )
+                )
                 # add computed values to data storage objects
                 energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
                 energy_raw[occupied_orbitals].append(
@@ -240,6 +247,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         mem_energy_stddev,
                     )
                 )
+                energy_parity_basis_raw[occupied_orbitals].append(
+                    raw_energy_parity_basis + energy_shift
+                )
+                energy_parity_basis_mem[occupied_orbitals].append(
+                    mem_energy_parity_basis + energy_shift
+                )
                 edge_correlation_exact[occupied_orbitals].append(exact_correlation)
                 edge_correlation_raw[occupied_orbitals].append(raw_edge_correlation)
                 edge_correlation_mem[occupied_orbitals].append(mem_correlation)
@@ -249,13 +262,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 number_exact[occupied_orbitals].append(exact_number)
                 number_raw[occupied_orbitals].append(raw_number)
                 number_mem[occupied_orbitals].append(mem_number)
-                energy_parity_basis_raw[occupied_orbitals].append(
-                    raw_energy_parity_basis + energy_shift
-                )
 
         yield AnalysisResultData("energy_exact", energy_exact)
         yield AnalysisResultData("energy_raw", energy_raw)
         yield AnalysisResultData("energy_mem", energy_mem)
+        yield AnalysisResultData("energy_parity_basis_raw", energy_parity_basis_raw)
+        yield AnalysisResultData("energy_parity_basis_mem", energy_parity_basis_mem)
         yield AnalysisResultData("edge_correlation_exact", edge_correlation_exact)
         yield AnalysisResultData("edge_correlation_raw", edge_correlation_raw)
         yield AnalysisResultData("edge_correlation_mem", edge_correlation_mem)
@@ -265,4 +277,3 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("number_exact", number_exact)
         yield AnalysisResultData("number_raw", number_raw)
         yield AnalysisResultData("number_mem", number_mem)
-        yield AnalysisResultData("energy_parity_basis_raw", energy_parity_basis_raw)
