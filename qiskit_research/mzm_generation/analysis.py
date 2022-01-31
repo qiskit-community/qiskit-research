@@ -208,7 +208,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     new_quasis, removed_mass = post_select_quasis(
                         quasis[label], exact_parity
                     )
-                    print(f"Post-selecting {label} quasis removed {removed_mass} mass.")
                     quasis_post_selected[label] = new_quasis
                 # exact values
                 circuit = FermionicGaussianState(
