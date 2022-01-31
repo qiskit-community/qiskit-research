@@ -10,6 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+import itertools
 import os
 from collections import defaultdict
 from typing import Dict, Iterable, List, Tuple
@@ -46,6 +47,7 @@ from qiskit_research.mzm_generation.utils import (
     expectation,
     kitaev_hamiltonian,
     number_op,
+    post_select_quasis,
 )
 
 
@@ -131,6 +133,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
         energy_parity_basis_raw = defaultdict(list)
         energy_parity_basis_mem = defaultdict(list)
+        energy_ps = defaultdict(list)
         edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         edge_correlation_raw = defaultdict(list)
         edge_correlation_mem = defaultdict(list)
@@ -165,6 +168,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             hamiltonian_parity = np.real(np.sign(np.linalg.det(full_transformation)))
             # compute exact and experimental values
             for occupied_orbitals in experiment.occupied_orbitals_list:
+                exact_parity = (-1) ** len(occupied_orbitals) * hamiltonian_parity
                 measurements = {}  # Dict[str, Dict[str, int]]
                 for pauli_string in experiment.measurement_pauli_strings():
                     params = CircuitParameters(
@@ -196,6 +200,16 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     )
                     for label, counts in measurements.items()
                 }
+                quasis_post_selected = {}
+                for label in itertools.chain(
+                    experiment.measurement_interaction_op_labels(),
+                    ["z" * experiment.n_modes],
+                ):
+                    new_quasis, removed_mass = post_select_quasis(
+                        quasis[label], exact_parity
+                    )
+                    print(f"Post-selecting {label} quasis removed {removed_mass} mass.")
+                    quasis_post_selected[label] = new_quasis
                 # exact values
                 circuit = FermionicGaussianState(
                     transformation_matrix, occupied_orbitals
@@ -211,7 +225,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     np.sum(orbital_energies[list(occupied_orbitals)]) + constant
                 )
                 exact_correlation = np.real(expectation(edge_correlation_dense, state))
-                exact_parity = (-1) ** len(occupied_orbitals) * hamiltonian_parity
                 exact_number = np.real(expectation(number_dense, state))
                 # raw values
                 raw_energy, raw_energy_stddev = compute_energy_pauli(
@@ -236,6 +249,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         quasis, hamiltonian_quad
                     )
                 )
+                # post-selected values
+                ps_energy = compute_energy_parity_basis_measurement_corrected(
+                    quasis_post_selected, hamiltonian_quad
+                )
                 # add computed values to data storage objects
                 energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
                 energy_raw[occupied_orbitals].append(
@@ -253,6 +270,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 energy_parity_basis_mem[occupied_orbitals].append(
                     mem_energy_parity_basis + energy_shift
                 )
+                energy_ps[occupied_orbitals].append(ps_energy + energy_shift)
                 edge_correlation_exact[occupied_orbitals].append(exact_correlation)
                 edge_correlation_raw[occupied_orbitals].append(raw_edge_correlation)
                 edge_correlation_mem[occupied_orbitals].append(mem_correlation)
@@ -268,6 +286,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("energy_mem", energy_mem)
         yield AnalysisResultData("energy_parity_basis_raw", energy_parity_basis_raw)
         yield AnalysisResultData("energy_parity_basis_mem", energy_parity_basis_mem)
+        yield AnalysisResultData("energy_ps", energy_ps)
         yield AnalysisResultData("edge_correlation_exact", edge_correlation_exact)
         yield AnalysisResultData("edge_correlation_raw", edge_correlation_raw)
         yield AnalysisResultData("edge_correlation_mem", edge_correlation_mem)

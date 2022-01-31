@@ -15,6 +15,7 @@ from typing import Dict, Tuple
 from cirq import validate_density_matrix
 
 import numpy as np
+import mthree
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import XYGate
 from qiskit.quantum_info import SparsePauliOp
@@ -400,3 +401,27 @@ def compute_number_measurement_corrected(
     projectors = ["I" * k + "1" + "I" * (n_qubits - k - 1) for k in range(n_qubits)]
     number_expectation = np.sum(quasi_dist.expval(projectors))
     return number_expectation
+
+
+def post_select_quasis(
+    quasis: mthree.classes.QuasiDistribution, parity: int
+) -> Tuple[mthree.classes.QuasiDistribution, float]:
+    new_quasis = quasis.copy()
+    removed_mass = 0.0
+    # set bitstrings with wrong parity to zero
+    for bitstring in new_quasis:
+        if (-1) ** sum(1 for b in bitstring if b == "1") != parity:
+            removed_mass += abs(new_quasis[bitstring])
+            new_quasis[bitstring] = 0.0
+    # normalize
+    normalization = sum(new_quasis.values())
+    for bitstring in new_quasis:
+        new_quasis[bitstring] /= normalization
+    return (
+        mthree.classes.QuasiDistribution(
+            new_quasis,
+            shots=quasis.shots,
+            mitigation_overhead=quasis.mitigation_overhead,
+        ),
+        removed_mass,
+    )
