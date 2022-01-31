@@ -34,15 +34,15 @@ from qiskit_research.mzm_generation.experiment import (
 )
 from qiskit_research.mzm_generation.utils import (
     compute_edge_correlation,
-    compute_edge_correlation_measurement_corrected,
+    compute_edge_correlation_mem,
     compute_energy_parity_basis,
-    compute_energy_parity_basis_measurement_corrected,
+    compute_energy_parity_basis_mem,
     compute_energy_pauli,
-    compute_energy_pauli_measurement_corrected,
+    compute_energy_pauli_mem,
     compute_number,
-    compute_number_measurement_corrected,
+    compute_number_mem,
     compute_parity,
-    compute_parity_measurement_corrected,
+    compute_parity_mem,
     edge_correlation_op,
     expectation,
     kitaev_hamiltonian,
@@ -239,17 +239,15 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 (
                     mem_energy,
                     mem_energy_stddev,
-                ) = compute_energy_pauli_measurement_corrected(quasis, hamiltonian_jw)
-                mem_correlation = compute_edge_correlation_measurement_corrected(quasis)
-                mem_parity = compute_parity_measurement_corrected(quasis)
-                mem_number = compute_number_measurement_corrected(quasis)
-                mem_energy_parity_basis = (
-                    compute_energy_parity_basis_measurement_corrected(
-                        quasis, hamiltonian_quad
-                    )
+                ) = compute_energy_pauli_mem(quasis, hamiltonian_jw)
+                mem_correlation = compute_edge_correlation_mem(quasis)
+                mem_parity = compute_parity_mem(quasis)
+                mem_number = compute_number_mem(quasis)
+                mem_energy_parity_basis = compute_energy_parity_basis_mem(
+                    quasis, hamiltonian_quad
                 )
                 # post-selected values
-                ps_energy = compute_energy_parity_basis_measurement_corrected(
+                ps_energy = compute_energy_parity_basis_mem(
                     quasis_post_selected, hamiltonian_quad
                 )
                 # add computed values to data storage objects

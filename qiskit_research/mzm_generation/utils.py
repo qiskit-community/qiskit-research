@@ -12,7 +12,6 @@
 
 import functools
 from typing import Dict, Tuple
-from cirq import validate_density_matrix
 
 import numpy as np
 import mthree
@@ -170,7 +169,7 @@ def compute_energy_pauli(
     return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
 
 
-def compute_energy_pauli_measurement_corrected(
+def compute_energy_pauli_mem(
     quasis: Dict[str, Dict[str, float]], hamiltonian: SparsePauliOp
 ) -> Tuple[float, float]:
     # TODO standard deviation estimate needs to include covariances
@@ -251,7 +250,7 @@ def compute_interaction_matrix(
     return mat
 
 
-def compute_interaction_matrix_measurement_corrected(
+def compute_interaction_matrix_mem(
     quasis: Dict[str, Dict[str, float]], label: str
 ) -> np.ndarray:
     n_qubits = len(next(iter(next(iter(quasis.values())))))
@@ -314,13 +313,11 @@ def compute_energy_parity_basis(
     )
 
 
-def compute_energy_parity_basis_measurement_corrected(
+def compute_energy_parity_basis_mem(
     quasis: Dict[str, Dict[str, float]], hamiltonian: QuadraticHamiltonian
 ) -> float:
-    tunneling_plus = compute_interaction_matrix_measurement_corrected(
-        quasis, "tunneling_plus"
-    )
-    superconducting_plus = compute_interaction_matrix_measurement_corrected(
+    tunneling_plus = compute_interaction_matrix_mem(quasis, "tunneling_plus")
+    superconducting_plus = compute_interaction_matrix_mem(
         quasis, "superconducting_plus"
     )
     return (
@@ -346,7 +343,7 @@ def compute_edge_correlation(measurements: Dict[str, Dict[str, int]]) -> float:
     return np.real(correlation_expectation)
 
 
-def compute_edge_correlation_measurement_corrected(
+def compute_edge_correlation_mem(
     quasis: Dict[str, Dict[str, float]],
 ) -> float:
     # TODO estimate standard deviation
@@ -369,7 +366,7 @@ def compute_parity(measurements: Dict[str, Dict[str, int]]) -> float:
     return parity_expectation
 
 
-def compute_parity_measurement_corrected(
+def compute_parity_mem(
     quasis: Dict[str, Dict[str, float]],
 ) -> float:
     # TODO estimate standard deviation
@@ -392,7 +389,7 @@ def compute_number(measurements: Dict[str, Dict[str, int]]) -> float:
     return number_expectation
 
 
-def compute_number_measurement_corrected(
+def compute_number_mem(
     quasis: Dict[str, Dict[str, float]],
 ) -> float:
     # TODO estimate standard deviation
