@@ -10,10 +10,9 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-import itertools
 import os
 from collections import defaultdict
-from typing import Dict, Iterable, List, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple
 
 import mthree
 import numpy as np
@@ -27,28 +26,26 @@ from qiskit_experiments.framework import (
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.converters.second_quantization.qubit_converter import QubitConverter
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
-
 from qiskit_research.mzm_generation.experiment import (
     CircuitParameters,
     KitaevHamiltonianExperiment,
 )
 from qiskit_research.mzm_generation.utils import (
     compute_edge_correlation,
-    compute_edge_correlation_mem,
     compute_energy_parity_basis,
-    compute_energy_parity_basis_mem,
-    compute_energy_pauli,
-    compute_energy_pauli_mem,
+    compute_energy_pauli_basis,
     compute_number,
-    compute_number_mem,
     compute_parity,
-    compute_parity_mem,
+    counts_to_quasis,
     edge_correlation_op,
     expectation,
     kitaev_hamiltonian,
     number_op,
     post_select_quasis,
 )
+
+if TYPE_CHECKING:
+    from mthree.classes import QuasiDistribution
 
 
 class KitaevHamiltonianAnalysis(BaseAnalysis):
@@ -165,50 +162,36 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             W1 = transformation_matrix[:, : experiment.n_modes]
             W2 = transformation_matrix[:, experiment.n_modes :]
             full_transformation = np.block([[W1, W2], [W2.conj(), W1.conj()]])
-            hamiltonian_parity = np.real(np.sign(np.linalg.det(full_transformation)))
+            hamiltonian_parity = np.sign(np.real(np.linalg.det(full_transformation)))
             # compute exact and experimental values
             for occupied_orbitals in experiment.occupied_orbitals_list:
                 exact_parity = (-1) ** len(occupied_orbitals) * hamiltonian_parity
-                measurements = {}  # Dict[str, Dict[str, int]]
-                for pauli_string in experiment.measurement_pauli_strings():
+                quasis_raw = {}  # Dict[Tuple[str, str], QuasiDistribution]
+                quasis_mem = {}  # Dict[Tuple[str, str], QuasiDistribution]
+                quasis_post_selected = {}  # Dict[Tuple[str, str], QuasiDistribution]
+                post_selection_removed_mass = {}  # Dict[Tuple[str, str], float]
+                for basis, label in experiment.measurement_labels():
                     params = CircuitParameters(
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
-                        "pauli",
-                        pauli_string,
+                        basis,
+                        label,
                     )
-                    measurements[pauli_string] = data[params]["counts"]
-                for (
-                    interaction_op_label
-                ) in experiment.measurement_interaction_op_labels():
-                    params = CircuitParameters(
-                        tunneling,
-                        superconducting,
-                        chemical_potential,
-                        occupied_orbitals,
-                        "parity",
-                        interaction_op_label,
-                    )
-                    measurements[interaction_op_label] = data[params]["counts"]
-                quasis = {
-                    label: mit.apply_correction(
+                    counts = data[params]["counts"]
+                    quasis_raw[basis, label] = counts_to_quasis(counts)
+                    quasis_mem[basis, label] = mit.apply_correction(
                         counts,
                         experiment.qubits,
                         return_mitigation_overhead=True,
                     )
-                    for label, counts in measurements.items()
-                }
-                quasis_post_selected = {}
-                for label in itertools.chain(
-                    experiment.measurement_interaction_op_labels(),
-                    ["z" * experiment.n_modes],
-                ):
-                    new_quasis, removed_mass = post_select_quasis(
-                        quasis[label], exact_parity
-                    )
-                    quasis_post_selected[label] = new_quasis
+                    if basis == "parity" or label == "z" * experiment.n_modes:
+                        new_quasis, removed_mass = post_select_quasis(
+                            quasis_mem[basis, label], exact_parity
+                        )
+                        quasis_post_selected[basis, label] = new_quasis
+                        post_selection_removed_mass[basis, label] = removed_mass
                 # exact values
                 circuit = FermionicGaussianState(
                     transformation_matrix, occupied_orbitals
@@ -226,28 +209,28 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 exact_correlation = np.real(expectation(edge_correlation_dense, state))
                 exact_number = np.real(expectation(number_dense, state))
                 # raw values
-                raw_energy, raw_energy_stddev = compute_energy_pauli(
-                    measurements, hamiltonian_jw
+                raw_energy, raw_energy_stddev = compute_energy_pauli_basis(
+                    quasis_raw, hamiltonian_jw
                 )
-                raw_edge_correlation = compute_edge_correlation(measurements)
-                raw_parity = compute_parity(measurements)
-                raw_number = compute_number(measurements)
+                raw_edge_correlation = compute_edge_correlation(quasis_raw)
+                raw_parity = compute_parity(quasis_raw)
+                raw_number = compute_number(quasis_raw)
                 raw_energy_parity_basis = compute_energy_parity_basis(
-                    measurements, hamiltonian_quad
+                    quasis_raw, hamiltonian_quad
                 )
                 # measurement error corrected values
                 (
                     mem_energy,
                     mem_energy_stddev,
-                ) = compute_energy_pauli_mem(quasis, hamiltonian_jw)
-                mem_correlation = compute_edge_correlation_mem(quasis)
-                mem_parity = compute_parity_mem(quasis)
-                mem_number = compute_number_mem(quasis)
-                mem_energy_parity_basis = compute_energy_parity_basis_mem(
-                    quasis, hamiltonian_quad
+                ) = compute_energy_pauli_basis(quasis_mem, hamiltonian_jw)
+                mem_correlation = compute_edge_correlation(quasis_mem)
+                mem_parity = compute_parity(quasis_mem)
+                mem_number = compute_number(quasis_mem)
+                mem_energy_parity_basis = compute_energy_parity_basis(
+                    quasis_mem, hamiltonian_quad
                 )
                 # post-selected values
-                ps_energy = compute_energy_parity_basis_mem(
+                ps_energy = compute_energy_parity_basis(
                     quasis_post_selected, hamiltonian_quad
                 )
                 # add computed values to data storage objects

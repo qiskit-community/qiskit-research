@@ -124,36 +124,27 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             self.chemical_potential_values,
             self.occupied_orbitals_list,
         ):
-            for pauli_string in self.measurement_pauli_strings():
+            for basis, label in self.measurement_labels():
                 yield CircuitParameters(
                     tunneling=tunneling,
                     superconducting=superconducting,
                     chemical_potential=chemical_potential,
                     occupied_orbitals=occupied_orbitals,
-                    measurement_basis="pauli",
-                    measurement_label=pauli_string,
-                )
-            for interaction_op_label in self.measurement_interaction_op_labels():
-                yield CircuitParameters(
-                    tunneling=tunneling,
-                    superconducting=superconducting,
-                    chemical_potential=chemical_potential,
-                    occupied_orbitals=occupied_orbitals,
-                    measurement_basis="parity",
-                    measurement_label=interaction_op_label,
+                    measurement_basis=basis,
+                    measurement_label=label,
                 )
 
-    def measurement_pauli_strings(self) -> Iterable[str]:
+    def measurement_labels(self) -> Iterable[Tuple[str, str]]:
+        # pauli basis
         # NOTE these strings are in big endian order (opposite of qiskit)
-        yield "x" * self.n_modes
-        yield "y" * self.n_modes
-        yield "z" * self.n_modes
+        yield "pauli", "x" * self.n_modes
+        yield "pauli", "y" * self.n_modes
+        yield "pauli", "z" * self.n_modes
         for i in range(self.n_modes - 1):
-            yield "y" + "z" * i + "x"
-            yield "y" + "z" * i + "y"
-
-    def measurement_interaction_op_labels(self) -> Iterable[str]:
-        yield "tunneling_plus_even"
-        yield "tunneling_plus_odd"
-        yield "superconducting_plus_even"
-        yield "superconducting_plus_odd"
+            yield "pauli", "y" + "z" * i + "x"
+            yield "pauli", "y" + "z" * i + "y"
+        # parity basis
+        yield "parity", "tunneling_plus_even"
+        yield "parity", "tunneling_plus_odd"
+        yield "parity", "superconducting_plus_even"
+        yield "parity", "superconducting_plus_odd"

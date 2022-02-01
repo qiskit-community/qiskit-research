@@ -11,10 +11,10 @@
 # that they have been altered from the originals.
 
 import functools
-from typing import Dict, Tuple
+from typing import Dict, FrozenSet, Tuple
 
-import numpy as np
 import mthree
+import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import XYGate
 from qiskit.quantum_info import SparsePauliOp
@@ -124,64 +124,14 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
     return circuit
 
 
-def compute_energy_pauli(
-    measurements: Dict[str, Dict[str, int]],
-    hamiltonian: SparsePauliOp,
-) -> Tuple[float, float]:
-    """Compute energy given measurements of Pauli strings."""
-    # TODO standard deviation estimate needs to include covariances
-    # Assumes Hamiltonian only has X strings, Y strings, and Z strings
-    counts_x = measurements["x" * hamiltonian.num_qubits]
-    counts_y = measurements["y" * hamiltonian.num_qubits]
-    counts_z = measurements["z" * hamiltonian.num_qubits]
-    shots_x = sum(counts_x.values())
-    shots_y = sum(counts_y.values())
-    shots_z = sum(counts_z.values())
-    hamiltonian_expectation = 0.0
-    hamiltonian_var = 0.0
-    for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
-        term_y = np.logical_and(term.z, term.x)
-        if np.any(term_y):
-            counts = counts_y
-            shots = shots_y
-            pauli_string = term_y
-        elif np.any(term.z):
-            counts = counts_z
-            shots = shots_z
-            pauli_string = term.z
-        elif np.any(term.x):
-            counts = counts_x
-            shots = shots_x
-            pauli_string = term.x
-        else:
-            hamiltonian_expectation += coeff
-            continue
-        parities = {1: 0.0, -1: 0.0}
-        for bitstring, count in counts.items():
-            # reverse bitstrings because Qiskit uses little endian
-            parity = (-1) ** sum(
-                1
-                for i, b in enumerate(reversed(bitstring))
-                if pauli_string[i] and b == "1"
-            )
-            parities[parity] += count
-        term_expectation = sum(p * count for p, count in parities.items()) / shots
-        term_var = sum(
-            (p - term_expectation) ** 2 * count for p, count in parities.items()
-        ) / (shots - 1)
-        hamiltonian_expectation += coeff * term_expectation
-        hamiltonian_var += abs(coeff) ** 2 * term_var / shots
-    return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
-
-
-def compute_energy_pauli_mem(
+def compute_energy_pauli_basis(
     quasis: Dict[str, Dict[str, float]], hamiltonian: SparsePauliOp
 ) -> Tuple[float, float]:
-    """Compute energy given measurement-error-mitigated quasiprobabilities of Pauli strings."""
+    """Compute energy given quasiprobabilities of Pauli strings."""
     # TODO standard deviation estimate needs to include covariances
-    quasis_x = quasis["x" * hamiltonian.num_qubits]
-    quasis_y = quasis["y" * hamiltonian.num_qubits]
-    quasis_z = quasis["z" * hamiltonian.num_qubits]
+    quasis_x = quasis["pauli", "x" * hamiltonian.num_qubits]
+    quasis_y = quasis["pauli", "y" * hamiltonian.num_qubits]
+    quasis_z = quasis["pauli", "z" * hamiltonian.num_qubits]
     hamiltonian_expectation = 0.0
     hamiltonian_var = 0.0
     for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
@@ -207,60 +157,9 @@ def compute_energy_pauli_mem(
 
 
 def compute_interaction_matrix(
-    measurements: Dict[str, Dict[str, int]], label: str
-) -> np.ndarray:
-    """Compute interaction operators given measurements."""
-    n_qubits = len(next(iter(next(iter(measurements.values())))))
-
-    if label == "tunneling_plus":
-        sign = -1
-        symmetry = 1
-    elif label == "tunneling_minus":
-        sign = -1
-        symmetry = -1
-    elif label == "superconducting_plus":
-        sign = 1
-        symmetry = -1
-    else:  # label == "superconducting_minus"
-        sign = 1
-        symmetry = -1
-
-    even_counts = measurements[f"{label}_even"]
-    odd_counts = measurements[f"{label}_odd"]
-    z_counts = measurements["z" * n_qubits]
-    even_shots = sum(even_counts.values())
-    odd_shots = sum(odd_counts.values())
-    z_shots = sum(z_counts.values())
-
-    mat = np.zeros((n_qubits, n_qubits))
-    # diagonal terms
-    if label == "tunneling_plus":
-        for bitstring, count in z_counts.items():
-            # reverse bitstring because Qiskit uses little endian
-            bitstring = bitstring[::-1]
-            for i, b in enumerate(bitstring):
-                mat[i, i] += (1 - (-1) ** (b == "1")) * count / z_shots
-    # off-diagonal terms
-    for start_index in [0, 1]:
-        counts = odd_counts if start_index else even_counts
-        shots = odd_shots if start_index else even_shots
-        for bitstring, count in counts.items():
-            # reverse bitstring because Qiskit uses little endian
-            bitstring = bitstring[::-1]
-            for i in range(start_index, n_qubits - 1, 2):
-                z0 = (-1) ** (bitstring[i] == "1")
-                z1 = (-1) ** (bitstring[i + 1] == "1")
-                val = 0.5 * (z1 + sign * z0) * count / shots
-                mat[i, i + 1] += val
-                mat[i + 1, i] += symmetry * val
-
-    return mat
-
-
-def compute_interaction_matrix_mem(
     quasis: Dict[str, Dict[str, float]], label: str
 ) -> np.ndarray:
-    """Compute interaction operators given measurement-error mitigated quasiprobabilities."""
+    """Compute interaction operator given quasiprobabilities."""
     n_qubits = len(next(iter(next(iter(quasis.values())))))
 
     if label == "tunneling_plus":
@@ -276,9 +175,9 @@ def compute_interaction_matrix_mem(
         sign = 1
         symmetry = -1
 
-    even_quasis = quasis[f"{label}_even"]
-    odd_quasis = quasis[f"{label}_odd"]
-    z_quasis = quasis["z" * n_qubits]
+    even_quasis = quasis["parity", f"{label}_even"]
+    odd_quasis = quasis["parity", f"{label}_odd"]
+    z_quasis = quasis["pauli", "z" * n_qubits]
 
     mat = np.zeros((n_qubits, n_qubits))
     # diagonal terms
@@ -305,31 +204,11 @@ def compute_interaction_matrix_mem(
 
 
 def compute_energy_parity_basis(
-    measurements: Dict[str, Dict[str, int]], hamiltonian: QuadraticHamiltonian
-) -> float:
-    """Compute energy given measurements."""
-    tunneling_plus = compute_interaction_matrix(measurements, "tunneling_plus")
-    superconducting_plus = compute_interaction_matrix(
-        measurements, "superconducting_plus"
-    )
-    return (
-        0.5
-        * np.sum(
-            hamiltonian.hermitian_part * tunneling_plus
-            + hamiltonian.antisymmetric_part * superconducting_plus
-        )
-        + hamiltonian.constant
-    )
-
-
-def compute_energy_parity_basis_mem(
     quasis: Dict[str, Dict[str, float]], hamiltonian: QuadraticHamiltonian
 ) -> float:
-    """Compute energy given measurement-error mitigated quasiprobabilities."""
-    tunneling_plus = compute_interaction_matrix_mem(quasis, "tunneling_plus")
-    superconducting_plus = compute_interaction_matrix_mem(
-        quasis, "superconducting_plus"
-    )
+    """Compute energy given quasiprobabilities of interaction operator measurements."""
+    tunneling_plus = compute_interaction_matrix(quasis, "tunneling_plus")
+    superconducting_plus = compute_interaction_matrix(quasis, "superconducting_plus")
     return (
         0.5
         * np.sum(
@@ -340,71 +219,26 @@ def compute_energy_parity_basis_mem(
     )
 
 
-def compute_edge_correlation(measurements: Dict[str, Dict[str, int]]) -> float:
+def compute_edge_correlation(quasis: Dict[str, Dict[str, float]]) -> float:
     # TODO estimate standard deviation
-    n_qubits = len(next(iter(measurements)))
-    counts = measurements["y" + "z" * (n_qubits - 2) + "y"]
-    shots = sum(counts.values())
-    correlation_expectation = 0.0
-    for bitstring, count in counts.items():
-        parity = sum(1 for b in bitstring if b == "1")
-        correlation_expectation -= (-1) ** parity * count
-    correlation_expectation /= shots
-    return np.real(correlation_expectation)
-
-
-def compute_edge_correlation_mem(
-    quasis: Dict[str, Dict[str, float]],
-) -> float:
-    # TODO estimate standard deviation
-    n_qubits = len(next(iter(quasis)))
-    quasi_dist = quasis["y" + "z" * (n_qubits - 2) + "y"]
+    n_qubits = len(next(iter(next(iter(quasis.values())))))
+    quasi_dist = quasis["pauli", "y" + "z" * (n_qubits - 2) + "y"]
     correlation_expectation = -quasi_dist.expval()
     return correlation_expectation
 
 
-def compute_parity(measurements: Dict[str, Dict[str, int]]) -> float:
+def compute_parity(quasis: Dict[str, Dict[str, float]]) -> float:
     # TODO estimate standard deviation
-    n_qubits = len(next(iter(measurements)))
-    counts = measurements["z" * n_qubits]
-    shots = sum(counts.values())
-    parity_expectation = 0.0
-    for bitstring, count in counts.items():
-        parity = sum(1 for b in bitstring if b == "1")
-        parity_expectation += (-1) ** parity * count
-    parity_expectation /= shots
-    return parity_expectation
-
-
-def compute_parity_mem(
-    quasis: Dict[str, Dict[str, float]],
-) -> float:
-    # TODO estimate standard deviation
-    n_qubits = len(next(iter(quasis)))
-    quasi_dist = quasis["z" * n_qubits]
+    n_qubits = len(next(iter(next(iter(quasis.values())))))
+    quasi_dist = quasis["pauli", "z" * n_qubits]
     parity_expectation = quasi_dist.expval()
     return parity_expectation
 
 
-def compute_number(measurements: Dict[str, Dict[str, int]]) -> float:
+def compute_number(quasis: Dict[str, Dict[str, float]]) -> float:
     # TODO estimate standard deviation
-    n_qubits = len(next(iter(measurements)))
-    counts = measurements["z" * n_qubits]
-    shots = sum(counts.values())
-    number_expectation = 0.0
-    for bitstring, count in counts.items():
-        number = sum(1 for b in bitstring if b == "1")
-        number_expectation += number * count
-    number_expectation /= shots
-    return number_expectation
-
-
-def compute_number_mem(
-    quasis: Dict[str, Dict[str, float]],
-) -> float:
-    # TODO estimate standard deviation
-    n_qubits = len(next(iter(quasis)))
-    quasi_dist = quasis["z" * n_qubits]
+    n_qubits = len(next(iter(next(iter(quasis.values())))))
+    quasi_dist = quasis["pauli", "z" * n_qubits]
     projectors = ["I" * k + "1" + "I" * (n_qubits - k - 1) for k in range(n_qubits)]
     number_expectation = np.sum(quasi_dist.expval(projectors))
     return number_expectation
@@ -432,3 +266,9 @@ def post_select_quasis(
         ),
         removed_mass,
     )
+
+
+def counts_to_quasis(counts: Dict[str, int]) -> mthree.classes.QuasiDistribution:
+    shots = sum(counts.values())
+    data = {bitstring: count / shots for bitstring, count in counts.items()}
+    return mthree.classes.QuasiDistribution(data, shots=shots, mitigation_overhead=1.0)
