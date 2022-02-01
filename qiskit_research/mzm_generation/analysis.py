@@ -119,7 +119,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         # TODO should probably use sparse matrix here
         number_dense = number_jw.to_matrix()
 
-        # data storage objects
+        # create data storage objects
         # TODO add stddev and type annotations to all the following dictionaries
         energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         energy_raw = defaultdict(
@@ -128,9 +128,15 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         energy_mem = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
-        energy_parity_basis_raw = defaultdict(list)
-        energy_parity_basis_mem = defaultdict(list)
-        energy_ps = defaultdict(list)
+        energy_ps = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        energy_pauli_basis_raw = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        energy_pauli_basis_mem = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
         edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         edge_correlation_raw = defaultdict(list)
         edge_correlation_mem = defaultdict(list)
@@ -141,6 +147,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         number_raw = defaultdict(list)
         number_mem = defaultdict(list)
 
+        # calculate results
         for chemical_potential in experiment.chemical_potential_values:
             # create Hamiltonian
             hamiltonian_quad = kitaev_hamiltonian(
@@ -209,34 +216,38 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 exact_correlation = np.real(expectation(edge_correlation_dense, state))
                 exact_number = np.real(expectation(number_dense, state))
                 # raw values
-                raw_energy, raw_energy_stddev = compute_energy_pauli_basis(
-                    quasis_raw, hamiltonian_jw
+                raw_energy, raw_energy_stddev = compute_energy_parity_basis(
+                    quasis_raw, hamiltonian_quad
                 )
+                (
+                    raw_energy_pauli_basis,
+                    raw_energy_pauli_basis_stddev,
+                ) = compute_energy_pauli_basis(quasis_raw, hamiltonian_jw)
                 raw_edge_correlation = compute_edge_correlation(quasis_raw)
                 raw_parity = compute_parity(quasis_raw)
                 raw_number = compute_number(quasis_raw)
-                raw_energy_parity_basis = compute_energy_parity_basis(
-                    quasis_raw, hamiltonian_quad
-                )
                 # measurement error corrected values
+                mem_energy, mem_energy_stddev = compute_energy_parity_basis(
+                    quasis_mem, hamiltonian_quad
+                )
                 (
-                    mem_energy,
-                    mem_energy_stddev,
+                    mem_energy_pauli_basis,
+                    mem_energy_pauli_basis_stddev,
                 ) = compute_energy_pauli_basis(quasis_mem, hamiltonian_jw)
                 mem_correlation = compute_edge_correlation(quasis_mem)
                 mem_parity = compute_parity(quasis_mem)
                 mem_number = compute_number(quasis_mem)
-                mem_energy_parity_basis = compute_energy_parity_basis(
-                    quasis_mem, hamiltonian_quad
-                )
                 # post-selected values
-                ps_energy = compute_energy_parity_basis(
+                ps_energy, ps_energy_stddev = compute_energy_parity_basis(
                     quasis_post_selected, hamiltonian_quad
                 )
                 # add computed values to data storage objects
                 energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
                 energy_raw[occupied_orbitals].append(
-                    (raw_energy + energy_shift, raw_energy_stddev)
+                    (
+                        raw_energy + energy_shift,
+                        raw_energy_stddev,
+                    )
                 )
                 energy_mem[occupied_orbitals].append(
                     (
@@ -244,13 +255,21 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         mem_energy_stddev,
                     )
                 )
-                energy_parity_basis_raw[occupied_orbitals].append(
-                    raw_energy_parity_basis + energy_shift
+                energy_ps[occupied_orbitals].append(
+                    (ps_energy + energy_shift, ps_energy_stddev)
                 )
-                energy_parity_basis_mem[occupied_orbitals].append(
-                    mem_energy_parity_basis + energy_shift
+                energy_pauli_basis_raw[occupied_orbitals].append(
+                    (
+                        raw_energy_pauli_basis + energy_shift,
+                        raw_energy_pauli_basis_stddev,
+                    )
                 )
-                energy_ps[occupied_orbitals].append(ps_energy + energy_shift)
+                energy_pauli_basis_mem[occupied_orbitals].append(
+                    (
+                        mem_energy_pauli_basis + energy_shift,
+                        mem_energy_pauli_basis_stddev,
+                    )
+                )
                 edge_correlation_exact[occupied_orbitals].append(exact_correlation)
                 edge_correlation_raw[occupied_orbitals].append(raw_edge_correlation)
                 edge_correlation_mem[occupied_orbitals].append(mem_correlation)
@@ -264,9 +283,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("energy_exact", energy_exact)
         yield AnalysisResultData("energy_raw", energy_raw)
         yield AnalysisResultData("energy_mem", energy_mem)
-        yield AnalysisResultData("energy_parity_basis_raw", energy_parity_basis_raw)
-        yield AnalysisResultData("energy_parity_basis_mem", energy_parity_basis_mem)
         yield AnalysisResultData("energy_ps", energy_ps)
+        yield AnalysisResultData("energy_pauli_basis_raw", energy_pauli_basis_raw)
+        yield AnalysisResultData("energy_pauli_basis_mem", energy_pauli_basis_mem)
         yield AnalysisResultData("edge_correlation_exact", edge_correlation_exact)
         yield AnalysisResultData("edge_correlation_raw", edge_correlation_raw)
         yield AnalysisResultData("edge_correlation_mem", edge_correlation_mem)
@@ -276,3 +295,94 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("number_exact", number_exact)
         yield AnalysisResultData("number_raw", number_raw)
         yield AnalysisResultData("number_mem", number_mem)
+
+        # error analysis
+        energy_error_raw = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_stddev_raw = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_mem = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_stddev_mem = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_ps = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_stddev_ps = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_pauli_basis_raw = np.zeros(
+            len(experiment.chemical_potential_values)
+        )
+        energy_error_pauli_basis_stddev_raw = np.zeros(
+            len(experiment.chemical_potential_values)
+        )
+        energy_error_pauli_basis_mem = np.zeros(
+            len(experiment.chemical_potential_values)
+        )
+        energy_error_pauli_basis_stddev_mem = np.zeros(
+            len(experiment.chemical_potential_values)
+        )
+
+        for occupied_orbitals in experiment.occupied_orbitals_list:
+            exact = np.array(energy_exact[occupied_orbitals])
+
+            raw, raw_stddev = zip(*energy_raw[occupied_orbitals])
+            raw = np.array(raw)
+            energy_error_raw += np.abs(raw - exact)
+            energy_error_stddev_raw += np.array(raw_stddev) ** 2
+
+            mem, mem_stddev = zip(*energy_mem[occupied_orbitals])
+            mem = np.array(mem)
+            energy_error_mem += np.abs(mem - exact)
+            energy_error_stddev_mem += np.array(mem_stddev) ** 2
+
+            ps, ps_stddev = zip(*energy_ps[occupied_orbitals])
+            ps = np.array(ps)
+            energy_error_ps += np.abs(ps - exact)
+            energy_error_stddev_ps += np.array(ps_stddev) ** 2
+
+            pauli_basis_raw, pauli_basis_raw_stddev = zip(
+                *energy_pauli_basis_raw[occupied_orbitals]
+            )
+            pauli_basis_raw = np.array(pauli_basis_raw)
+            energy_error_pauli_basis_raw += np.abs(pauli_basis_raw - exact)
+            energy_error_pauli_basis_stddev_raw += np.array(pauli_basis_raw_stddev) ** 2
+
+            pauli_basis_mem, pauli_basis_mem_stddev = zip(
+                *energy_pauli_basis_mem[occupied_orbitals]
+            )
+            pauli_basis_mem = np.array(pauli_basis_mem)
+            energy_error_pauli_basis_mem += np.abs(pauli_basis_mem - exact)
+            energy_error_pauli_basis_stddev_mem += np.array(pauli_basis_mem_stddev) ** 2
+
+        energy_error_raw /= len(experiment.occupied_orbitals_list)
+        energy_error_stddev_raw = np.sqrt(energy_error_stddev_raw) / len(
+            experiment.occupied_orbitals_list
+        )
+        energy_error_mem /= len(experiment.occupied_orbitals_list)
+        energy_error_stddev_mem = np.sqrt(energy_error_stddev_mem) / len(
+            experiment.occupied_orbitals_list
+        )
+        energy_error_ps /= len(experiment.occupied_orbitals_list)
+        energy_error_stddev_ps = np.sqrt(energy_error_stddev_ps) / len(
+            experiment.occupied_orbitals_list
+        )
+        energy_error_pauli_basis_raw /= len(experiment.occupied_orbitals_list)
+        energy_error_pauli_basis_stddev_raw = np.sqrt(
+            energy_error_pauli_basis_stddev_raw
+        ) / len(experiment.occupied_orbitals_list)
+        energy_error_pauli_basis_mem /= len(experiment.occupied_orbitals_list)
+        energy_error_pauli_basis_stddev_mem = np.sqrt(
+            energy_error_pauli_basis_stddev_mem
+        ) / len(experiment.occupied_orbitals_list)
+
+        yield AnalysisResultData(
+            "energy_error_raw", (energy_error_raw, energy_error_stddev_raw)
+        )
+        yield AnalysisResultData(
+            "energy_error_mem", (energy_error_mem, energy_error_stddev_mem)
+        )
+        yield AnalysisResultData(
+            "energy_error_ps", (energy_error_ps, energy_error_stddev_ps)
+        )
+        yield AnalysisResultData(
+            "energy_error_pauli_basis_raw",
+            (energy_error_pauli_basis_raw, energy_error_pauli_basis_stddev_raw),
+        )
+        yield AnalysisResultData(
+            "energy_error_pauli_basis_mem",
+            (energy_error_pauli_basis_mem, energy_error_pauli_basis_stddev_mem),
+        )

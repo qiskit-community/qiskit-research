@@ -10,6 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+from collections import defaultdict
 import functools
 from typing import Dict, FrozenSet, Tuple
 
@@ -127,7 +128,7 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 def compute_energy_pauli_basis(
     quasis: Dict[str, Dict[str, float]], hamiltonian: SparsePauliOp
 ) -> Tuple[float, float]:
-    """Compute energy given quasiprobabilities of Pauli strings."""
+    """Compute energy from quasiprobabilities of Pauli strings."""
     # TODO standard deviation estimate needs to include covariances
     quasis_x = quasis["pauli", "x" * hamiltonian.num_qubits]
     quasis_y = quasis["pauli", "y" * hamiltonian.num_qubits]
@@ -158,8 +159,13 @@ def compute_energy_pauli_basis(
 
 def compute_interaction_matrix(
     quasis: Dict[str, Dict[str, float]], label: str
-) -> np.ndarray:
-    """Compute interaction operator given quasiprobabilities."""
+) -> Tuple[np.ndarray, Dict[FrozenSet[Tuple[int]], float]]:
+    """Compute interaction operator from quasiprobabilities.
+
+    Returns:
+        - Interaction matrix
+        - Dictionary containing covariances between entries of the interaction matrix
+    """
     n_qubits = len(next(iter(next(iter(quasis.values())))))
 
     if label == "tunneling_plus":
@@ -194,22 +200,84 @@ def compute_interaction_matrix(
             # don't reverse pauli string because M3 does it internally!
             z0 = "I" * i + "Z" + "I" * (n_qubits - i - 1)
             z1 = "I" * (i + 1) + "Z" + "I" * (n_qubits - i - 2)
+            # TODO calculate expectation value of summed op using mthree directly
+            # See https://github.com/Qiskit-Partners/mthree/issues/83
             z0_expval, z0_stddev = quasi_dist.expval_and_stddev(z0)
             z1_expval, z1_stddev = quasi_dist.expval_and_stddev(z1)
             val = 0.5 * (z1_expval + sign * z0_expval)
             mat[i, i + 1] = val
             mat[i + 1, i] = symmetry * val
 
-    return mat
+    # compute covariance
+    cov = defaultdict(float)  # Dict[FrozenSet[Tuple[int]], float]
+    # diagonal entries
+    for i in range(n_qubits):
+        z0 = "I" * i + "Z" + "I" * (n_qubits - i - 1)
+        for j in range(i, n_qubits):
+            z1 = "I" * j + "Z" + "I" * (n_qubits - j - 1)
+            cov[frozenset([(i, i), (j, j)])] = 0.25 * covariance(z_quasis, z0, z1)
+    # off-diagonal entries
+    for start_index in [0, 1]:
+        quasi_dist = odd_quasis if start_index else even_quasis
+        for i in range(start_index, n_qubits - 1, 2):
+            z0 = "I" * i + "Z" + "I" * (n_qubits - i - 1)
+            z1 = "I" * (i + 1) + "Z" + "I" * (n_qubits - i - 2)
+            for j in range(start_index, n_qubits - 1, 2):
+                z2 = "I" * j + "Z" + "I" * (n_qubits - j - 1)
+                z3 = "I" * (j + 1) + "Z" + "I" * (n_qubits - j - 2)
+                cov[frozenset([(i, i + 1), (j, j + 1)])] = 0.25 * (
+                    covariance(quasi_dist, z0, z2)
+                    - covariance(quasi_dist, z0, z3)
+                    - covariance(quasi_dist, z1, z2)
+                    + covariance(quasi_dist, z1, z3)
+                )
+
+    return mat, cov
+
+
+def covariance(
+    quasi_dist: mthree.classes.QuasiDistribution, op1: str, op2: str
+) -> float:
+    expval1 = quasi_dist.expval(op1)
+    expval2 = quasi_dist.expval(op2)
+    cov = 0.0
+    for bitstring, quasiprob in quasi_dist.items():
+        cov += (
+            quasiprob
+            * (evaluate_diagonal_op(op1, bitstring) - expval1)
+            * (evaluate_diagonal_op(op2, bitstring) - expval2)
+        )
+    return cov * quasi_dist.mitigation_overhead / quasi_dist.shots
+
+
+def evaluate_diagonal_op(operator: str, bitstring: str):
+    prod = 1.0
+    # reverse bitstring because Qiskit uses little endian
+    for op, bit in zip(operator, reversed(bitstring)):
+        if op == "0" or op == "1":
+            prod *= bit == op
+        elif op == "Z":
+            prod *= (-1) ** (bit == "1")
+    return prod
 
 
 def compute_energy_parity_basis(
     quasis: Dict[str, Dict[str, float]], hamiltonian: QuadraticHamiltonian
-) -> float:
-    """Compute energy given quasiprobabilities of interaction operator measurements."""
-    tunneling_plus = compute_interaction_matrix(quasis, "tunneling_plus")
-    superconducting_plus = compute_interaction_matrix(quasis, "superconducting_plus")
-    return (
+) -> Tuple[float, float]:
+    """Compute energy from quasiprobabilities of interaction operator measurements.
+
+    Returns:
+        - Expectation value of energy
+        - Standard deviation of energy
+    """
+    n_qubits = len(next(iter(next(iter(quasis.values())))))
+    tunneling_plus, tunneling_plus_cov = compute_interaction_matrix(
+        quasis, "tunneling_plus"
+    )
+    superconducting_plus, superconducting_plus_cov = compute_interaction_matrix(
+        quasis, "superconducting_plus"
+    )
+    energy = (
         0.5
         * np.sum(
             hamiltonian.hermitian_part * tunneling_plus
@@ -217,6 +285,31 @@ def compute_energy_parity_basis(
         )
         + hamiltonian.constant
     )
+    # compute variance
+    variance = 0.0
+    # diagonal entries
+    for i in range(n_qubits):
+        for j in range(i, n_qubits):
+            variance += (1 + (i != j)) * (
+                hamiltonian.hermitian_part[i, i]
+                * hamiltonian.hermitian_part[j, j]
+                * tunneling_plus_cov[frozenset([(i, i), (j, j)])]
+            )
+    # off-diagonal entries
+    for start_index in [0, 1]:
+        for i in range(start_index, n_qubits - 1, 2):
+            for j in range(start_index, n_qubits - 1, 2):
+                variance += (1 + (i != j)) * (
+                    hamiltonian.hermitian_part[i, i + 1]
+                    * hamiltonian.hermitian_part[j, j + 1]
+                    * tunneling_plus_cov[frozenset([(i, i + 1), (j, j + 1)])]
+                )
+                variance += (1 + (i != j)) * (
+                    hamiltonian.antisymmetric_part[i, i + 1]
+                    * hamiltonian.antisymmetric_part[j, j + 1]
+                    * superconducting_plus_cov[frozenset([(i, i + 1), (j, j + 1)])]
+                )
+    return energy, np.sqrt(variance)
 
 
 def compute_edge_correlation(quasis: Dict[str, Dict[str, float]]) -> float:
@@ -261,7 +354,7 @@ def post_select_quasis(
     return (
         mthree.classes.QuasiDistribution(
             new_quasis,
-            shots=quasis.shots,
+            shots=int(quasis.shots * (1 - removed_mass)),
             mitigation_overhead=quasis.mitigation_overhead,
         ),
         removed_mass,
