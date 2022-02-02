@@ -280,21 +280,33 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 number_raw[occupied_orbitals].append(raw_number)
                 number_mem[occupied_orbitals].append(mem_number)
 
-        yield AnalysisResultData("energy_exact", energy_exact)
-        yield AnalysisResultData("energy_raw", energy_raw)
-        yield AnalysisResultData("energy_mem", energy_mem)
-        yield AnalysisResultData("energy_ps", energy_ps)
-        yield AnalysisResultData("energy_pauli_basis_raw", energy_pauli_basis_raw)
-        yield AnalysisResultData("energy_pauli_basis_mem", energy_pauli_basis_mem)
-        yield AnalysisResultData("edge_correlation_exact", edge_correlation_exact)
-        yield AnalysisResultData("edge_correlation_raw", edge_correlation_raw)
-        yield AnalysisResultData("edge_correlation_mem", edge_correlation_mem)
-        yield AnalysisResultData("parity_exact", parity_exact)
-        yield AnalysisResultData("parity_raw", parity_raw)
-        yield AnalysisResultData("parity_mem", parity_mem)
-        yield AnalysisResultData("number_exact", number_exact)
-        yield AnalysisResultData("number_raw", number_raw)
-        yield AnalysisResultData("number_mem", number_mem)
+        def zip_dict(d):
+            val = next(iter(d.values()))
+            if isinstance(val[0], Iterable):
+                return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
+            return {k: np.array(v) for k, v in d.items()}
+
+        yield AnalysisResultData("energy_exact", zip_dict(energy_exact))
+        yield AnalysisResultData("energy_raw", zip_dict(energy_raw))
+        yield AnalysisResultData("energy_mem", zip_dict(energy_mem))
+        yield AnalysisResultData("energy_ps", zip_dict(energy_ps))
+        yield AnalysisResultData(
+            "energy_pauli_basis_raw", zip_dict(energy_pauli_basis_raw)
+        )
+        yield AnalysisResultData(
+            "energy_pauli_basis_mem", zip_dict(energy_pauli_basis_mem)
+        )
+        yield AnalysisResultData(
+            "edge_correlation_exact", zip_dict(edge_correlation_exact)
+        )
+        yield AnalysisResultData("edge_correlation_raw", zip_dict(edge_correlation_raw))
+        yield AnalysisResultData("edge_correlation_mem", zip_dict(edge_correlation_mem))
+        yield AnalysisResultData("parity_exact", zip_dict(parity_exact))
+        yield AnalysisResultData("parity_raw", zip_dict(parity_raw))
+        yield AnalysisResultData("parity_mem", zip_dict(parity_mem))
+        yield AnalysisResultData("number_exact", zip_dict(number_exact))
+        yield AnalysisResultData("number_raw", zip_dict(number_raw))
+        yield AnalysisResultData("number_mem", zip_dict(number_mem))
 
         # error analysis
         energy_error_raw = np.zeros(len(experiment.chemical_potential_values))
