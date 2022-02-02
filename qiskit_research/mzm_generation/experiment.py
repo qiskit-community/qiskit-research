@@ -75,9 +75,9 @@ class KitaevHamiltonianExperiment(BaseExperiment):
 
     def _circuits(self) -> Iterable[QuantumCircuit]:
         for circuit_params in self.circuit_parameters():
-            yield self._generate_circuit(circuit_params)
+            yield self.generate_circuit(circuit_params)
 
-    def _generate_circuit(self, circuit_params: CircuitParameters) -> QuantumCircuit:
+    def generate_circuit(self, circuit_params: CircuitParameters) -> QuantumCircuit:
         base_circuit = self._base_circuit(
             circuit_params.tunneling,
             circuit_params.superconducting,
@@ -135,6 +135,11 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                 )
 
     def measurement_labels(self) -> Iterable[Tuple[str, str]]:
+        # parity basis
+        yield "parity", "tunneling_plus_even"
+        yield "parity", "tunneling_plus_odd"
+        yield "parity", "superconducting_plus_even"
+        yield "parity", "superconducting_plus_odd"
         # pauli basis
         # NOTE these strings are in big endian order (opposite of qiskit)
         yield "pauli", "x" * self.n_modes
@@ -143,8 +148,3 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         for i in range(self.n_modes - 1):
             yield "pauli", "y" + "z" * i + "x"
             yield "pauli", "y" + "z" * i + "y"
-        # parity basis
-        yield "parity", "tunneling_plus_even"
-        yield "parity", "tunneling_plus_odd"
-        yield "parity", "superconducting_plus_even"
-        yield "parity", "superconducting_plus_odd"

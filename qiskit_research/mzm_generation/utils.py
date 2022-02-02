@@ -61,7 +61,7 @@ def variance(operator: np.ndarray, state: np.ndarray) -> complex:
 
 @functools.lru_cache
 def kitaev_hamiltonian(
-    n_modes: int, tunneling: float, superconducting: float, chemical_potential: float
+    n_modes: int, tunneling: float, superconducting: complex, chemical_potential: float
 ) -> QuadraticHamiltonian:
     """Create Kitaev model Hamiltonian."""
     eye = np.eye(n_modes)

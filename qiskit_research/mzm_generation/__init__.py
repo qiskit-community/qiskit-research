@@ -12,3 +12,7 @@
 
 from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
 from qiskit_research.mzm_generation.analysis import KitaevHamiltonianAnalysis
+from qiskit_research.mzm_generation.utils import (
+    kitaev_hamiltonian,
+    measure_interaction_op,
+)
