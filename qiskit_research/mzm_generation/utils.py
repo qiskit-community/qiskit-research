@@ -24,6 +24,8 @@ from qiskit_nature.operators.second_quantization import (
     QuadraticHamiltonian,
 )
 from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
+from qiskit_nature.converters.second_quantization import QubitConverter
+from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -56,7 +58,35 @@ def expectation(operator: np.ndarray, state: np.ndarray) -> complex:
 # TODO operator could be scipy sparse matrix
 def variance(operator: np.ndarray, state: np.ndarray) -> complex:
     """Variance of operator with state."""
-    return expectation(operator ** 2, state) - expectation(operator, state) ** 2
+    return expectation(operator @ operator, state) - expectation(operator, state) ** 2
+
+
+def jordan_wigner(op: FermionicOp) -> SparsePauliOp:
+    return QubitConverter(mapper=JordanWignerMapper()).convert(op).primitive
+
+
+def correlation_matrix(state: np.ndarray) -> np.ndarray:
+    (N,) = state.shape
+    n = N.bit_length() - 1
+    corr = np.zeros((2 * n, 2 * n), dtype=complex)
+    for i in range(n):
+        for j in range(i, n):
+            op = FermionicOp(f"+_{i} -_{j}", register_length=n)
+            op_jw = jordan_wigner(op).to_matrix()
+            val = expectation(op_jw, state)
+            corr[i, j] = val
+            corr[j, i] = val.conj()
+            corr[i + n, j + n] = float(i == j) - val.conj()
+            corr[j + n, i + n] = float(i == j) - val
+
+            op = FermionicOp(f"-_{i} -_{j}", register_length=n)
+            op_jw = jordan_wigner(op).to_matrix()
+            val = expectation(op_jw, state)
+            corr[i + n, j] = val
+            corr[j + n, i] = -val
+            corr[i, j + n] = -val.conj()
+            corr[j, i + n] = val.conj()
+    return corr
 
 
 @functools.lru_cache
