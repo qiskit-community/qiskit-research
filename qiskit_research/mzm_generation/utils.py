@@ -12,7 +12,7 @@
 
 from collections import defaultdict
 import functools
-from typing import Dict, FrozenSet, Tuple
+from typing import Dict, FrozenSet, Iterable, List, Tuple, Union
 
 import mthree
 import numpy as np
@@ -26,6 +26,14 @@ from qiskit_nature.operators.second_quantization import (
 from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 from qiskit_nature.converters.second_quantization import QubitConverter
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
+
+
+# HACK FermionicOp should support iteration natively
+# See https://github.com/Qiskit/qiskit-nature/issues/541
+def _iterate_terms(op: FermionicOp) -> Iterable[Tuple[List[Tuple[bool, int]], complex]]:
+    for term, coefficient in op._data:
+        term = [(t.is_creation, t.index) for t in term]
+        yield term, coefficient
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -87,6 +95,35 @@ def correlation_matrix(state: np.ndarray) -> np.ndarray:
             corr[i, j + n] = -val.conj()
             corr[j, i + n] = val.conj()
     return corr
+
+
+def expectation_from_correlation_matrix(
+    operator: Union[QuadraticHamiltonian, FermionicOp], corr: np.ndarray
+) -> complex:
+    dim, _ = corr.shape
+    n = dim // 2
+
+    if isinstance(operator, QuadraticHamiltonian):
+        return (
+            np.sum(
+                operator.hermitian_part * corr[:n, :n]
+                + np.real(operator.antisymmetric_part * corr[:n, n:])
+            )
+            + operator.constant
+        )
+
+    expectation = 0.0
+    for term, coefficient in _iterate_terms(operator):
+        if not term:
+            expectation += coefficient
+        elif len(term) == 2:
+            (action_i, i), (action_j, j) = term
+            expectation += coefficient * corr[i + n * (not action_i), j + n * action_j]
+        else:
+            raise ValueError(
+                "Operator must be quadratic in the fermionic ladder operators."
+            )
+    return expectation
 
 
 @functools.lru_cache
@@ -183,7 +220,7 @@ def compute_energy_pauli_basis(
         operator = "".join("Z" if b else "I" for b in pauli_string)
         term_expectation, term_stddev = quasi_dist.expval_and_stddev(operator)
         hamiltonian_expectation += coeff * term_expectation
-        hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
+        hamiltonian_var += abs(coeff) ** 2 * term_stddev**2
     return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
 
 
