@@ -12,6 +12,7 @@
 
 from typing import Optional, Union
 from qiskit.qasm import pi
+import numpy
 
 from qiskit import pulse
 from qiskit.circuit import QuantumCircuit
