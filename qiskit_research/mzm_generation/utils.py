@@ -147,12 +147,12 @@ def expectation_from_correlation_matrix(
                 for j in range(i + 1, n):
                     for k in range(n):
                         for l in range(k + 1, n):
-                            var += 2 * np.real(
+                            var += 4 * np.real(
                                 operator.hermitian_part[i, j]
                                 * operator.hermitian_part[k, l].conjugate()
                                 * cov[frozenset([(i, j), (k, l)])]
                             )
-                            var += 2 * np.real(
+                            var += 4 * np.real(
                                 operator.antisymmetric_part[i, j]
                                 * operator.antisymmetric_part[k, l].conjugate()
                                 * cov[frozenset([(i, j + n), (k, l + n)])]

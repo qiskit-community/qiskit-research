@@ -15,13 +15,21 @@
 import unittest
 
 import numpy as np
+from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import random_hermitian, random_statevector
 from qiskit_nature.operators.second_quantization import QuadraticHamiltonian
+from qiskit_research.mzm_generation.experiment import (
+    CircuitParameters,
+    KitaevHamiltonianExperiment,
+)
 from qiskit_research.mzm_generation.utils import (
+    compute_correlation_matrix,
     correlation_matrix,
+    counts_to_quasis,
     expectation,
     expectation_from_correlation_matrix,
     jordan_wigner,
+    kitaev_hamiltonian,
 )
 
 
@@ -33,7 +41,7 @@ def _random_antisymmetric(dim: int):
 class TestMZMGenerationUtils(unittest.TestCase):
     """Test PhasedXXMinusYYGate."""
 
-    def test_expectation_from_correlation_matrix(self):
+    def test_expectation_from_correlation_matrix_exact(self):
         dim = 5
 
         hermitian_part = np.array(random_hermitian(5))
@@ -51,4 +59,55 @@ class TestMZMGenerationUtils(unittest.TestCase):
         exp_expected = expectation(hamiltonian_jw, state)
         np.testing.assert_allclose(exp1, exp_expected, atol=1e-8)
         np.testing.assert_allclose(exp2, exp_expected, atol=1e-8)
+        np.testing.assert_allclose(var1, var2, atol=1e-8)
+
+    def test_expectation_from_correlation_matrix_sample(self):
+        n_modes = 5
+        tunneling = -1.0
+        superconducting = 1.0
+        chemical_potential = 1.0
+        occupied_orbitals = ()
+        experiment = KitaevHamiltonianExperiment(
+            experiment_id="test",
+            qubits=list(range(n_modes)),
+            tunneling_values=[tunneling],
+            superconducting_values=[superconducting],
+            chemical_potential_values=[chemical_potential],
+            occupied_orbitals_list=[occupied_orbitals],
+        )
+        backend = AerSimulator(method="statevector")
+        experiment_data = experiment.run(backend=backend, shots=1000)
+        experiment_data.block_for_results()
+        data = {}
+        for result in experiment_data.data():
+            params = CircuitParameters(
+                *(
+                    tuple(p) if isinstance(p, list) else p
+                    for p in result["metadata"]["params"]
+                )
+            )
+            data[params] = result
+        quasis = {}
+        for permutation, label in experiment.measurement_labels():
+            params = CircuitParameters(
+                tunneling,
+                superconducting,
+                chemical_potential,
+                occupied_orbitals,
+                permutation,
+                label,
+            )
+            counts = data[params]["counts"]
+            quasis[permutation, label] = counts_to_quasis(counts)
+        corr, cov = compute_correlation_matrix(quasis, experiment)
+        quad_ham = kitaev_hamiltonian(
+            n_modes,
+            tunneling=tunneling,
+            superconducting=superconducting,
+            chemical_potential=chemical_potential,
+        )
+        hamiltonian = quad_ham._fermionic_op()
+        exp1, var1 = expectation_from_correlation_matrix(quad_ham, corr, cov)
+        exp2, var2 = expectation_from_correlation_matrix(hamiltonian, corr, cov)
+        np.testing.assert_allclose(exp1, exp2, atol=1e-8)
         np.testing.assert_allclose(var1, var2, atol=1e-8)
