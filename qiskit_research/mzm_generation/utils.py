@@ -14,10 +14,9 @@ import functools
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
+    Callable,
     Dict,
     FrozenSet,
-    Iterable,
-    List,
     Optional,
     Tuple,
     Union,
@@ -47,13 +46,6 @@ def majorana_op(index: int, action: int) -> FermionicOp:
 
 def edge_correlation_op(n_modes: int) -> FermionicOp:
     return -1j * majorana_op(0, 0) @ majorana_op(n_modes - 1, 1)
-
-
-def parity_op(n_modes: int) -> FermionicOp:
-    op = FermionicOp.one(n_modes)
-    for i in range(n_modes):
-        op @= FermionicOp.one(n_modes) - 2 * FermionicOp(f"N_{i}")
-    return op
 
 
 def number_op(n_modes: int) -> FermionicOp:
@@ -225,18 +217,6 @@ def expectation_from_correlation_matrix(
     return exp_val, np.sqrt(np.real(var))
 
 
-def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumCircuit:
-    """Measure a Pauli string."""
-    circuit = circuit.copy()
-    for q, pauli in zip(circuit.qubits, pauli_string):
-        if pauli.lower() == "x":
-            circuit.h(q)
-        elif pauli.lower() == "y":
-            circuit.rx(np.pi / 2, q)
-    circuit.measure_all()
-    return circuit
-
-
 def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircuit:
     """Measure fermionic interaction with a circuit that preserves parity."""
     if label == "number":
@@ -269,38 +249,6 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
     circuit.measure_all()
 
     return circuit
-
-
-def compute_energy_pauli_basis(
-    quasis: Dict[str, Dict[str, float]], hamiltonian: SparsePauliOp
-) -> Tuple[float, float]:
-    """Compute energy from quasiprobabilities of Pauli strings."""
-    # TODO standard deviation estimate needs to include covariances
-    quasis_x = quasis["pauli", "x" * hamiltonian.num_qubits]
-    quasis_y = quasis["pauli", "y" * hamiltonian.num_qubits]
-    quasis_z = quasis["pauli", "z" * hamiltonian.num_qubits]
-    hamiltonian_expectation = 0.0
-    hamiltonian_var = 0.0
-    for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
-        term_y = np.logical_and(term.z, term.x)
-        if np.any(term_y):
-            quasi_dist = quasis_y
-            pauli_string = term_y
-        elif np.any(term.z):
-            quasi_dist = quasis_z
-            pauli_string = term.z
-        elif np.any(term.x):
-            quasi_dist = quasis_x
-            pauli_string = term.x
-        else:
-            hamiltonian_expectation += coeff
-            continue
-        # don't reverse pauli string because M3 does it internally!
-        operator = "".join("Z" if b else "I" for b in pauli_string)
-        term_expectation, term_stddev = quasi_dist.expval_and_stddev(operator)
-        hamiltonian_expectation += coeff * term_expectation
-        hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
-    return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
 
 
 def compute_correlation_matrix(
@@ -448,6 +396,7 @@ def compute_interaction_matrix(
 def covariance(
     quasi_dist: mthree.classes.QuasiDistribution, op1: str, op2: str
 ) -> float:
+    """Compute covariance of two diagonal operators from quasiprobabilities."""
     expval1 = quasi_dist.expval(op1)
     expval2 = quasi_dist.expval(op2)
     cov = 0.0
@@ -461,6 +410,7 @@ def covariance(
 
 
 def evaluate_diagonal_op(operator: str, bitstring: str):
+    """Evaluate a diagional operator on a bitstring."""
     prod = 1.0
     # reverse bitstring because Qiskit uses little endian
     for op, bit in zip(operator, reversed(bitstring)):
@@ -471,31 +421,28 @@ def evaluate_diagonal_op(operator: str, bitstring: str):
     return prod
 
 
-def compute_parity(quasis: Dict[str, Dict[str, float]]) -> float:
-    # TODO estimate standard deviation
+def compute_parity(quasis: Dict[str, Dict[str, float]]) -> Tuple[float, float]:
+    """Compute parity from quasiprobabilities."""
+    # TODO maybe use probs instead of quasis to avoid value outside [-1, 1]
     n = len(next(iter(next(iter(quasis.values())))))
     quasi_dist = quasis[(tuple(range(n)), "number")]
-    parity_expectation = quasi_dist.expval()
-    return parity_expectation
-
-
-def compute_number(quasis: Dict[str, Dict[str, float]]) -> float:
-    # TODO estimate standard deviation
-    n = len(next(iter(next(iter(quasis.values())))))
-    quasi_dist = quasis[(tuple(range(n)), "number")]
-    projectors = ["I" * k + "1" + "I" * (n - k - 1) for k in range(n)]
-    number_expectation = np.sum(quasi_dist.expval(projectors))
-    return number_expectation
+    return quasi_dist.expval_and_stddev()
 
 
 def post_select_quasis(
-    quasis: mthree.classes.QuasiDistribution, parity: int
+    quasis: mthree.classes.QuasiDistribution, predicate: Callable[[str], bool]
 ) -> Tuple[mthree.classes.QuasiDistribution, float]:
+    """Post-select quasiprobabilities to enforce a given bitstring predicate.
+
+    Returns:
+        - Post-selected quasiprobabilities
+        - total quasiprobability mass removed
+    """
     new_quasis = quasis.copy()
     removed_mass = 0.0
-    # set bitstrings with wrong parity to zero
+    # postselect
     for bitstring in new_quasis:
-        if (-1) ** sum(1 for b in bitstring if b == "1") != parity:
+        if not predicate(bitstring):
             removed_mass += abs(new_quasis[bitstring])
             new_quasis[bitstring] = 0.0
     # normalize
@@ -513,16 +460,24 @@ def post_select_quasis(
 
 
 def counts_to_quasis(counts: Dict[str, int]) -> mthree.classes.QuasiDistribution:
+    """Convert counts to quasiprobabilities."""
     shots = sum(counts.values())
     data = {bitstring: count / shots for bitstring, count in counts.items()}
     return mthree.classes.QuasiDistribution(data, shots=shots, mitigation_overhead=1.0)
 
 
-def purify_correlation_matrix(corr: np.ndarray, tol: float = 1e-8) -> np.ndarray:
-    dim, _ = corr.shape
-    three = 3 * np.eye(dim, dtype=corr.dtype)
+def purify_idempotent_matrix(
+    mat: np.ndarray, tol: float = 1e-8, max_iter: int = 1000
+) -> np.ndarray:
+    """McWeeny purification of an idempotent matrix."""
+    dim, _ = mat.shape
+    three = 3 * np.eye(dim, dtype=mat.dtype)
     error = np.inf
-    while error > tol:
-        corr = corr @ corr @ (three - 2 * corr)
-        error = np.linalg.norm(corr @ corr - corr)
-    return corr
+    iterations = 0
+    while error > tol and iterations < max_iter:
+        mat = mat @ mat @ (three - 2 * mat)
+        error = np.linalg.norm(mat @ mat - mat)
+        iterations += 1
+    if error > tol:
+        raise RuntimeError("Purification failed to converge.")
+    return mat
