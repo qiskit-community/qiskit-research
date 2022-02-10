@@ -516,3 +516,13 @@ def counts_to_quasis(counts: Dict[str, int]) -> mthree.classes.QuasiDistribution
     shots = sum(counts.values())
     data = {bitstring: count / shots for bitstring, count in counts.items()}
     return mthree.classes.QuasiDistribution(data, shots=shots, mitigation_overhead=1.0)
+
+
+def purify_correlation_matrix(corr: np.ndarray, tol: float = 1e-8) -> np.ndarray:
+    dim, _ = corr.shape
+    three = 3 * np.eye(dim, dtype=corr.dtype)
+    error = np.inf
+    while error > tol:
+        corr = corr @ corr @ (three - 2 * corr)
+        error = np.linalg.norm(corr @ corr - corr)
+    return corr

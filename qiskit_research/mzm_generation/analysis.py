@@ -39,6 +39,7 @@ from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
     number_op,
     post_select_quasis,
+    purify_correlation_matrix,
 )
 
 if TYPE_CHECKING:
@@ -121,6 +122,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         energy_ps = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        energy_pur = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
         edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         edge_correlation_raw = defaultdict(list)
         edge_correlation_mem = defaultdict(list)
@@ -199,6 +203,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 corr_raw, cov_raw = compute_correlation_matrix(quasis_raw, experiment)
                 corr_mem, cov_mem = compute_correlation_matrix(quasis_mem, experiment)
                 corr_ps, cov_ps = compute_correlation_matrix(quasis_ps, experiment)
+                corr_pur = purify_correlation_matrix(corr_ps)
+                cov_pur = cov_ps
                 # exact values
                 exact_energy = (
                     np.sum(orbital_energies[list(occupied_orbitals)]) + constant
@@ -241,6 +247,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         hamiltonian_quad, corr_ps, cov_ps
                     )
                 )
+                # purified values
+                pur_energy, pur_energy_stddev = np.real(
+                    expectation_from_correlation_matrix(
+                        hamiltonian_quad, corr_pur, cov_pur
+                    )
+                )
                 # add computed values to data storage objects
                 energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
                 energy_raw[occupied_orbitals].append(
@@ -257,6 +269,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 )
                 energy_ps[occupied_orbitals].append(
                     (ps_energy + energy_shift, ps_energy_stddev)
+                )
+                energy_pur[occupied_orbitals].append(
+                    (pur_energy + energy_shift, pur_energy_stddev)
                 )
                 edge_correlation_exact[occupied_orbitals].append(exact_edge_correlation)
                 edge_correlation_raw[occupied_orbitals].append(
@@ -282,6 +297,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("energy_raw", zip_dict(energy_raw))
         yield AnalysisResultData("energy_mem", zip_dict(energy_mem))
         yield AnalysisResultData("energy_ps", zip_dict(energy_ps))
+        yield AnalysisResultData("energy_pur", zip_dict(energy_pur))
         yield AnalysisResultData(
             "edge_correlation_exact", zip_dict(edge_correlation_exact)
         )
@@ -301,6 +317,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         energy_error_stddev_mem = np.zeros(len(experiment.chemical_potential_values))
         energy_error_ps = np.zeros(len(experiment.chemical_potential_values))
         energy_error_stddev_ps = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_pur = np.zeros(len(experiment.chemical_potential_values))
+        energy_error_stddev_pur = np.zeros(len(experiment.chemical_potential_values))
 
         for occupied_orbitals in experiment.occupied_orbitals_list:
             exact = np.array(energy_exact[occupied_orbitals])
@@ -320,6 +338,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             energy_error_ps += np.abs(ps - exact)
             energy_error_stddev_ps += np.array(ps_stddev) ** 2
 
+            pur, pur_stddev = zip(*energy_pur[occupied_orbitals])
+            pur = np.array(pur)
+            energy_error_pur += np.abs(pur - exact)
+            energy_error_stddev_pur += np.array(pur_stddev) ** 2
+
         energy_error_raw /= len(experiment.occupied_orbitals_list)
         energy_error_stddev_raw = np.sqrt(energy_error_stddev_raw) / len(
             experiment.occupied_orbitals_list
@@ -332,6 +355,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         energy_error_stddev_ps = np.sqrt(energy_error_stddev_ps) / len(
             experiment.occupied_orbitals_list
         )
+        energy_error_pur /= len(experiment.occupied_orbitals_list)
+        energy_error_stddev_pur = np.sqrt(energy_error_stddev_pur) / len(
+            experiment.occupied_orbitals_list
+        )
 
         yield AnalysisResultData(
             "energy_error_raw", (energy_error_raw, energy_error_stddev_raw)
@@ -341,4 +368,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         )
         yield AnalysisResultData(
             "energy_error_ps", (energy_error_ps, energy_error_stddev_ps)
+        )
+        yield AnalysisResultData(
+            "energy_error_pur", (energy_error_pur, energy_error_stddev_pur)
         )
