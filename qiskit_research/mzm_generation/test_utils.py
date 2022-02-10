@@ -64,7 +64,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
     def test_expectation_from_correlation_matrix_sample(self):
         n_modes = 5
         tunneling = -1.0
-        superconducting = 1.0
+        superconducting = 1 + 2j
         chemical_potential = 1.0
         occupied_orbitals = ()
         experiment = KitaevHamiltonianExperiment(
@@ -80,11 +80,23 @@ class TestMZMGenerationUtils(unittest.TestCase):
         experiment_data.block_for_results()
         data = {}
         for result in experiment_data.data():
+            (
+                _tunneling,
+                _superconducting,
+                _chemical_potential,
+                _occupied_orbitals,
+                permutation,
+                measurement_label,
+            ) = result["metadata"]["params"]
             params = CircuitParameters(
-                *(
-                    tuple(p) if isinstance(p, list) else p
-                    for p in result["metadata"]["params"]
-                )
+                tunneling=_tunneling,
+                superconducting=_superconducting
+                if isinstance(_superconducting, float)
+                else complex(*_superconducting),
+                chemical_potential=_chemical_potential,
+                occupied_orbitals=tuple(_occupied_orbitals),
+                permutation=tuple(permutation),
+                measurement_label=measurement_label,
             )
             data[params] = result
         quasis = {}

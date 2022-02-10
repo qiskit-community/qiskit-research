@@ -72,11 +72,23 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         # put data into dictionary for easier handling
         data = {}
         for result in experiment_data.data():
+            (
+                tunneling,
+                superconducting,
+                chemical_potential,
+                occupied_orbitals,
+                permutation,
+                measurement_label,
+            ) = result["metadata"]["params"]
             params = CircuitParameters(
-                *(
-                    tuple(p) if isinstance(p, list) else p
-                    for p in result["metadata"]["params"]
-                )
+                tunneling=tunneling,
+                superconducting=superconducting
+                if isinstance(superconducting, float)
+                else complex(*superconducting),
+                chemical_potential=chemical_potential,
+                occupied_orbitals=tuple(occupied_orbitals),
+                permutation=tuple(permutation),
+                measurement_label=measurement_label,
             )
             data[params] = result
 
