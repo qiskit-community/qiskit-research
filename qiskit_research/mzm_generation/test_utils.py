@@ -26,6 +26,7 @@ from qiskit_research.mzm_generation.utils import (
     compute_correlation_matrix,
     correlation_matrix,
     counts_to_quasis,
+    covariance_matrix,
     expectation,
     expectation_from_correlation_matrix,
     jordan_wigner,
@@ -40,6 +41,24 @@ def _random_antisymmetric(dim: int):
 
 class TestMZMGenerationUtils(unittest.TestCase):
     """Test PhasedXXMinusYYGate."""
+
+    def test_covariance_matrix(self):
+        dim = 5
+
+        hermitian_part = np.array(random_hermitian(5))
+        antisymmetric_part = _random_antisymmetric(5)
+        constant = np.random.randn()
+        quad_ham = QuadraticHamiltonian(hermitian_part, antisymmetric_part, constant)
+
+        hamiltonian = quad_ham._fermionic_op()
+        hamiltonian_jw = jordan_wigner(hamiltonian).to_matrix()
+        _, vecs = np.linalg.eigh(hamiltonian_jw)
+        state = vecs[:, 0]
+        corr = correlation_matrix(state)
+        cov = covariance_matrix(corr)
+
+        np.testing.assert_allclose(corr @ corr, corr, atol=1e-8)
+        np.testing.assert_allclose(cov @ cov, -np.eye(2 * dim), atol=1e-8)
 
     def test_expectation_from_correlation_matrix_exact(self):
         dim = 5

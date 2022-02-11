@@ -32,6 +32,7 @@ from qiskit_research.mzm_generation.utils import (
     counts_to_quasis,
     edge_correlation_op,
     expectation_from_correlation_matrix,
+    fidelity_witness,
     kitaev_hamiltonian,
     number_op,
     post_select_quasis,
@@ -117,6 +118,19 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         number = number_op(experiment.n_modes)
 
         # create data storage objects
+        # TODO exact values should be computed at a fixed independent resolution
+        fidelity_witness_raw = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        fidelity_witness_mem = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        fidelity_witness_ps = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        fidelity_witness_pur = defaultdict(
+            list
+        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
         energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         energy_raw = defaultdict(
             list
@@ -253,6 +267,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     np.sum(np.diag(corr_exact)[: experiment.n_modes])
                 )
                 # raw values
+                raw_fidelity_witness, raw_fidelity_witness_stddev = fidelity_witness(
+                    corr_raw, corr_exact, cov_raw
+                )
                 raw_energy, raw_energy_stddev = np.real(
                     expectation_from_correlation_matrix(
                         hamiltonian_quad, corr_raw, cov_raw
@@ -268,6 +285,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     expectation_from_correlation_matrix(number, corr_raw, cov_raw)
                 )
                 # measurement error corrected values
+                mem_fidelity_witness, mem_fidelity_witness_stddev = fidelity_witness(
+                    corr_mem, corr_exact, cov_mem
+                )
                 mem_energy, mem_energy_stddev = np.real(
                     expectation_from_correlation_matrix(
                         hamiltonian_quad, corr_mem, cov_mem
@@ -283,6 +303,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     expectation_from_correlation_matrix(number, corr_mem, cov_mem)
                 )
                 # post-selected values
+                ps_fidelity_witness, ps_fidelity_witness_stddev = fidelity_witness(
+                    corr_ps, corr_exact, cov_ps
+                )
                 ps_energy, ps_energy_stddev = np.real(
                     expectation_from_correlation_matrix(
                         hamiltonian_quad, corr_ps, cov_ps
@@ -294,6 +317,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     )
                 )
                 # purified values
+                pur_fidelity_witness, pur_fidelity_witness_stddev = fidelity_witness(
+                    corr_pur, corr_exact, cov_pur
+                )
                 pur_energy, pur_energy_stddev = np.real(
                     expectation_from_correlation_matrix(
                         hamiltonian_quad, corr_pur, cov_pur
@@ -305,6 +331,18 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     )
                 )
                 # add computed values to data storage objects
+                fidelity_witness_raw[occupied_orbitals].append(
+                    (raw_fidelity_witness, raw_fidelity_witness_stddev)
+                )
+                fidelity_witness_mem[occupied_orbitals].append(
+                    (mem_fidelity_witness, mem_fidelity_witness_stddev)
+                )
+                fidelity_witness_ps[occupied_orbitals].append(
+                    (ps_fidelity_witness, ps_fidelity_witness_stddev)
+                )
+                fidelity_witness_pur[occupied_orbitals].append(
+                    (pur_fidelity_witness, pur_fidelity_witness_stddev)
+                )
                 energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
                 energy_raw[occupied_orbitals].append(
                     (
@@ -350,6 +388,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
             return {k: np.array(v) for k, v in d.items()}
 
+        yield AnalysisResultData("fidelity_witness_raw", zip_dict(fidelity_witness_raw))
+        yield AnalysisResultData("fidelity_witness_mem", zip_dict(fidelity_witness_mem))
+        yield AnalysisResultData("fidelity_witness_ps", zip_dict(fidelity_witness_ps))
+        yield AnalysisResultData("fidelity_witness_pur", zip_dict(fidelity_witness_pur))
         yield AnalysisResultData("energy_exact", zip_dict(energy_exact))
         yield AnalysisResultData("energy_raw", zip_dict(energy_raw))
         yield AnalysisResultData("energy_mem", zip_dict(energy_mem))
@@ -430,4 +472,71 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         )
         yield AnalysisResultData(
             "energy_error_pur", (energy_error_pur, energy_error_stddev_pur)
+        )
+
+        # average fidelity witness
+        fidelity_witness_avg_raw = np.zeros(len(experiment.chemical_potential_values))
+        fidelity_witness_stddev_raw = np.zeros(
+            len(experiment.chemical_potential_values)
+        )
+        fidelity_witness_avg_mem = np.zeros(len(experiment.chemical_potential_values))
+        fidelity_witness_stddev_mem = np.zeros(
+            len(experiment.chemical_potential_values)
+        )
+        fidelity_witness_avg_ps = np.zeros(len(experiment.chemical_potential_values))
+        fidelity_witness_stddev_ps = np.zeros(len(experiment.chemical_potential_values))
+        fidelity_witness_avg_pur = np.zeros(len(experiment.chemical_potential_values))
+        fidelity_witness_stddev_pur = np.zeros(
+            len(experiment.chemical_potential_values)
+        )
+
+        for occupied_orbitals in experiment.occupied_orbitals_list:
+            raw, raw_stddev = zip(*fidelity_witness_raw[occupied_orbitals])
+            fidelity_witness_avg_raw += np.array(raw)
+            fidelity_witness_stddev_raw += np.array(raw_stddev) ** 2
+
+            mem, mem_stddev = zip(*fidelity_witness_mem[occupied_orbitals])
+            fidelity_witness_avg_mem += np.array(mem)
+            fidelity_witness_stddev_mem += np.array(mem_stddev) ** 2
+
+            ps, ps_stddev = zip(*fidelity_witness_ps[occupied_orbitals])
+            fidelity_witness_avg_ps += np.array(ps)
+            fidelity_witness_stddev_ps += np.array(ps_stddev) ** 2
+
+            pur, pur_stddev = zip(*fidelity_witness_pur[occupied_orbitals])
+            fidelity_witness_avg_pur += np.array(pur)
+            fidelity_witness_stddev_pur += np.array(pur_stddev) ** 2
+
+        fidelity_witness_avg_raw /= len(experiment.occupied_orbitals_list)
+        fidelity_witness_stddev_raw = np.sqrt(fidelity_witness_stddev_raw) / len(
+            experiment.occupied_orbitals_list
+        )
+        fidelity_witness_avg_mem /= len(experiment.occupied_orbitals_list)
+        fidelity_witness_stddev_mem = np.sqrt(fidelity_witness_stddev_mem) / len(
+            experiment.occupied_orbitals_list
+        )
+        fidelity_witness_avg_ps /= len(experiment.occupied_orbitals_list)
+        fidelity_witness_stddev_ps = np.sqrt(fidelity_witness_stddev_ps) / len(
+            experiment.occupied_orbitals_list
+        )
+        fidelity_witness_avg_pur /= len(experiment.occupied_orbitals_list)
+        fidelity_witness_stddev_pur = np.sqrt(fidelity_witness_stddev_pur) / len(
+            experiment.occupied_orbitals_list
+        )
+
+        yield AnalysisResultData(
+            "fidelity_witness_avg_raw",
+            (fidelity_witness_avg_raw, fidelity_witness_stddev_raw),
+        )
+        yield AnalysisResultData(
+            "fidelity_witness_avg_mem",
+            (fidelity_witness_avg_mem, fidelity_witness_stddev_mem),
+        )
+        yield AnalysisResultData(
+            "fidelity_witness_avg_ps",
+            (fidelity_witness_avg_ps, fidelity_witness_stddev_ps),
+        )
+        yield AnalysisResultData(
+            "fidelity_witness_avg_pur",
+            (fidelity_witness_avg_pur, fidelity_witness_stddev_pur),
         )

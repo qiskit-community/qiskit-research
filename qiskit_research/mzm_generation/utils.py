@@ -38,6 +38,9 @@ if TYPE_CHECKING:
     from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
 
 
+_CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
+
+
 def majorana_op(index: int, action: int) -> FermionicOp:
     if action == 0:
         return FermionicOp(f"-_{index}") + FermionicOp(f"+_{index}")
@@ -120,10 +123,85 @@ def correlation_matrix(state: np.ndarray) -> np.ndarray:
     return corr
 
 
+def covariance_matrix(corr: np.ndarray) -> np.ndarray:
+    """Convert correlation matrix to covariance matrix."""
+    n, _ = corr.shape
+    eye = np.eye(n // 2)
+    majorana_basis = np.block([[eye, eye], [1j * eye, -1j * eye]]) / np.sqrt(2)
+    return np.real(
+        -1j * majorana_basis @ (2 * corr - np.eye(n)) @ majorana_basis.T.conj()
+    )
+
+
+def fidelity_witness(
+    corr: np.ndarray,
+    corr_target: np.ndarray,
+    cov: Optional[_CovarianceDict] = None,
+) -> Tuple[float, float]:
+    """Compute fidelity witness from correlation matrix.
+
+    Reference: arXiv:1703.03152
+
+    Args:
+        corr: The correlation matrix for which to compute the witness.
+        corr_target: The correlation matrix of the target state.
+        cov: Covariances of the elements of the first given correlation matrix.
+
+    Returns:
+        - Fidelity witness
+        - Standard deviation of fidelity witness
+    """
+    # compute fidelity witness
+    dim, _ = corr.shape
+    n = dim // 2
+    witness = 1 + np.trace((corr - corr_target) @ (corr_target - 0.5 * np.eye(dim)))
+
+    # compute variance
+    var = 0.0
+    if cov is not None:
+        # off-diagonal entries
+        for i in range(n):
+            for j in range(i + 1, n):
+                for k in range(n):
+                    for ell in range(k + 1, n):
+                        var += 2 * np.real(
+                            corr_target[i, j].conjugate()
+                            * corr_target[k, ell].conjugate()
+                            * cov[frozenset([(i, j), (k, ell)])]
+                        )
+                        var += 2 * np.real(
+                            corr_target[i, j].conjugate()
+                            * corr_target[k, ell]
+                            * cov[frozenset([(i, j), (k, ell)])]
+                        )
+                        var += 2 * np.real(
+                            corr_target[i, j + n].conjugate()
+                            * corr_target[k, ell + n].conjugate()
+                            * cov[frozenset([(i, j + n), (k, ell + n)])]
+                        )
+                        var += 2 * np.real(
+                            corr_target[i, j + n].conjugate()
+                            * corr_target[k, ell + n]
+                            * cov[frozenset([(i, j + n), (k, ell + n)])]
+                        )
+        # diagonal entries
+        for i in range(n):
+            for j in range(i, n):
+                var += (1 + (i != j)) * (
+                    (corr_target[i, i] - float(i == j))
+                    * (corr_target[j, j] - float(i == j))
+                    * cov[frozenset([(i, i), (j, j)])]
+                )
+        # account for lower half of correlation matrices
+        var *= 4
+
+    return np.real(witness), np.sqrt(np.real(var))
+
+
 def expectation_from_correlation_matrix(
     operator: Union[QuadraticHamiltonian, FermionicOp],
     corr: np.ndarray,
-    cov: Optional[Dict[FrozenSet[Tuple[int, int]], float]] = None,
+    cov: Optional[_CovarianceDict] = None,
 ) -> Tuple[complex, float]:
     """Compute expectation value of operator from correlation matrix.
 
@@ -149,26 +227,26 @@ def expectation_from_correlation_matrix(
             for i in range(n):
                 for j in range(i + 1, n):
                     for k in range(n):
-                        for l in range(k + 1, n):
+                        for ell in range(k + 1, n):
                             var += 2 * np.real(
                                 operator.hermitian_part[i, j]
-                                * operator.hermitian_part[k, l]
-                                * cov[frozenset([(i, j), (k, l)])]
+                                * operator.hermitian_part[k, ell]
+                                * cov[frozenset([(i, j), (k, ell)])]
                             )
                             var += 2 * np.real(
                                 operator.hermitian_part[i, j]
-                                * operator.hermitian_part[k, l].conjugate()
-                                * cov[frozenset([(i, j), (k, l)])]
+                                * operator.hermitian_part[k, ell].conjugate()
+                                * cov[frozenset([(i, j), (k, ell)])]
                             )
                             var += 2 * np.real(
                                 operator.antisymmetric_part[i, j]
-                                * operator.antisymmetric_part[k, l]
-                                * cov[frozenset([(i, j + n), (k, l + n)])]
+                                * operator.antisymmetric_part[k, ell]
+                                * cov[frozenset([(i, j + n), (k, ell + n)])]
                             )
                             var += 2 * np.real(
                                 operator.antisymmetric_part[i, j]
-                                * operator.antisymmetric_part[k, l].conjugate()
-                                * cov[frozenset([(i, j + n), (k, l + n)])]
+                                * operator.antisymmetric_part[k, ell].conjugate()
+                                * cov[frozenset([(i, j + n), (k, ell + n)])]
                             )
             # diagonal entries
             for i in range(n):
@@ -210,9 +288,9 @@ def expectation_from_correlation_matrix(
                 for term_kl, coeff_kl in operator._data:
                     if not term_kl:
                         continue
-                    (action_k, k), (action_l, l) = term_kl
-                    if k > l:
-                        k, l = l, k
+                    (action_k, k), (action_l, ell) = term_kl
+                    if k > ell:
+                        k, ell = ell, k
                         action_k, action_l = action_l, action_k
                     var += (
                         coeff_ij
@@ -221,7 +299,7 @@ def expectation_from_correlation_matrix(
                             frozenset(
                                 [
                                     (i, j + n * (action_i == action_j)),
-                                    (k, l + n * (action_k == action_l)),
+                                    (k, ell + n * (action_k == action_l)),
                                 ]
                             )
                         ]
@@ -266,7 +344,7 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 
 def compute_correlation_matrix(
     quasis: Dict[str, Dict[str, float]], experiment: "KitaevHamiltonianExperiment"
-) -> Tuple[np.ndarray, Dict[FrozenSet[Tuple[int, int]], float]]:
+) -> Tuple[np.ndarray, _CovarianceDict]:
     """Compute correlation matrix from quasiprobabilities.
 
     Returns:
@@ -307,19 +385,19 @@ def compute_correlation_matrix(
         corr[i + n, i + n] = 1 - expval
 
     # covariance
-    cov = defaultdict(float)  # Dict[FrozenSet[Tuple[int, int]], float]]
+    cov = defaultdict(float)  # _CovarianceDict
     # off-diagonal entries
     for i in range(n):
         for j in range(i + 1, n):
             for k in range(n):
-                for l in range(k + 1, n):
-                    cov[frozenset([(i, j), (k, l)])] = 0.25 * (
-                        tunneling_plus_cov[frozenset([(i, j), (k, l)])]
-                        + tunneling_minus_cov[frozenset([(i, j), (k, l)])]
+                for ell in range(k + 1, n):
+                    cov[frozenset([(i, j), (k, ell)])] = 0.25 * (
+                        tunneling_plus_cov[frozenset([(i, j), (k, ell)])]
+                        + tunneling_minus_cov[frozenset([(i, j), (k, ell)])]
                     )
-                    cov[frozenset([(i, j + n), (k, l + n)])] = 0.25 * (
-                        superconducting_plus_cov[frozenset([(i, j), (k, l)])]
-                        + superconducting_minus_cov[frozenset([(i, j), (k, l)])]
+                    cov[frozenset([(i, j + n), (k, ell + n)])] = 0.25 * (
+                        superconducting_plus_cov[frozenset([(i, j), (k, ell)])]
+                        + superconducting_minus_cov[frozenset([(i, j), (k, ell)])]
                     )
     # diagonal entries
     for i in range(n):
@@ -335,7 +413,7 @@ def compute_interaction_matrix(
     quasis: Dict[str, Dict[str, float]],
     experiment: "KitaevHamiltonianExperiment",
     label: str,
-) -> Tuple[np.ndarray, Dict[FrozenSet[Tuple[int, int]], float]]:
+) -> Tuple[np.ndarray, _CovarianceDict]:
     """Compute interaction matrix from quasiprobabilities.
 
     Returns:
@@ -378,7 +456,7 @@ def compute_interaction_matrix(
                 mat[q, p] = symmetry * val
 
     # compute covariance
-    cov = defaultdict(float)  # Dict[FrozenSet[Tuple[int, int]], float]]
+    cov = defaultdict(float)  # _CovarianceDict
     for permutation in experiment.permutations():
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
