@@ -446,8 +446,6 @@ def compute_interaction_matrix(
                 # don't reverse pauli string because M3 does it internally!
                 z0 = "I" * i + "Z" + "I" * (n - i - 1)
                 z1 = "I" * (i + 1) + "Z" + "I" * (n - i - 2)
-                # TODO calculate expectation value of summed op using mthree directly
-                # See https://github.com/Qiskit-Partners/mthree/issues/83
                 z0_expval = quasi_dist.expval(z0)
                 z1_expval = quasi_dist.expval(z1)
                 val = 0.5 * (z1_expval + sign * z0_expval)

@@ -12,7 +12,7 @@
 
 import os
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
 
 import mthree
 import numpy as np
@@ -113,12 +113,17 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         tunneling = -1.0
         superconducting = 1.0
 
+        # get simulation results
+        yield from self._compute_simulation_results(
+            tunneling, superconducting, experiment
+        )
+
         # construct operators
         edge_correlation = edge_correlation_op(experiment.n_modes)
         number = number_op(experiment.n_modes)
 
         # create data storage objects
-        # TODO exact values should be computed at a fixed independent resolution
+        energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         fidelity_witness_raw = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
@@ -131,7 +136,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         fidelity_witness_pur = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
-        energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         energy_raw = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
@@ -144,7 +148,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         energy_pur = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
-        edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         edge_correlation_raw = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
@@ -157,7 +160,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         edge_correlation_pur = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
-        parity_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         parity_raw = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
@@ -167,10 +169,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         parity_ps = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
-        parity_pur = defaultdict(
-            list
-        )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
-        number_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
         number_raw = defaultdict(
             list
         )  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
@@ -260,12 +258,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 exact_energy = (
                     np.sum(orbital_energies[list(occupied_orbitals)]) + constant
                 )
-                exact_edge_correlation, _ = np.real(
-                    expectation_from_correlation_matrix(edge_correlation, corr_exact)
-                )
-                exact_number = np.real(
-                    np.sum(np.diag(corr_exact)[: experiment.n_modes])
-                )
                 # raw values
                 raw_fidelity_witness, raw_fidelity_witness_stddev = fidelity_witness(
                     corr_raw, corr_exact, cov_raw
@@ -316,6 +308,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         edge_correlation, corr_ps, cov_ps
                     )
                 )
+                ps_parity, ps_parity_stddev = compute_parity(quasis_ps)
+                ps_number, ps_number_stddev = np.real(
+                    expectation_from_correlation_matrix(number, corr_ps, cov_ps)
+                )
                 # purified values
                 pur_fidelity_witness, pur_fidelity_witness_stddev = fidelity_witness(
                     corr_pur, corr_exact, cov_pur
@@ -330,7 +326,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         edge_correlation, corr_pur, cov_pur
                     )
                 )
+                pur_number, pur_number_stddev = np.real(
+                    expectation_from_correlation_matrix(number, corr_pur, cov_pur)
+                )
                 # add computed values to data storage objects
+                energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
                 fidelity_witness_raw[occupied_orbitals].append(
                     (raw_fidelity_witness, raw_fidelity_witness_stddev)
                 )
@@ -343,7 +343,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 fidelity_witness_pur[occupied_orbitals].append(
                     (pur_fidelity_witness, pur_fidelity_witness_stddev)
                 )
-                energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
                 energy_raw[occupied_orbitals].append(
                     (
                         raw_energy + energy_shift,
@@ -362,7 +361,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 energy_pur[occupied_orbitals].append(
                     (pur_energy + energy_shift, pur_energy_stddev)
                 )
-                edge_correlation_exact[occupied_orbitals].append(exact_edge_correlation)
                 edge_correlation_raw[occupied_orbitals].append(
                     (raw_edge_correlation, raw_edge_correlation_stddev)
                 )
@@ -375,12 +373,13 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 edge_correlation_pur[occupied_orbitals].append(
                     (pur_edge_correlation, pur_edge_correlation_stddev)
                 )
-                parity_exact[occupied_orbitals].append(exact_parity)
                 parity_raw[occupied_orbitals].append((raw_parity, raw_parity_stddev))
                 parity_mem[occupied_orbitals].append((mem_parity, mem_parity_stddev))
-                number_exact[occupied_orbitals].append(exact_number)
+                parity_ps[occupied_orbitals].append((ps_parity, ps_parity_stddev))
                 number_raw[occupied_orbitals].append((raw_number, raw_number_stddev))
                 number_mem[occupied_orbitals].append((mem_number, mem_number_stddev))
+                number_ps[occupied_orbitals].append((ps_number, ps_number_stddev))
+                number_pur[occupied_orbitals].append((pur_number, pur_number_stddev))
 
         def zip_dict(d):
             val = next(iter(d.values()))
@@ -392,24 +391,21 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("fidelity_witness_mem", zip_dict(fidelity_witness_mem))
         yield AnalysisResultData("fidelity_witness_ps", zip_dict(fidelity_witness_ps))
         yield AnalysisResultData("fidelity_witness_pur", zip_dict(fidelity_witness_pur))
-        yield AnalysisResultData("energy_exact", zip_dict(energy_exact))
         yield AnalysisResultData("energy_raw", zip_dict(energy_raw))
         yield AnalysisResultData("energy_mem", zip_dict(energy_mem))
         yield AnalysisResultData("energy_ps", zip_dict(energy_ps))
         yield AnalysisResultData("energy_pur", zip_dict(energy_pur))
-        yield AnalysisResultData(
-            "edge_correlation_exact", zip_dict(edge_correlation_exact)
-        )
         yield AnalysisResultData("edge_correlation_raw", zip_dict(edge_correlation_raw))
         yield AnalysisResultData("edge_correlation_mem", zip_dict(edge_correlation_mem))
         yield AnalysisResultData("edge_correlation_ps", zip_dict(edge_correlation_ps))
         yield AnalysisResultData("edge_correlation_pur", zip_dict(edge_correlation_pur))
-        yield AnalysisResultData("parity_exact", zip_dict(parity_exact))
         yield AnalysisResultData("parity_raw", zip_dict(parity_raw))
         yield AnalysisResultData("parity_mem", zip_dict(parity_mem))
-        yield AnalysisResultData("number_exact", zip_dict(number_exact))
+        yield AnalysisResultData("parity_ps", zip_dict(parity_ps))
         yield AnalysisResultData("number_raw", zip_dict(number_raw))
         yield AnalysisResultData("number_mem", zip_dict(number_mem))
+        yield AnalysisResultData("number_ps", zip_dict(number_ps))
+        yield AnalysisResultData("number_pur", zip_dict(number_pur))
 
         # error analysis
         energy_error_raw = np.zeros(len(experiment.chemical_potential_values))
@@ -540,3 +536,86 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             "fidelity_witness_avg_pur",
             (fidelity_witness_avg_pur, fidelity_witness_stddev_pur),
         )
+
+    def _compute_simulation_results(
+        self,
+        tunneling: float,
+        superconducting: Union[float, complex],
+        experiment: KitaevHamiltonianExperiment,
+    ) -> Iterable[AnalysisResultData]:
+        # set chemical potential values to the experiment range but with fixed resolution
+        chemical_potential_values = np.linspace(
+            experiment.chemical_potential_values[0],
+            experiment.chemical_potential_values[-1],
+            num=50,
+        )
+
+        # construct operators
+        edge_correlation = edge_correlation_op(experiment.n_modes)
+        number = number_op(experiment.n_modes)
+
+        # create data storage objects
+        energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+        edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+        parity_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+        number_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+
+        for chemical_potential in chemical_potential_values:
+            # create Hamiltonian
+            hamiltonian_quad = kitaev_hamiltonian(
+                experiment.n_modes,
+                tunneling=tunneling,
+                superconducting=superconducting,
+                chemical_potential=chemical_potential,
+            )
+            # compute energy
+            (
+                transformation_matrix,
+                orbital_energies,
+                constant,
+            ) = hamiltonian_quad.diagonalizing_bogoliubov_transform()
+            energy_shift = -0.5 * np.sum(orbital_energies) - constant
+            # compute parity
+            W1 = transformation_matrix[:, : experiment.n_modes]
+            W2 = transformation_matrix[:, experiment.n_modes :]
+            full_transformation_matrix = np.block([[W1, W2], [W2.conj(), W1.conj()]])
+            hamiltonian_parity = np.sign(
+                np.real(np.linalg.det(full_transformation_matrix))
+            )
+            # compute results
+            for occupied_orbitals in experiment.occupied_orbitals_list:
+                # compute exact correlation matrix
+                occupation = np.zeros(experiment.n_modes)
+                occupation[list(occupied_orbitals)] = 1.0
+                corr_diag = np.diag(np.concatenate([occupation, 1 - occupation]))
+                corr_exact = (
+                    full_transformation_matrix.T.conj()
+                    @ corr_diag
+                    @ full_transformation_matrix
+                )
+                # exact values
+                exact_energy = (
+                    np.sum(orbital_energies[list(occupied_orbitals)]) + constant
+                )
+                exact_edge_correlation, _ = np.real(
+                    expectation_from_correlation_matrix(edge_correlation, corr_exact)
+                )
+                exact_parity = (-1) ** len(occupied_orbitals) * hamiltonian_parity
+                exact_number = np.real(
+                    np.sum(np.diag(corr_exact)[: experiment.n_modes])
+                )
+                # add computed values to data storage objects
+                energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
+                edge_correlation_exact[occupied_orbitals].append(exact_edge_correlation)
+                parity_exact[occupied_orbitals].append(exact_parity)
+                number_exact[occupied_orbitals].append(exact_number)
+
+        def zip_dict(d):
+            return {k: (np.array(v), chemical_potential_values) for k, v in d.items()}
+
+        yield AnalysisResultData("energy_exact", zip_dict(energy_exact))
+        yield AnalysisResultData(
+            "edge_correlation_exact", zip_dict(edge_correlation_exact)
+        )
+        yield AnalysisResultData("parity_exact", zip_dict(parity_exact))
+        yield AnalysisResultData("number_exact", zip_dict(number_exact))
