@@ -11,22 +11,26 @@
 # that they have been altered from the originals.
 
 import functools
+import random
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
     Callable,
     Dict,
     FrozenSet,
+    List,
     Optional,
     Tuple,
     Union,
 )
 
+import mapomatic
 import mthree
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import XYGate
 from qiskit.quantum_info import SparsePauliOp
+from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 from qiskit_nature.operators.second_quantization import (
     FermionicOp,
@@ -35,6 +39,7 @@ from qiskit_nature.operators.second_quantization import (
 from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 
 if TYPE_CHECKING:
+    from qiskit.providers.ibmq import IBMQBackend
     from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
 
 
@@ -570,3 +575,26 @@ def purify_idempotent_matrix(
     if error > tol:
         raise RuntimeError("Purification failed to converge.")
     return mat
+
+
+def pick_qubit_layout(
+    n_modes: int, backends: List["IBMQBackend"]
+) -> Tuple[List[int], str, float]:
+    """Pick qubit layout using mapomatic."""
+    tunneling = -1.0
+    superconducting = 1.0
+    chemical_potential = 1.0
+    hamiltonian = kitaev_hamiltonian(
+        n_modes=n_modes,
+        tunneling=tunneling,
+        superconducting=superconducting,
+        chemical_potential=chemical_potential,
+    )
+    transformation_matrix, _, _ = hamiltonian.diagonalizing_bogoliubov_transform()
+    occupied_orbitals = tuple(range(n_modes // 2))
+    circuit = FermionicGaussianState(
+        transformation_matrix, occupied_orbitals=occupied_orbitals
+    )
+    transpiled = transpile(circuit, random.choice(backends), optimization_level=3)
+    deflated = mapomatic.deflate_circuit(transpiled)
+    return mapomatic.best_overall_layout(deflated, backends)

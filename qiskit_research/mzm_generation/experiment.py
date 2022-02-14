@@ -17,7 +17,6 @@ from collections import namedtuple
 from typing import Dict, Iterable, List, Sequence, Tuple
 
 import numpy as np
-from openfermion import QuadraticHamiltonian
 from qiskit import QuantumCircuit
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
