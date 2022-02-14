@@ -10,20 +10,40 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from collections import defaultdict
 import functools
-from typing import Dict, FrozenSet, Tuple
+import random
+from collections import defaultdict
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    FrozenSet,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
+import mapomatic
 import mthree
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import XYGate
 from qiskit.quantum_info import SparsePauliOp
+from qiskit_nature.circuit.library import FermionicGaussianState
+from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
 from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
+
+if TYPE_CHECKING:
+    from qiskit.providers.ibmq import IBMQBackend
+    from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
+
+
+_CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -36,32 +56,30 @@ def edge_correlation_op(n_modes: int) -> FermionicOp:
     return -1j * majorana_op(0, 0) @ majorana_op(n_modes - 1, 1)
 
 
-def parity_op(n_modes: int) -> FermionicOp:
-    op = FermionicOp.one(n_modes)
-    for i in range(n_modes):
-        op @= FermionicOp.one(n_modes) - 2 * FermionicOp(f"N_{i}")
-    return op
-
-
 def number_op(n_modes: int) -> FermionicOp:
     return sum(FermionicOp(f"N_{i}") for i in range(n_modes))
 
 
-# TODO operator could be scipy sparse matrix
 def expectation(operator: np.ndarray, state: np.ndarray) -> complex:
     """Expectation value of operator with state."""
     return np.vdot(state, operator @ state)
 
 
-# TODO operator could be scipy sparse matrix
 def variance(operator: np.ndarray, state: np.ndarray) -> complex:
     """Variance of operator with state."""
-    return expectation(operator ** 2, state) - expectation(operator, state) ** 2
+    return expectation(operator @ operator, state) - expectation(operator, state) ** 2
+
+
+def jordan_wigner(op: FermionicOp) -> SparsePauliOp:
+    return JordanWignerMapper().map(op).primitive
 
 
 @functools.lru_cache
 def kitaev_hamiltonian(
-    n_modes: int, tunneling: float, superconducting: complex, chemical_potential: float
+    n_modes: int,
+    tunneling: float,
+    superconducting: Union[float, complex],
+    chemical_potential: float,
 ) -> QuadraticHamiltonian:
     """Create Kitaev model Hamiltonian."""
     eye = np.eye(n_modes)
@@ -84,20 +102,224 @@ def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
     )
 
 
-def measure_pauli_string(circuit: QuantumCircuit, pauli_string: str) -> QuantumCircuit:
-    """Measure a Pauli string."""
-    circuit = circuit.copy()
-    for q, pauli in zip(circuit.qubits, pauli_string):
-        if pauli.lower() == "x":
-            circuit.h(q)
-        elif pauli.lower() == "y":
-            circuit.rx(np.pi / 2, q)
-    circuit.measure_all()
-    return circuit
+def correlation_matrix(state: np.ndarray) -> np.ndarray:
+    """Compute correlation matrix from state vector."""
+    (N,) = state.shape
+    n = N.bit_length() - 1
+    corr = np.zeros((2 * n, 2 * n), dtype=complex)
+    for i in range(n):
+        for j in range(i, n):
+            op = FermionicOp(f"+_{i} -_{j}", register_length=n)
+            op_jw = jordan_wigner(op).to_matrix()
+            val = expectation(op_jw, state)
+            corr[i, j] = val
+            corr[j, i] = val.conj()
+            corr[i + n, j + n] = float(i == j) - val.conj()
+            corr[j + n, i + n] = float(i == j) - val
+
+            op = FermionicOp(f"-_{i} -_{j}", register_length=n)
+            op_jw = jordan_wigner(op).to_matrix()
+            val = expectation(op_jw, state)
+            corr[i + n, j] = val
+            corr[j + n, i] = -val
+            corr[i, j + n] = -val.conj()
+            corr[j, i + n] = val.conj()
+
+    return corr
+
+
+def covariance_matrix(corr: np.ndarray) -> np.ndarray:
+    """Convert correlation matrix to covariance matrix."""
+    n, _ = corr.shape
+    eye = np.eye(n // 2)
+    majorana_basis = np.block([[eye, eye], [1j * eye, -1j * eye]]) / np.sqrt(2)
+    return np.real(
+        -1j * majorana_basis @ (2 * corr - np.eye(n)) @ majorana_basis.T.conj()
+    )
+
+
+def fidelity_witness(
+    corr: np.ndarray,
+    corr_target: np.ndarray,
+    cov: Optional[_CovarianceDict] = None,
+) -> Tuple[float, float]:
+    """Compute fidelity witness from correlation matrix.
+
+    Reference: arXiv:1703.03152
+
+    Args:
+        corr: The correlation matrix for which to compute the witness.
+        corr_target: The correlation matrix of the target state.
+        cov: Covariances of the elements of the first given correlation matrix.
+
+    Returns:
+        - Fidelity witness
+        - Standard deviation of fidelity witness
+    """
+    # compute fidelity witness
+    dim, _ = corr.shape
+    n = dim // 2
+    witness = 1 + np.trace((corr - corr_target) @ (corr_target - 0.5 * np.eye(dim)))
+
+    # compute variance
+    var = 0.0
+    if cov is not None:
+        # off-diagonal entries
+        for i in range(n):
+            for j in range(i + 1, n):
+                for k in range(n):
+                    for ell in range(k + 1, n):
+                        var += 2 * np.real(
+                            corr_target[i, j].conjugate()
+                            * corr_target[k, ell].conjugate()
+                            * cov[frozenset([(i, j), (k, ell)])]
+                        )
+                        var += 2 * np.real(
+                            corr_target[i, j].conjugate()
+                            * corr_target[k, ell]
+                            * cov[frozenset([(i, j), (k, ell)])]
+                        )
+                        var += 2 * np.real(
+                            corr_target[i, j + n].conjugate()
+                            * corr_target[k, ell + n].conjugate()
+                            * cov[frozenset([(i, j + n), (k, ell + n)])]
+                        )
+                        var += 2 * np.real(
+                            corr_target[i, j + n].conjugate()
+                            * corr_target[k, ell + n]
+                            * cov[frozenset([(i, j + n), (k, ell + n)])]
+                        )
+        # diagonal entries
+        for i in range(n):
+            for j in range(i, n):
+                var += (1 + (i != j)) * (
+                    (corr_target[i, i] - float(i == j))
+                    * (corr_target[j, j] - float(i == j))
+                    * cov[frozenset([(i, i), (j, j)])]
+                )
+        # account for lower half of correlation matrices
+        var *= 4
+
+    return np.real(witness), np.sqrt(np.real(var))
+
+
+def expectation_from_correlation_matrix(
+    operator: Union[QuadraticHamiltonian, FermionicOp],
+    corr: np.ndarray,
+    cov: Optional[_CovarianceDict] = None,
+) -> Tuple[complex, float]:
+    """Compute expectation value of operator from correlation matrix.
+
+    Raises:
+        ValueError: Operator must be quadratic in the fermionic ladder operators.
+    """
+    dim, _ = corr.shape
+    n = dim // 2
+
+    if isinstance(operator, QuadraticHamiltonian):
+        # expectation
+        exp_val = (
+            np.sum(
+                operator.hermitian_part * corr[:n, :n]
+                + np.real(operator.antisymmetric_part * corr[:n, n:])
+            )
+            + operator.constant
+        )
+        # variance
+        var = 0.0
+        if cov is not None:
+            # off-diagonal entries
+            for i in range(n):
+                for j in range(i + 1, n):
+                    for k in range(n):
+                        for ell in range(k + 1, n):
+                            var += 2 * np.real(
+                                operator.hermitian_part[i, j]
+                                * operator.hermitian_part[k, ell]
+                                * cov[frozenset([(i, j), (k, ell)])]
+                            )
+                            var += 2 * np.real(
+                                operator.hermitian_part[i, j]
+                                * operator.hermitian_part[k, ell].conjugate()
+                                * cov[frozenset([(i, j), (k, ell)])]
+                            )
+                            var += 2 * np.real(
+                                operator.antisymmetric_part[i, j]
+                                * operator.antisymmetric_part[k, ell]
+                                * cov[frozenset([(i, j + n), (k, ell + n)])]
+                            )
+                            var += 2 * np.real(
+                                operator.antisymmetric_part[i, j]
+                                * operator.antisymmetric_part[k, ell].conjugate()
+                                * cov[frozenset([(i, j + n), (k, ell + n)])]
+                            )
+            # diagonal entries
+            for i in range(n):
+                for j in range(i, n):
+                    var += (1 + (i != j)) * (
+                        operator.hermitian_part[i, i]
+                        * operator.hermitian_part[j, j]
+                        * cov[frozenset([(i, i), (j, j)])]
+                    )
+    else:  # isinstance(operator, FermionicOp)
+        # expectation
+        exp_val = 0.0
+        # HACK FermionicOp should support iteration with public API
+        # See https://github.com/Qiskit/qiskit-nature/issues/541
+        for term, coeff in operator._data:
+            if not term:
+                exp_val += coeff
+            elif len(term) == 2:
+                (action_i, i), (action_j, j) = term
+                exp_val += (
+                    coeff * corr[i + n * (action_i == "-"), j + n * (action_j == "+")]
+                )
+            else:
+                raise ValueError(
+                    "Operator must be quadratic in the fermionic ladder operators."
+                )
+        # variance
+        var = 0.0
+        if cov is not None:
+            # HACK FermionicOp should support iteration with public API
+            # See https://github.com/Qiskit/qiskit-nature/issues/541
+            for term_ij, coeff_ij in operator._data:
+                if not term_ij:
+                    continue
+                (action_i, i), (action_j, j) = term_ij
+                if i > j:
+                    i, j = j, i
+                    action_i, action_j = action_j, action_i
+                for term_kl, coeff_kl in operator._data:
+                    if not term_kl:
+                        continue
+                    (action_k, k), (action_l, ell) = term_kl
+                    if k > ell:
+                        k, ell = ell, k
+                        action_k, action_l = action_l, action_k
+                    var += (
+                        coeff_ij
+                        * coeff_kl.conjugate()
+                        * cov[
+                            frozenset(
+                                [
+                                    (i, j + n * (action_i == action_j)),
+                                    (k, ell + n * (action_k == action_l)),
+                                ]
+                            )
+                        ]
+                    )
+
+    return exp_val, np.sqrt(np.real(var))
 
 
 def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircuit:
     """Measure fermionic interaction with a circuit that preserves parity."""
+    if label == "number":
+        circuit = circuit.copy()
+        circuit.measure_all()
+        return circuit
+
     if label.startswith("tunneling_plus"):
         # this gate transforms a^\dagger_i a_j + h.c into (IZ - ZI) / 2
         gate = XYGate(np.pi / 2, -np.pi / 2)
@@ -125,49 +347,84 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
     return circuit
 
 
-def compute_energy_pauli_basis(
-    quasis: Dict[str, Dict[str, float]], hamiltonian: SparsePauliOp
-) -> Tuple[float, float]:
-    """Compute energy from quasiprobabilities of Pauli strings."""
-    # TODO standard deviation estimate needs to include covariances
-    quasis_x = quasis["pauli", "x" * hamiltonian.num_qubits]
-    quasis_y = quasis["pauli", "y" * hamiltonian.num_qubits]
-    quasis_z = quasis["pauli", "z" * hamiltonian.num_qubits]
-    hamiltonian_expectation = 0.0
-    hamiltonian_var = 0.0
-    for term, coeff in zip(hamiltonian.paulis, hamiltonian.coeffs):
-        term_y = np.logical_and(term.z, term.x)
-        if np.any(term_y):
-            quasi_dist = quasis_y
-            pauli_string = term_y
-        elif np.any(term.z):
-            quasi_dist = quasis_z
-            pauli_string = term.z
-        elif np.any(term.x):
-            quasi_dist = quasis_x
-            pauli_string = term.x
-        else:
-            hamiltonian_expectation += coeff
-            continue
+def compute_correlation_matrix(
+    quasis: Dict[str, Dict[str, float]], experiment: "KitaevHamiltonianExperiment"
+) -> Tuple[np.ndarray, _CovarianceDict]:
+    """Compute correlation matrix from quasiprobabilities.
+
+    Returns:
+        - Correlation matrix
+        - Dictionary containing covariances between entries of the correlation matrix
+    """
+    n = experiment.n_modes
+
+    # off-diagonal entries
+    tunneling_plus, tunneling_plus_cov = compute_interaction_matrix(
+        quasis, experiment, "tunneling_plus"
+    )
+    tunneling_minus, tunneling_minus_cov = compute_interaction_matrix(
+        quasis, experiment, "tunneling_minus"
+    )
+    superconducting_plus, superconducting_plus_cov = compute_interaction_matrix(
+        quasis, experiment, "superconducting_plus"
+    )
+    superconducting_minus, superconducting_minus_cov = compute_interaction_matrix(
+        quasis, experiment, "superconducting_minus"
+    )
+    tunneling_mat = 0.5 * (tunneling_plus + 1j * tunneling_minus)
+    superconducting_mat = 0.5 * (superconducting_plus + 1j * superconducting_minus)
+    corr = np.block(
+        [
+            [tunneling_mat, superconducting_mat],
+            [-superconducting_mat.conj(), np.eye(n) - tunneling_mat.T],
+        ],
+    )
+
+    # diagonal entries
+    num_quasis = quasis[(tuple(range(n)), "number")]
+    for i in range(n):
         # don't reverse pauli string because M3 does it internally!
-        operator = "".join("Z" if b else "I" for b in pauli_string)
-        term_expectation, term_stddev = quasi_dist.expval_and_stddev(operator)
-        hamiltonian_expectation += coeff * term_expectation
-        hamiltonian_var += abs(coeff) ** 2 * term_stddev ** 2
-    return np.real(hamiltonian_expectation), np.sqrt(hamiltonian_var)
+        num = "I" * i + "1" + "I" * (n - i - 1)
+        expval = num_quasis.expval(num)
+        corr[i, i] = expval
+        corr[i + n, i + n] = 1 - expval
+
+    # covariance
+    cov = defaultdict(float)  # _CovarianceDict
+    # off-diagonal entries
+    for i in range(n):
+        for j in range(i + 1, n):
+            for k in range(n):
+                for ell in range(k + 1, n):
+                    cov[frozenset([(i, j), (k, ell)])] = 0.25 * (
+                        tunneling_plus_cov[frozenset([(i, j), (k, ell)])]
+                        + tunneling_minus_cov[frozenset([(i, j), (k, ell)])]
+                    )
+                    cov[frozenset([(i, j + n), (k, ell + n)])] = 0.25 * (
+                        superconducting_plus_cov[frozenset([(i, j), (k, ell)])]
+                        + superconducting_minus_cov[frozenset([(i, j), (k, ell)])]
+                    )
+    # diagonal entries
+    for i in range(n):
+        z0 = "I" * i + "Z" + "I" * (n - i - 1)
+        for j in range(i, n):
+            z1 = "I" * j + "Z" + "I" * (n - j - 1)
+            cov[frozenset([(i, i), (j, j)])] = 0.25 * covariance(num_quasis, z0, z1)
+
+    return corr, cov
 
 
 def compute_interaction_matrix(
-    quasis: Dict[str, Dict[str, float]], label: str
-) -> Tuple[np.ndarray, Dict[FrozenSet[Tuple[int]], float]]:
-    """Compute interaction operator from quasiprobabilities.
+    quasis: Dict[str, Dict[str, float]],
+    experiment: "KitaevHamiltonianExperiment",
+    label: str,
+) -> Tuple[np.ndarray, _CovarianceDict]:
+    """Compute interaction matrix from quasiprobabilities.
 
     Returns:
         - Interaction matrix
         - Dictionary containing covariances between entries of the interaction matrix
     """
-    n_qubits = len(next(iter(next(iter(quasis.values())))))
-
     if label == "tunneling_plus":
         sign = -1
         symmetry = 1
@@ -181,56 +438,51 @@ def compute_interaction_matrix(
         sign = 1
         symmetry = -1
 
-    even_quasis = quasis["parity", f"{label}_even"]
-    odd_quasis = quasis["parity", f"{label}_odd"]
-    z_quasis = quasis["pauli", "z" * n_qubits]
+    n = experiment.n_modes
 
-    mat = np.zeros((n_qubits, n_qubits))
-    # diagonal terms
-    if label == "tunneling_plus":
-        for i in range(n_qubits):
-            # don't reverse pauli string because M3 does it internally!
-            num = "I" * i + "1" + "I" * (n_qubits - i - 1)
-            expval, stddev = z_quasis.expval_and_stddev(num)
-            mat[i, i] = 2 * expval
-    # off-diagonal terms
-    for start_index in [0, 1]:
-        quasi_dist = odd_quasis if start_index else even_quasis
-        for i in range(start_index, n_qubits - 1, 2):
-            # don't reverse pauli string because M3 does it internally!
-            z0 = "I" * i + "Z" + "I" * (n_qubits - i - 1)
-            z1 = "I" * (i + 1) + "Z" + "I" * (n_qubits - i - 2)
-            # TODO calculate expectation value of summed op using mthree directly
-            # See https://github.com/Qiskit-Partners/mthree/issues/83
-            z0_expval, z0_stddev = quasi_dist.expval_and_stddev(z0)
-            z1_expval, z1_stddev = quasi_dist.expval_and_stddev(z1)
-            val = 0.5 * (z1_expval + sign * z0_expval)
-            mat[i, i + 1] = val
-            mat[i + 1, i] = symmetry * val
+    # compute interaction matrix
+    mat = np.zeros((n, n))
+    for permutation in experiment.permutations():
+        even_quasis = quasis[permutation, f"{label}_even"]
+        odd_quasis = quasis[permutation, f"{label}_odd"]
+        for start_index in [0, 1]:
+            quasi_dist = odd_quasis if start_index else even_quasis
+            for i in range(start_index, n - 1, 2):
+                # don't reverse pauli string because M3 does it internally!
+                z0 = "I" * i + "Z" + "I" * (n - i - 1)
+                z1 = "I" * (i + 1) + "Z" + "I" * (n - i - 2)
+                z0_expval = quasi_dist.expval(z0)
+                z1_expval = quasi_dist.expval(z1)
+                val = 0.5 * (z1_expval + sign * z0_expval)
+                p, q = permutation[i], permutation[i + 1]
+                mat[p, q] = val
+                mat[q, p] = symmetry * val
 
     # compute covariance
-    cov = defaultdict(float)  # Dict[FrozenSet[Tuple[int]], float]
-    # diagonal entries
-    for i in range(n_qubits):
-        z0 = "I" * i + "Z" + "I" * (n_qubits - i - 1)
-        for j in range(i, n_qubits):
-            z1 = "I" * j + "Z" + "I" * (n_qubits - j - 1)
-            cov[frozenset([(i, i), (j, j)])] = 0.25 * covariance(z_quasis, z0, z1)
-    # off-diagonal entries
-    for start_index in [0, 1]:
-        quasi_dist = odd_quasis if start_index else even_quasis
-        for i in range(start_index, n_qubits - 1, 2):
-            z0 = "I" * i + "Z" + "I" * (n_qubits - i - 1)
-            z1 = "I" * (i + 1) + "Z" + "I" * (n_qubits - i - 2)
-            for j in range(start_index, n_qubits - 1, 2):
-                z2 = "I" * j + "Z" + "I" * (n_qubits - j - 1)
-                z3 = "I" * (j + 1) + "Z" + "I" * (n_qubits - j - 2)
-                cov[frozenset([(i, i + 1), (j, j + 1)])] = 0.25 * (
-                    covariance(quasi_dist, z0, z2)
-                    - covariance(quasi_dist, z0, z3)
-                    - covariance(quasi_dist, z1, z2)
-                    + covariance(quasi_dist, z1, z3)
-                )
+    cov = defaultdict(float)  # _CovarianceDict
+    for permutation in experiment.permutations():
+        even_quasis = quasis[permutation, f"{label}_even"]
+        odd_quasis = quasis[permutation, f"{label}_odd"]
+        for start_index in [0, 1]:
+            quasi_dist = odd_quasis if start_index else even_quasis
+            for i in range(start_index, n - 1, 2):
+                z0 = "I" * i + "Z" + "I" * (n - i - 1)
+                z1 = "I" * (i + 1) + "Z" + "I" * (n - i - 2)
+                p, q = permutation[i], permutation[i + 1]
+                if p > q:
+                    p, q = q, p
+                for j in range(start_index, n - 1, 2):
+                    z2 = "I" * j + "Z" + "I" * (n - j - 1)
+                    z3 = "I" * (j + 1) + "Z" + "I" * (n - j - 2)
+                    r, s = permutation[j], permutation[j + 1]
+                    if r > s:
+                        r, s = s, r
+                    cov[frozenset([(p, q), (r, s)])] = 0.25 * (
+                        covariance(quasi_dist, z0, z2)
+                        - covariance(quasi_dist, z0, z3)
+                        - covariance(quasi_dist, z1, z2)
+                        + covariance(quasi_dist, z1, z3)
+                    )
 
     return mat, cov
 
@@ -238,6 +490,7 @@ def compute_interaction_matrix(
 def covariance(
     quasi_dist: mthree.classes.QuasiDistribution, op1: str, op2: str
 ) -> float:
+    """Compute covariance of two diagonal operators from quasiprobabilities."""
     expval1 = quasi_dist.expval(op1)
     expval2 = quasi_dist.expval(op2)
     cov = 0.0
@@ -251,6 +504,7 @@ def covariance(
 
 
 def evaluate_diagonal_op(operator: str, bitstring: str):
+    """Evaluate a diagional operator on a bitstring."""
     prod = 1.0
     # reverse bitstring because Qiskit uses little endian
     for op, bit in zip(operator, reversed(bitstring)):
@@ -261,90 +515,28 @@ def evaluate_diagonal_op(operator: str, bitstring: str):
     return prod
 
 
-def compute_energy_parity_basis(
-    quasis: Dict[str, Dict[str, float]], hamiltonian: QuadraticHamiltonian
-) -> Tuple[float, float]:
-    """Compute energy from quasiprobabilities of interaction operator measurements.
-
-    Returns:
-        - Expectation value of energy
-        - Standard deviation of energy
-    """
-    n_qubits = len(next(iter(next(iter(quasis.values())))))
-    tunneling_plus, tunneling_plus_cov = compute_interaction_matrix(
-        quasis, "tunneling_plus"
-    )
-    superconducting_plus, superconducting_plus_cov = compute_interaction_matrix(
-        quasis, "superconducting_plus"
-    )
-    energy = (
-        0.5
-        * np.sum(
-            hamiltonian.hermitian_part * tunneling_plus
-            + hamiltonian.antisymmetric_part * superconducting_plus
-        )
-        + hamiltonian.constant
-    )
-    # compute variance
-    variance = 0.0
-    # diagonal entries
-    for i in range(n_qubits):
-        for j in range(i, n_qubits):
-            variance += (1 + (i != j)) * (
-                hamiltonian.hermitian_part[i, i]
-                * hamiltonian.hermitian_part[j, j]
-                * tunneling_plus_cov[frozenset([(i, i), (j, j)])]
-            )
-    # off-diagonal entries
-    for start_index in [0, 1]:
-        for i in range(start_index, n_qubits - 1, 2):
-            for j in range(start_index, n_qubits - 1, 2):
-                variance += (1 + (i != j)) * (
-                    hamiltonian.hermitian_part[i, i + 1]
-                    * hamiltonian.hermitian_part[j, j + 1]
-                    * tunneling_plus_cov[frozenset([(i, i + 1), (j, j + 1)])]
-                )
-                variance += (1 + (i != j)) * (
-                    hamiltonian.antisymmetric_part[i, i + 1]
-                    * hamiltonian.antisymmetric_part[j, j + 1]
-                    * superconducting_plus_cov[frozenset([(i, i + 1), (j, j + 1)])]
-                )
-    return energy, np.sqrt(variance)
-
-
-def compute_edge_correlation(quasis: Dict[str, Dict[str, float]]) -> float:
-    # TODO estimate standard deviation
-    n_qubits = len(next(iter(next(iter(quasis.values())))))
-    quasi_dist = quasis["pauli", "y" + "z" * (n_qubits - 2) + "y"]
-    correlation_expectation = -quasi_dist.expval()
-    return correlation_expectation
-
-
-def compute_parity(quasis: Dict[str, Dict[str, float]]) -> float:
-    # TODO estimate standard deviation
-    n_qubits = len(next(iter(next(iter(quasis.values())))))
-    quasi_dist = quasis["pauli", "z" * n_qubits]
-    parity_expectation = quasi_dist.expval()
-    return parity_expectation
-
-
-def compute_number(quasis: Dict[str, Dict[str, float]]) -> float:
-    # TODO estimate standard deviation
-    n_qubits = len(next(iter(next(iter(quasis.values())))))
-    quasi_dist = quasis["pauli", "z" * n_qubits]
-    projectors = ["I" * k + "1" + "I" * (n_qubits - k - 1) for k in range(n_qubits)]
-    number_expectation = np.sum(quasi_dist.expval(projectors))
-    return number_expectation
+def compute_parity(quasis: Dict[str, Dict[str, float]]) -> Tuple[float, float]:
+    """Compute parity from quasiprobabilities."""
+    # TODO maybe use probs instead of quasis to avoid value outside [-1, 1]
+    n = len(next(iter(next(iter(quasis.values())))))
+    quasi_dist = quasis[(tuple(range(n)), "number")]
+    return quasi_dist.expval_and_stddev()
 
 
 def post_select_quasis(
-    quasis: mthree.classes.QuasiDistribution, parity: int
+    quasis: mthree.classes.QuasiDistribution, predicate: Callable[[str], bool]
 ) -> Tuple[mthree.classes.QuasiDistribution, float]:
+    """Post-select quasiprobabilities to enforce a given bitstring predicate.
+
+    Returns:
+        - Post-selected quasiprobabilities
+        - total quasiprobability mass removed
+    """
     new_quasis = quasis.copy()
     removed_mass = 0.0
-    # set bitstrings with wrong parity to zero
+    # postselect
     for bitstring in new_quasis:
-        if (-1) ** sum(1 for b in bitstring if b == "1") != parity:
+        if not predicate(bitstring):
             removed_mass += abs(new_quasis[bitstring])
             new_quasis[bitstring] = 0.0
     # normalize
@@ -362,6 +554,47 @@ def post_select_quasis(
 
 
 def counts_to_quasis(counts: Dict[str, int]) -> mthree.classes.QuasiDistribution:
+    """Convert counts to quasiprobabilities."""
     shots = sum(counts.values())
     data = {bitstring: count / shots for bitstring, count in counts.items()}
     return mthree.classes.QuasiDistribution(data, shots=shots, mitigation_overhead=1.0)
+
+
+def purify_idempotent_matrix(
+    mat: np.ndarray, tol: float = 1e-8, max_iter: int = 1000
+) -> np.ndarray:
+    """McWeeny purification of an idempotent matrix."""
+    dim, _ = mat.shape
+    three = 3 * np.eye(dim, dtype=mat.dtype)
+    error = np.inf
+    iterations = 0
+    while error > tol and iterations < max_iter:
+        mat = mat @ mat @ (three - 2 * mat)
+        error = np.linalg.norm(mat @ mat - mat)
+        iterations += 1
+    if error > tol:
+        raise RuntimeError("Purification failed to converge.")
+    return mat
+
+
+def pick_qubit_layout(
+    n_modes: int, backends: List["IBMQBackend"]
+) -> Tuple[List[int], str, float]:
+    """Pick qubit layout using mapomatic."""
+    tunneling = -1.0
+    superconducting = 1.0
+    chemical_potential = 1.0
+    hamiltonian = kitaev_hamiltonian(
+        n_modes=n_modes,
+        tunneling=tunneling,
+        superconducting=superconducting,
+        chemical_potential=chemical_potential,
+    )
+    transformation_matrix, _, _ = hamiltonian.diagonalizing_bogoliubov_transform()
+    occupied_orbitals = tuple(range(n_modes // 2))
+    circuit = FermionicGaussianState(
+        transformation_matrix, occupied_orbitals=occupied_orbitals
+    )
+    transpiled = transpile(circuit, random.choice(backends), optimization_level=3)
+    deflated = mapomatic.deflate_circuit(transpiled)
+    return mapomatic.best_overall_layout(deflated, backends)
