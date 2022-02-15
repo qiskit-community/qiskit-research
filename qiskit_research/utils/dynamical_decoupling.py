@@ -10,17 +10,20 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import Optional, Union
+from typing import Iterable, Optional, TYPE_CHECKING
 from qiskit.qasm import pi
 import numpy
 
 from qiskit import pulse
-from qiskit.circuit import QuantumCircuit
+from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import XGate, YGate
 from qiskit.pulse import DriveChannel
 from qiskit.transpiler import InstructionDurations, PassManager
 from qiskit.transpiler.passes import ALAPSchedule, ASAPSchedule, DynamicalDecoupling
+
+if TYPE_CHECKING:
+    from qiskit.transpiler.basepasses import BasePass
 
 
 def add_dd_calibrations(qc: QuantumCircuit, backend, dd_str: str, sched_method=None):
@@ -116,6 +119,15 @@ def add_dd_sequence(
         )
 
     return pm.run(qc)
+
+
+def dynamical_decoupling_passes(
+    backend, dd_str: str, scheduler: "BasePass"
+) -> Iterable["BasePass"]:
+    durations = get_timing(backend)
+    sequence = get_dd_sequence(dd_str)
+    yield scheduler(durations)
+    yield DynamicalDecoupling(durations, sequence)
 
 
 def add_dd_pulse_calibrations(qc: QuantumCircuit, backend):
