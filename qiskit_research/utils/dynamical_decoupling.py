@@ -47,14 +47,15 @@ DD_SEQUENCE = {
 }
 
 
-def add_dd_calibrations(
+def add_dynamical_decoupling(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Union[Backend, BaseBackend],
     dd_str: str,
     scheduler: "BasePass" = ALAPSchedule,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
-    """
-    Add dynamical decoupling sequences and the calibrations necessary
+    """Add dynamical decoupling sequences and calibrations to circuits.
+
+    Adds dynamical decoupling sequences and the calibrations necessary
     to run them on an IBM backend.
     """
     circuits_dd = add_dd_sequence(circuits, backend, dd_str, scheduler)
