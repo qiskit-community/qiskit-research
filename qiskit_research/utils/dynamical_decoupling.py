@@ -12,39 +12,55 @@
 
 from typing import Iterable, List, Optional, TYPE_CHECKING, Union
 from qiskit.qasm import pi
-import numpy
 
 from qiskit import pulse
-from qiskit.circuit import QuantumCircuit, QuantumRegister
+from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import XGate, YGate
 from qiskit.providers import BaseBackend
 from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel
 from qiskit.transpiler import InstructionDurations, PassManager
-from qiskit.transpiler.passes import ALAPSchedule, ASAPSchedule, DynamicalDecoupling
+from qiskit.transpiler.passes import ALAPSchedule, DynamicalDecoupling
+from qiskit_research.utils.gates import XpGate, XmGate, YpGate, YmGate
 
 if TYPE_CHECKING:
     from qiskit.transpiler.basepasses import BasePass
+
+
+DD_SEQUENCE = {
+    "X2": [XGate(), XGate()],
+    "X2pm": [XpGate(), XmGate()],
+    "XY4": [XGate(), YGate(), XGate(), YGate()],
+    "XY4pm": [XpGate(), YpGate(), XmGate(), YmGate()],
+    "XY8": [XGate(), YGate(), XGate(), YGate(), YGate(), XGate(), YGate(), XGate()],
+    "XY8pm": [
+        XpGate(),
+        YpGate(),
+        XmGate(),
+        YmGate(),
+        YmGate(),
+        XmGate(),
+        YpGate(),
+        XpGate(),
+    ],
+}
+
 
 def add_dd_calibrations(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Union[Backend, BaseBackend],
     dd_str: str,
-    sched_method: Optional[str] = None,
+    scheduler: "BasePass" = ALAPSchedule,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
     Add dynamical decoupling sequences and the calibrations necessary
     to run them on an IBM backend.
     """
-
-    if sched_method is None:
-        sched_method = "alap"
-
-    circuits_dd = add_dd_sequence(circuits, backend, dd_str, sched_method)
+    circuits_dd = add_dd_sequence(circuits, backend, dd_str, scheduler)
     add_dd_pulse_calibrations(circuits_dd, backend)
-
     return circuits_dd
+
 
 def get_dd_sequence(dd_str: str) -> List[Gate]:
     """
@@ -59,31 +75,7 @@ def get_dd_sequence(dd_str: str) -> List[Gate]:
         'XY8': X-Y-X-Y-Y-X-Y-X
         'XY8pm': Xp-Yp-Xm-Ym-Ym-Xm-Yp-Xp
     """
-
-    if dd_str == "X2":
-        return [XGate(), XGate()]
-    elif dd_str == "X2pm":
-        return [XpGate(), XmGate()]
-    elif dd_str == "XY4":
-        return [XGate(), YGate(), XGate(), YGate()]
-    elif dd_str == "XY4pm":
-        return [XpGate(), YpGate(), XmGate(), YmGate()]
-    elif dd_str == "XY8":
-        return [XGate(), YGate(), XGate(), YGate(), YGate(), XGate(), YGate(), XGate()]
-    elif dd_str == "XY8pm":
-        return [
-            XpGate(),
-            YpGate(),
-            XmGate(),
-            YmGate(),
-            YmGate(),
-            XmGate(),
-            YpGate(),
-            XpGate(),
-        ]
-    else:
-        return []
-
+    return DD_SEQUENCE.get(dd_str, [])
 
 
 def get_timing(backend) -> InstructionDurations:
@@ -127,35 +119,26 @@ def get_timing(backend) -> InstructionDurations:
     return InstructionDurations(inst_durs)
 
 
-
 def add_dd_sequence(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Union[Backend, BaseBackend],
     dd_str: str,
-    sched_method: str,
+    scheduler: "BasePass" = ALAPSchedule,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
     Schedules the circuit accoring to sched_method string, followed by
     inserting the dynamical decoupling sequence into the circuit(s).
     """
+    pass_manager = PassManager(
+        list(dynamical_decoupling_passes(backend, dd_str, scheduler))
+    )
+    return pass_manager.run(circuits)
 
-    durations = get_timing(backend)
-    sequence = get_dd_sequence(dd_str)
-
-    if sched_method == "asap":
-        pm = PassManager(
-            [ASAPSchedule(durations), DynamicalDecoupling(durations, sequence)]
-        )
-    elif sched_method == "alap":
-        pm = PassManager(
-            [ALAPSchedule(durations), DynamicalDecoupling(durations, sequence)]
-        )
-
-    return pm.run(circuits)
 
 def dynamical_decoupling_passes(
-    backend, dd_str: str, scheduler: "BasePass"
+    backend, dd_str: str, scheduler: "BasePass" = ALAPSchedule
 ) -> Iterable["BasePass"]:
+    """Yields transpilation passes for dynamical decoupling."""
     durations = get_timing(backend)
     sequence = get_dd_sequence(dd_str)
     yield scheduler(durations)
@@ -228,134 +211,3 @@ def add_dd_pulse_calibrations(
             # for each DD sequence with a YmGate() in it
             for circ in circuits:
                 circ.add_calibration("ym", [qubit], sched)
-
-
-
-class XpGate(Gate):
-    r"""The single-qubit Pauli-X gate (:math:`\sigma_x`), implemented
-    via RX(\pi).
-    """
-
-    def __init__(self, label: Optional[str] = None):
-        """Create new Xp gate."""
-        super().__init__("xp", 1, [], label=label)
-
-    def _define(self):
-        """
-        gate xp a { u3(pi,0,pi) a; }
-        """
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
-        q = QuantumRegister(1, "q")
-        qc = QuantumCircuit(q, name=self.name)
-        rules = [(U3Gate(pi, 0, pi), [q[0]], [])]
-        for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
-
-        self.definition = qc
-
-    def inverse(self):
-        r"""Return inverted Xp gate (Xm)."""
-        return XmGate()  # self-inverse
-
-    def __array__(self, dtype=None):
-        """Return a numpy.array for the Xp gate."""
-        return numpy.array([[0, 1], [1, 0]], dtype=dtype)
-
-
-class XmGate(Gate):
-    r"""The single-qubit Pauli-X gate (:math:`\sigma_x`), implemented
-    via RX(-\pi).
-    """
-
-    def __init__(self, label: Optional[str] = None):
-        """Create new Xm gate."""
-        super().__init__("xm", 1, [], label=label)
-
-    def _define(self):
-        """
-        gate xm a { u3(pi,0,pi) a; }
-        """
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
-        q = QuantumRegister(1, "q")
-        qc = QuantumCircuit(q, name=self.name)
-        rules = [(U3Gate(pi, 0, pi), [q[0]], [])]
-        for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
-
-        self.definition = qc
-
-    def inverse(self):
-        r"""Return inverted Xm gate (Xp)."""
-        return XpGate()  # self-inverse
-
-    def __array__(self, dtype=None):
-        """Return a numpy.array for the X gate."""
-        return numpy.array([[0, 1], [1, 0]], dtype=dtype)
-
-
-class YpGate(Gate):
-    r"""The single-qubit Pauli-Y gate (:math:`\sigma_y`), implemented
-    via RY(\pi).
-    """
-
-    def __init__(self, label: Optional[str] = None):
-        """Create new Yp gate."""
-        super().__init__("yp", 1, [], label=label)
-
-    def _define(self):
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
-        q = QuantumRegister(1, "q")
-        qc = QuantumCircuit(q, name=self.name)
-        rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])]
-        for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
-
-        self.definition = qc
-
-    def inverse(self):
-        r"""Return inverted Yp gate (:math:`Y{\dagger} = Y`)"""
-        return YmGate()  # self-inverse
-
-    def __array__(self, dtype=None):
-        """Return a numpy.array for the Yp gate."""
-        return numpy.array([[0, -1j], [1j, 0]], dtype=dtype)
-
-
-class YmGate(Gate):
-    r"""The single-qubit Pauli-Y gate (:math:`\sigma_y`), implemented
-    via RY(-\pi).
-    """
-
-    def __init__(self, label: Optional[str] = None):
-        """Create new Ym gate."""
-        super().__init__("ym", 1, [], label=label)
-
-    def _define(self):
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
-        q = QuantumRegister(1, "q")
-        qc = QuantumCircuit(q, name=self.name)
-        rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])]
-        for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
-
-        self.definition = qc
-
-    def inverse(self):
-        r"""Return inverted Ym gate (:math:`Y{\dagger} = Y`)"""
-        return YpGate()  # self-inverse
-
-    def __array__(self, dtype=None):
-        """Return a numpy.array for the Ym gate."""
-        return numpy.array([[0, -1j], [1j, 0]], dtype=dtype)
