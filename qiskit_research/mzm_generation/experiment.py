@@ -10,20 +10,25 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+import copy
 import functools
 import itertools
 import math
 from collections import namedtuple
-from typing import Dict, Iterable, List, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
-from qiskit import QuantumCircuit
-from qiskit_experiments.framework import BaseExperiment
+from qiskit import QuantumCircuit, transpile
+from qiskit.providers import Backend
+from qiskit.transpiler import PassManager
+from qiskit.transpiler.passes import ALAPSchedule
+from qiskit_experiments.framework import BaseExperiment, BaseAnalysis, ExperimentData
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
     measure_interaction_op,
 )
+from qiskit_research.utils.dynamical_decoupling import add_dynamical_decoupling
 
 
 # TODO make this a JSON serializable dataclass when Aer supports it
@@ -52,6 +57,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         superconducting_values: float,
         chemical_potential_values: float,
         occupied_orbitals_list: Sequence[Tuple[int, ...]],
+        dynamical_decoupling_sequence: Optional[str] = None,
     ) -> None:
         self.experiment_id = experiment_id
         # TODO qubits should be set in parent class
@@ -62,6 +68,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         self.superconducting_values = superconducting_values
         self.chemical_potential_values = chemical_potential_values
         self.occupied_orbitals_list = occupied_orbitals_list
+        self.dynamical_decoupling_sequence = dynamical_decoupling_sequence
         super().__init__(qubits=qubits)
 
     def _additional_metadata(self) -> Dict:
@@ -72,6 +79,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             "superconducting_values": self.superconducting_values,
             "chemical_potential_values": self.chemical_potential_values,
             "occupied_orbitals_list": self.occupied_orbitals_list,
+            "dynamical_decoupling_sequence": self.dynamical_decoupling_sequence,
         }
 
     def circuits(self) -> List[QuantumCircuit]:
@@ -160,3 +168,65 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             yield permutation, "superconducting_plus_odd"
             yield permutation, "superconducting_minus_even"
             yield permutation, "superconducting_minus_odd"
+
+    # HACK override run because Qiskit Experiments does not support custom transpilation
+    # See https://github.com/Qiskit/qiskit-experiments/issues/669
+    def run(
+        self,
+        backend: Optional[Backend] = None,
+        analysis: Optional[Union[BaseAnalysis, None]] = "default",
+        timeout: Optional[float] = None,
+        circuits_per_job: Optional[int] = None,
+        **run_options,
+    ) -> ExperimentData:
+        if backend is not None or analysis != "default":
+            # Make a copy to update analysis or backend if one is provided at runtime
+            experiment = self.copy()
+            if backend:
+                experiment._set_backend(backend)
+            if isinstance(analysis, BaseAnalysis):
+                experiment.analysis = analysis
+        else:
+            experiment = self
+
+        if experiment.backend is None:
+            raise RuntimeError("Cannot run experiment, no backend has been set.")
+
+        # Initialize result container
+        experiment_data = experiment._initialize_experiment_data()
+
+        # Run options
+        run_opts = copy.copy(experiment.run_options)
+        run_opts.update_options(**run_options)
+        run_opts = run_opts.__dict__
+
+        # Generate and transpile circuits
+        transpile_opts = copy.copy(experiment.transpile_options.__dict__)
+        transpile_opts["initial_layout"] = list(experiment.physical_qubits)
+        circuits = self._transpile(
+            experiment.circuits(), experiment.backend, **transpile_opts
+        )
+        experiment._postprocess_transpiled_circuits(circuits, **run_options)
+
+        # Run jobs
+        jobs = experiment._run_jobs(circuits, circuits_per_job, **run_opts)
+        experiment_data.add_jobs(jobs, timeout=timeout)
+        experiment._add_job_metadata(experiment_data.metadata, jobs, **run_opts)
+
+        # Optionally run analysis
+        if analysis and experiment.analysis:
+            return experiment.analysis.run(experiment_data)
+        else:
+            return experiment_data
+
+    def _transpile(
+        self, circuits: List[QuantumCircuit], backend: Backend, **transpile_options
+    ) -> List[QuantumCircuit]:
+        transpiled = transpile(circuits, backend, **transpile_options)
+
+        if self.dynamical_decoupling_sequence:
+            transpiled = add_dynamical_decoupling(
+                transpiled, backend, self.dynamical_decoupling_sequence
+            )
+
+        return transpiled

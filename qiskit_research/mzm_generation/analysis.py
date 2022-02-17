@@ -61,6 +61,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             tuple(occupied_orbitals)
             for occupied_orbitals in experiment_data.metadata["occupied_orbitals_list"]
         ]
+        dynamical_decoupling_sequence = experiment_data.metadata[
+            "dynamical_decoupling_sequence"
+        ]
         experiment = KitaevHamiltonianExperiment(
             experiment_id=experiment_id,
             qubits=qubits,
@@ -68,6 +71,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             superconducting_values=superconducting_values,
             chemical_potential_values=chemical_potential_values,
             occupied_orbitals_list=occupied_orbitals_list,
+            dynamical_decoupling_sequence=dynamical_decoupling_sequence,
         )
 
         # put data into dictionary for easier handling
