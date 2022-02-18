@@ -52,6 +52,10 @@ def majorana_op(index: int, action: int) -> FermionicOp:
     return -1j * (FermionicOp(f"-_{index}") - FermionicOp(f"+_{index}"))
 
 
+def site_correlation_op(site: int) -> FermionicOp:
+    return -1j * majorana_op(0, 0) @ majorana_op(site // 2, site % 2)
+
+
 def edge_correlation_op(n_modes: int) -> FermionicOp:
     return -1j * majorana_op(0, 0) @ majorana_op(n_modes - 1, 1)
 
@@ -515,7 +519,9 @@ def evaluate_diagonal_op(operator: str, bitstring: str):
     return prod
 
 
-def compute_parity(quasis: Dict[str, Dict[str, float]]) -> Tuple[float, float]:
+def compute_parity(
+    quasis: Dict[Tuple[Tuple[int, ...], str], mthree.classes.QuasiDistribution]
+) -> Tuple[float, float]:
     """Compute parity from quasiprobabilities."""
     # TODO maybe use probs instead of quasis to avoid value outside [-1, 1]
     n = len(next(iter(next(iter(quasis.values())))))
