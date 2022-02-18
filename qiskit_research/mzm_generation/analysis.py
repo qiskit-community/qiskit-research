@@ -139,6 +139,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 chemical_potential=chemical_potential,
             )
             # diagonalize
+            # TODO compute diagonalization using cached function
             (
                 transformation_matrix,
                 _,
