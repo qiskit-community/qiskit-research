@@ -519,7 +519,9 @@ def evaluate_diagonal_op(operator: str, bitstring: str):
     return prod
 
 
-def compute_parity(quasis: Dict[str, Dict[str, float]]) -> Tuple[float, float]:
+def compute_parity(
+    quasis: Dict[Tuple[Tuple[int, ...], str], mthree.classes.QuasiDistribution]
+) -> Tuple[float, float]:
     """Compute parity from quasiprobabilities."""
     # TODO maybe use probs instead of quasis to avoid value outside [-1, 1]
     n = len(next(iter(next(iter(quasis.values())))))
