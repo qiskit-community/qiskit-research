@@ -18,13 +18,13 @@ from typing import Dict, Iterable, List, Sequence, Tuple
 
 import numpy as np
 from qiskit import QuantumCircuit
+from qiskit.providers import Backend
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
     measure_interaction_op,
 )
-
 
 # TODO make this a JSON serializable dataclass when Aer supports it
 # See https://github.com/Qiskit/qiskit-aer/issues/1435
@@ -47,6 +47,8 @@ class KitaevHamiltonianExperiment(BaseExperiment):
     def __init__(
         self,
         experiment_id: str,
+        backend: Backend,
+        readout_calibration_date: str,
         qubits: Sequence[int],
         tunneling_values: float,
         superconducting_values: float,
@@ -54,6 +56,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         occupied_orbitals_list: Sequence[Tuple[int, ...]],
     ) -> None:
         self.experiment_id = experiment_id
+        self.readout_calibration_date = readout_calibration_date
         # TODO qubits should be set in parent class
         # see https://github.com/Qiskit/qiskit-experiments/issues/627
         self.qubits = qubits
@@ -62,11 +65,12 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         self.superconducting_values = superconducting_values
         self.chemical_potential_values = chemical_potential_values
         self.occupied_orbitals_list = occupied_orbitals_list
-        super().__init__(qubits=qubits)
+        super().__init__(qubits=qubits, backend=backend)
 
     def _additional_metadata(self) -> Dict:
         return {
             "experiment_id": self.experiment_id,
+            "readout_calibration_date": self.readout_calibration_date,
             "qubits": self.qubits,
             "tunneling_values": self.tunneling_values,
             "superconducting_values": self.superconducting_values,
