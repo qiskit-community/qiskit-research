@@ -12,11 +12,12 @@
 
 import os
 from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, Iterable, List, Tuple, Union
+from typing import Dict, Iterable, List, Tuple, Union
 
 import mthree
 import numpy as np
 from matplotlib.figure import Figure
+from mthree.classes import QuasiDistribution
 from qiskit_experiments.framework import (
     AnalysisResultData,
     BaseAnalysis,
@@ -27,6 +28,7 @@ from qiskit_research.mzm_generation.experiment import (
     KitaevHamiltonianExperiment,
 )
 from qiskit_research.mzm_generation.utils import (
+    _CovarianceDict,
     compute_correlation_matrix,
     compute_parity,
     counts_to_quasis,
@@ -39,10 +41,6 @@ from qiskit_research.mzm_generation.utils import (
     purify_idempotent_matrix,
 )
 
-if TYPE_CHECKING:
-    from mthree.classes import QuasiDistribution
-    from qiskit_research.mzm_generation.utils import _CovarianceDict
-
 
 class KitaevHamiltonianAnalysis(BaseAnalysis):
     "Analyze Kitaev Hamiltonian experimental data."
@@ -51,7 +49,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self, experiment_data: ExperimentData
     ) -> Tuple[List[AnalysisResultData], List[Figure]]:
         # reconstruct experiment
+        # TODO should be able to serialize and deserialize experiment automatically
         experiment_id = experiment_data.metadata["experiment_id"]
+        backend = experiment_data.backend
+        readout_calibration_date = experiment_data.metadata["readout_calibration_date"]
         qubits = experiment_data.metadata["qubits"]
         tunneling_values = experiment_data.metadata["tunneling_values"]
         superconducting_values = experiment_data.metadata["superconducting_values"]
@@ -67,6 +68,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         ]
         experiment = KitaevHamiltonianExperiment(
             experiment_id=experiment_id,
+            backend=backend,
+            readout_calibration_date=readout_calibration_date,
             qubits=qubits,
             tunneling_values=tunneling_values,
             superconducting_values=superconducting_values,
@@ -101,7 +104,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         # load readout calibration
         mit = mthree.M3Mitigation()
         mit.cals_from_file(
-            os.path.join("data", experiment.experiment_id, f"readout_calibration.json")
+            os.path.join(
+                "data",
+                "readout_calibration",
+                backend.name(),
+                f"{readout_calibration_date}.json",
+            )
         )
 
         # get results
@@ -475,7 +483,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         label: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...]],
-            Tuple[np.ndarray, "_CovarianceDict"],
+            Tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
@@ -544,7 +552,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         label: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...]],
-            Tuple[np.ndarray, "_CovarianceDict"],
+            Tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
@@ -607,7 +615,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         label: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...]],
-            Tuple[np.ndarray, "_CovarianceDict"],
+            Tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
@@ -639,7 +647,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         label: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...]],
-            Tuple[np.ndarray, "_CovarianceDict"],
+            Tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
@@ -671,7 +679,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         label: str,
         quasi_dists: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...]],
-            Dict[Tuple[Tuple[int, ...], str], "QuasiDistribution"],
+            Dict[Tuple[Tuple[int, ...], str], QuasiDistribution],
         ],
         tunneling: float,
         superconducting: Union[float, complex],

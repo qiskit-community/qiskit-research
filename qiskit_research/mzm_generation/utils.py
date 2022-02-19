@@ -29,6 +29,7 @@ import mthree
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import XYGate
+from qiskit.providers import Backend
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
@@ -39,7 +40,6 @@ from qiskit_nature.operators.second_quantization import (
 from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 
 if TYPE_CHECKING:
-    from qiskit.providers.ibmq import IBMQBackend
     from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
 
 
@@ -584,7 +584,7 @@ def purify_idempotent_matrix(
 
 
 def pick_qubit_layout(
-    n_modes: int, backends: List["IBMQBackend"]
+    n_modes: int, backends: List[Backend]
 ) -> Tuple[List[int], str, float]:
     """Pick qubit layout using mapomatic."""
     tunneling = -1.0

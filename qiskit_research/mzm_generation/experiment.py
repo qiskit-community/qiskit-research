@@ -20,16 +20,13 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.providers import Backend
-from qiskit.transpiler import PassManager
-from qiskit.transpiler.passes import ALAPSchedule
-from qiskit_experiments.framework import BaseExperiment, BaseAnalysis, ExperimentData
+from qiskit_experiments.framework import BaseAnalysis, BaseExperiment, ExperimentData
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
     measure_interaction_op,
 )
 from qiskit_research.utils.dynamical_decoupling import add_dynamical_decoupling
-
 
 # TODO make this a JSON serializable dataclass when Aer supports it
 # See https://github.com/Qiskit/qiskit-aer/issues/1435
@@ -52,6 +49,8 @@ class KitaevHamiltonianExperiment(BaseExperiment):
     def __init__(
         self,
         experiment_id: str,
+        backend: Backend,
+        readout_calibration_date: str,
         qubits: Sequence[int],
         tunneling_values: float,
         superconducting_values: float,
@@ -60,6 +59,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         dynamical_decoupling_sequence: Optional[str] = None,
     ) -> None:
         self.experiment_id = experiment_id
+        self.readout_calibration_date = readout_calibration_date
         # TODO qubits should be set in parent class
         # see https://github.com/Qiskit/qiskit-experiments/issues/627
         self.qubits = qubits
@@ -69,11 +69,12 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         self.chemical_potential_values = chemical_potential_values
         self.occupied_orbitals_list = occupied_orbitals_list
         self.dynamical_decoupling_sequence = dynamical_decoupling_sequence
-        super().__init__(qubits=qubits)
+        super().__init__(qubits=qubits, backend=backend)
 
     def _additional_metadata(self) -> Dict:
         return {
             "experiment_id": self.experiment_id,
+            "readout_calibration_date": self.readout_calibration_date,
             "qubits": self.qubits,
             "tunneling_values": self.tunneling_values,
             "superconducting_values": self.superconducting_values,
