@@ -601,6 +601,5 @@ def pick_qubit_layout(
     circuit = FermionicGaussianState(
         transformation_matrix, occupied_orbitals=occupied_orbitals
     )
-    transpiled = transpile(circuit, random.choice(backends), optimization_level=3)
-    deflated = mapomatic.deflate_circuit(transpiled)
-    return mapomatic.best_overall_layout(deflated, backends)
+    # TODO check that mapomatic returns a line
+    return mapomatic.best_overall_layout(circuit, backends)

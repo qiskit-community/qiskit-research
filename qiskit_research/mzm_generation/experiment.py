@@ -15,7 +15,7 @@ import functools
 import itertools
 import math
 from collections import namedtuple
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, Optional, Sequence, Union
 
 import numpy as np
 from qiskit import QuantumCircuit, transpile
@@ -39,6 +39,7 @@ CircuitParameters = namedtuple(
         "occupied_orbitals",
         "permutation",
         "measurement_label",
+        "dynamical_decoupling_sequence",
     ],
 )
 
@@ -55,8 +56,8 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         tunneling_values: float,
         superconducting_values: float,
         chemical_potential_values: float,
-        occupied_orbitals_list: Sequence[Tuple[int, ...]],
-        dynamical_decoupling_sequence: Optional[str] = None,
+        occupied_orbitals_list: Sequence[tuple[int, ...]],
+        dynamical_decoupling_sequences: Optional[list[str]] = None,
     ) -> None:
         self.experiment_id = experiment_id
         self.readout_calibration_date = readout_calibration_date
@@ -68,10 +69,10 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         self.superconducting_values = superconducting_values
         self.chemical_potential_values = chemical_potential_values
         self.occupied_orbitals_list = occupied_orbitals_list
-        self.dynamical_decoupling_sequence = dynamical_decoupling_sequence
+        self.dynamical_decoupling_sequences = dynamical_decoupling_sequences
         super().__init__(qubits=qubits, backend=backend)
 
-    def _additional_metadata(self) -> Dict:
+    def _additional_metadata(self) -> dict:
         return {
             "experiment_id": self.experiment_id,
             "readout_calibration_date": self.readout_calibration_date,
@@ -80,10 +81,10 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             "superconducting_values": self.superconducting_values,
             "chemical_potential_values": self.chemical_potential_values,
             "occupied_orbitals_list": self.occupied_orbitals_list,
-            "dynamical_decoupling_sequence": self.dynamical_decoupling_sequence,
+            "dynamical_decoupling_sequences": self.dynamical_decoupling_sequences,
         }
 
-    def circuits(self) -> List[QuantumCircuit]:
+    def circuits(self) -> list[QuantumCircuit]:
         return list(self._circuits())
 
     def _circuits(self) -> Iterable[QuantumCircuit]:
@@ -108,8 +109,8 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         tunneling: float,
         superconducting: float,
         chemical_potential: float,
-        occupied_orbitals: Tuple[int, ...],
-        permutation: Tuple[int, ...],
+        occupied_orbitals: tuple[int, ...],
+        permutation: tuple[int, ...],
     ) -> QuantumCircuit:
         hamiltonian = kitaev_hamiltonian(
             self.n_modes,
@@ -125,6 +126,9 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         return FermionicGaussianState(transformation_matrix, occupied_orbitals)
 
     def circuit_parameters(self) -> Iterable[CircuitParameters]:
+        dd_sequences = [None]
+        if self.dynamical_decoupling_sequences:
+            dd_sequences += self.dynamical_decoupling_sequences
         for (
             tunneling,
             superconducting,
@@ -137,16 +141,18 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             self.occupied_orbitals_list,
         ):
             for permutation, label in self.measurement_labels():
-                yield CircuitParameters(
-                    tunneling=tunneling,
-                    superconducting=superconducting,
-                    chemical_potential=chemical_potential,
-                    occupied_orbitals=occupied_orbitals,
-                    permutation=permutation,
-                    measurement_label=label,
-                )
+                for dd_sequence in dd_sequences:
+                    yield CircuitParameters(
+                        tunneling=tunneling,
+                        superconducting=superconducting,
+                        chemical_potential=chemical_potential,
+                        occupied_orbitals=occupied_orbitals,
+                        permutation=permutation,
+                        measurement_label=label,
+                        dynamical_decoupling_sequence=dd_sequence,
+                    )
 
-    def permutations(self) -> Iterable[Tuple[int, ...]]:
+    def permutations(self) -> Iterable[tuple[int, ...]]:
         """Fermionic mode permutations used to measure the full correlation matrix."""
         permutation = list(range(self.n_modes))
         for _ in range(math.ceil(self.n_modes / 2)):
@@ -158,7 +164,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                 a, b = permutation[i], permutation[i + 1]
                 permutation[i], permutation[i + 1] = b, a
 
-    def measurement_labels(self) -> Iterable[Tuple[Tuple[int, ...], str]]:
+    def measurement_labels(self) -> Iterable[tuple[tuple[int, ...], str]]:
         yield tuple(range(self.n_modes)), "number"
         for permutation in self.permutations():
             yield permutation, "tunneling_plus_even"
@@ -221,13 +227,13 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             return experiment_data
 
     def _transpile(
-        self, circuits: List[QuantumCircuit], backend: Backend, **transpile_options
-    ) -> List[QuantumCircuit]:
-        transpiled = transpile(circuits, backend, **transpile_options)
-
-        if self.dynamical_decoupling_sequence:
-            transpiled = add_dynamical_decoupling(
-                transpiled, backend, self.dynamical_decoupling_sequence
-            )
-
-        return transpiled
+        self, circuits: list[QuantumCircuit], backend: Backend, **transpile_options
+    ) -> list[QuantumCircuit]:
+        transpiled_circuits = []
+        for circuit in circuits:
+            transpiled = transpile(circuit, backend, **transpile_options)
+            dd_sequence = circuit.metadata["params"].dynamical_decoupling_sequence
+            if dd_sequence:
+                transpiled = add_dynamical_decoupling(transpiled, backend, dd_sequence)
+            transpiled_circuits.append(transpiled)
+        return transpiled_circuits
