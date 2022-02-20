@@ -11,7 +11,6 @@
 # that they have been altered from the originals.
 
 import functools
-import random
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
@@ -92,6 +91,22 @@ def kitaev_hamiltonian(
     hermitian_part = -tunneling * (upper_diag + lower_diag) + chemical_potential * eye
     antisymmetric_part = superconducting * (upper_diag - lower_diag)
     return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
+
+
+@functools.lru_cache
+def diagonalizing_bogoliubov_transform(
+    n_modes: int,
+    tunneling: float,
+    superconducting: Union[float, complex],
+    chemical_potential: float,
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """Diagonalize a Kitaev Hamiltonian."""
+    return kitaev_hamiltonian(
+        n_modes,
+        tunneling=tunneling,
+        superconducting=superconducting,
+        chemical_potential=chemical_potential,
+    ).diagonalizing_bogoliubov_transform()
 
 
 def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:

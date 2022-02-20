@@ -32,6 +32,7 @@ from qiskit_research.mzm_generation.utils import (
     compute_correlation_matrix,
     compute_parity,
     counts_to_quasis,
+    diagonalizing_bogoliubov_transform,
     edge_correlation_op,
     expectation_from_correlation_matrix,
     fidelity_witness,
@@ -148,20 +149,13 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         if experiment.dynamical_decoupling_sequences:
             dd_sequences += experiment.dynamical_decoupling_sequences
         for chemical_potential in experiment.chemical_potential_values:
-            # create Hamiltonian
-            hamiltonian_quad = kitaev_hamiltonian(
+            # diagonalize
+            (transformation_matrix, _, _,) = diagonalizing_bogoliubov_transform(
                 experiment.n_modes,
                 tunneling=tunneling,
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            # diagonalize
-            # TODO compute diagonalization using cached function
-            (
-                transformation_matrix,
-                _,
-                _,
-            ) = hamiltonian_quad.diagonalizing_bogoliubov_transform()
             # compute parity
             W1 = transformation_matrix[:, : experiment.n_modes]
             W2 = transformation_matrix[:, experiment.n_modes :]
@@ -486,19 +480,17 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         number_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
 
         for chemical_potential in chemical_potential_values:
-            # create Hamiltonian
-            hamiltonian_quad = kitaev_hamiltonian(
+            # diagonalize Hamiltonian
+            (
+                transformation_matrix,
+                orbital_energies,
+                constant,
+            ) = diagonalizing_bogoliubov_transform(
                 experiment.n_modes,
                 tunneling=tunneling,
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            # compute energy
-            (
-                transformation_matrix,
-                orbital_energies,
-                constant,
-            ) = hamiltonian_quad.diagonalizing_bogoliubov_transform()
             energy_shift = -0.5 * np.sum(orbital_energies) - constant
             # compute parity
             W1 = transformation_matrix[:, : experiment.n_modes]
@@ -561,19 +553,13 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     ) -> Iterable[AnalysisResultData]:
         data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
         for chemical_potential in chemical_potential_values:
-            # create Hamiltonian
-            hamiltonian_quad = kitaev_hamiltonian(
+            # diagonalize Hamiltonian
+            (transformation_matrix, _, _,) = diagonalizing_bogoliubov_transform(
                 n_modes,
                 tunneling=tunneling,
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            # diagonalize
-            (
-                transformation_matrix,
-                _,
-                _,
-            ) = hamiltonian_quad.diagonalizing_bogoliubov_transform()
             W1 = transformation_matrix[:, :n_modes]
             W2 = transformation_matrix[:, n_modes:]
             full_transformation_matrix = np.block([[W1, W2], [W2.conj(), W1.conj()]])
@@ -644,11 +630,12 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 chemical_potential=chemical_potential,
             )
             # diagonalize
-            (
-                _,
-                orbital_energies,
-                constant,
-            ) = hamiltonian_quad.diagonalizing_bogoliubov_transform()
+            (_, orbital_energies, constant,) = diagonalizing_bogoliubov_transform(
+                n_modes,
+                tunneling=tunneling,
+                superconducting=superconducting,
+                chemical_potential=chemical_potential,
+            )
             energy_shift = -0.5 * np.sum(orbital_energies) - constant
             for occupied_orbitals in occupied_orbitals_list:
                 exact_energy = (
