@@ -17,6 +17,7 @@ from typing import (
     Callable,
     Dict,
     FrozenSet,
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -43,6 +44,19 @@ if TYPE_CHECKING:
 
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
+
+
+def mode_combinations(n_modes: int) -> Iterable[tuple[int]]:
+    """Yields mode combinations with 0 or 1 particles or holes."""
+    # no particles
+    yield ()
+    # no holes
+    yield tuple(range(n_modes))
+    for i in range(n_modes):
+        # one particle
+        yield ((i,))
+        # one hole
+        yield tuple(range(i)) + tuple(range(i + 1, n_modes))
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
