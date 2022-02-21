@@ -491,7 +491,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            energy_shift = -0.5 * np.sum(orbital_energies) - constant
+            energy_shift = -0.5 * chemical_potential * experiment.n_modes
             # compute parity
             W1 = transformation_matrix[:, : experiment.n_modes]
             W2 = transformation_matrix[:, experiment.n_modes :]
@@ -636,7 +636,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            energy_shift = -0.5 * np.sum(orbital_energies) - constant
+            energy_shift = -0.5 * chemical_potential * n_modes
             for occupied_orbitals in occupied_orbitals_list:
                 exact_energy = (
                     np.sum(orbital_energies[list(occupied_orbitals)]) + constant
