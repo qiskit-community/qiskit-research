@@ -46,13 +46,17 @@ if TYPE_CHECKING:
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
 
-def mode_combinations(n_modes: int) -> Iterable[tuple[int]]:
-    """Yields mode combinations with 0 or 1 particles or holes."""
+def orbital_combinations(
+    n_modes: int, threshold: Optional[int] = None
+) -> Iterable[tuple[int]]:
+    """Yields orbital combinations with 0 or 1 particles or holes."""
+    if threshold is None:
+        threshold = n_modes
     # no particles
     yield ()
     # no holes
     yield tuple(range(n_modes))
-    for i in range(n_modes):
+    for i in range(threshold):
         # one particle
         yield ((i,))
         # one hole
