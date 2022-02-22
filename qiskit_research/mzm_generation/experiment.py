@@ -176,64 +176,17 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             yield permutation, "superconducting_minus_even"
             yield permutation, "superconducting_minus_odd"
 
-    # HACK override run because Qiskit Experiments does not support custom transpilation
-    # See https://github.com/Qiskit/qiskit-experiments/issues/669
-    def run(
-        self,
-        backend: Optional[Backend] = None,
-        analysis: Optional[Union[BaseAnalysis, None]] = "default",
-        timeout: Optional[float] = None,
-        circuits_per_job: Optional[int] = None,
-        **run_options,
-    ) -> ExperimentData:
-        if backend is not None or analysis != "default":
-            # Make a copy to update analysis or backend if one is provided at runtime
-            experiment = self.copy()
-            if backend:
-                experiment._set_backend(backend)
-            if isinstance(analysis, BaseAnalysis):
-                experiment.analysis = analysis
-        else:
-            experiment = self
-
-        if experiment.backend is None:
-            raise RuntimeError("Cannot run experiment, no backend has been set.")
-
-        # Initialize result container
-        experiment_data = experiment._initialize_experiment_data()
-
-        # Run options
-        run_opts = copy.copy(experiment.run_options)
-        run_opts.update_options(**run_options)
-        run_opts = run_opts.__dict__
-
-        # Generate and transpile circuits
-        transpile_opts = copy.copy(experiment.transpile_options.__dict__)
-        transpile_opts["initial_layout"] = list(experiment.physical_qubits)
-        circuits = self._transpile(
-            experiment.circuits(), experiment.backend, **transpile_opts
-        )
-        experiment._postprocess_transpiled_circuits(circuits, **run_options)
-
-        # Run jobs
-        jobs = experiment._run_jobs(circuits, circuits_per_job, **run_opts)
-        experiment_data.add_jobs(jobs, timeout=timeout)
-        experiment._add_job_metadata(experiment_data.metadata, jobs, **run_opts)
-
-        # Optionally run analysis
-        if analysis and experiment.analysis:
-            return experiment.analysis.run(experiment_data)
-        else:
-            return experiment_data
-
-    def _transpile(
-        self, circuits: list[QuantumCircuit], backend: Backend, **transpile_options
-    ) -> list[QuantumCircuit]:
+    def _transpiled_circuits(self) -> list[QuantumCircuit]:
+        """Return a list of experiment circuits, transpiled."""
+        transpile_opts = copy.copy(self.transpile_options.__dict__)
+        transpile_opts["initial_layout"] = list(self.physical_qubits)
         transpiled_circuits = []
-        for circuit in circuits:
-            transpiled = transpile(circuit, backend, **transpile_options)
+        for circuit in self.circuits():
+            transpiled = transpile(circuit, self.backend, **transpile_opts)
             dd_sequence = circuit.metadata["params"].dynamical_decoupling_sequence
             if dd_sequence:
-                transpiled = add_dynamical_decoupling(transpiled, backend, dd_sequence)
+                transpiled = add_dynamical_decoupling(
+                    transpiled, self.backend, dd_sequence
+                )
             transpiled_circuits.append(transpiled)
         return transpiled_circuits
