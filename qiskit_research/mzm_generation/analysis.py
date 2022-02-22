@@ -38,6 +38,7 @@ from qiskit_research.mzm_generation.utils import (
     fidelity_witness,
     kitaev_hamiltonian,
     number_op,
+    orbital_combinations,
     post_select_quasis,
     purify_idempotent_matrix,
 )
@@ -537,6 +538,30 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("parity_exact", zip_dict(parity_exact))
         yield AnalysisResultData("number_exact", zip_dict(number_exact))
 
+        # BdG
+        occupied_orbitals_set = set(experiment.occupied_orbitals_list)
+        combs = list(orbital_combinations(experiment.n_modes))
+        threshold = -1
+        for i in range(0, len(combs), 2):
+            if (
+                combs[i] not in occupied_orbitals_set
+                or combs[i + 1] not in occupied_orbitals_set
+            ):
+                break
+            threshold += 1
+        if threshold >= 0:
+            bdg_energy = np.zeros((2 * threshold, len(chemical_potential_values)))
+            low = np.array(energy_exact[()])
+            high = np.array(energy_exact[tuple(range(experiment.n_modes))])
+            for i in range(threshold):
+                particle = np.array(energy_exact[combs[2 * i + 2]])
+                hole = np.array(energy_exact[combs[2 * i + 3]])
+                bdg_energy[i] = low - particle
+                bdg_energy[threshold + i] = high - hole
+            yield AnalysisResultData(
+                f"bdg_energy_exact", (bdg_energy, chemical_potential_values)
+            )
+
     def _compute_fidelity_witness(
         self,
         label: str,
@@ -662,6 +687,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"energy_{label}", data_zipped)
 
+        # error
         error = np.zeros(len(chemical_potential_values))
         error_stddev = np.zeros(len(chemical_potential_values))
         for occupied_orbitals in occupied_orbitals_list:
@@ -673,6 +699,32 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         error /= len(occupied_orbitals_list)
         error_stddev = np.sqrt(error_stddev) / len(occupied_orbitals_list)
         yield AnalysisResultData(f"energy_error_{label}", (error, error_stddev))
+
+        # BdG
+        occupied_orbitals_set = set(occupied_orbitals_list)
+        combs = list(orbital_combinations(n_modes))
+        threshold = -1
+        for i in range(0, len(combs), 2):
+            if (
+                combs[i] not in occupied_orbitals_set
+                or combs[i + 1] not in occupied_orbitals_set
+            ):
+                break
+            threshold += 1
+        if threshold >= 0:
+            bdg_energy = np.zeros((2 * threshold, len(chemical_potential_values)))
+            bdg_stddev = np.zeros((2 * threshold, len(chemical_potential_values)))
+            low, low_stddev = data_zipped[()]
+            high, high_stddev = data_zipped[tuple(range(n_modes))]
+            for i in range(threshold):
+                particle, particle_stddev = data_zipped[combs[2 * i + 2]]
+                hole, hole_stddev = data_zipped[combs[2 * i + 3]]
+                bdg_energy[i] = low - particle
+                bdg_energy[threshold + i] = high - hole
+                bdg_stddev[i] = low_stddev ** 2 + particle_stddev ** 2
+                bdg_stddev[threshold + i] = high_stddev ** 2 + hole_stddev ** 2
+            bdg_stddev = np.sqrt(bdg_stddev)
+            yield AnalysisResultData(f"bdg_energy_{label}", (bdg_energy, bdg_stddev))
 
     def _compute_edge_correlation(
         self,
