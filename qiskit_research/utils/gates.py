@@ -11,11 +11,12 @@
 # that they have been altered from the originals.
 
 from typing import Optional
-from qiskit.qasm import pi
-import numpy
 
-from qiskit.circuit import QuantumRegister
+import numpy
+from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
+from qiskit.circuit.library import U3Gate
+from qiskit.qasm import pi
 
 
 class XpGate(Gate):
@@ -31,10 +32,6 @@ class XpGate(Gate):
         """
         gate xp a { u3(pi,0,pi) a; }
         """
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
         q = QuantumRegister(1, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, 0, pi), [q[0]], [])]
@@ -65,10 +62,6 @@ class XmGate(Gate):
         """
         gate xm a { u3(pi,0,pi) a; }
         """
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
         q = QuantumRegister(1, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, 0, pi), [q[0]], [])]
@@ -96,10 +89,6 @@ class YpGate(Gate):
         super().__init__("yp", 1, [], label=label)
 
     def _define(self):
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
         q = QuantumRegister(1, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])]
@@ -127,10 +116,6 @@ class YmGate(Gate):
         super().__init__("ym", 1, [], label=label)
 
     def _define(self):
-        # pylint: disable=cyclic-import
-        from qiskit.circuit.quantumcircuit import QuantumCircuit
-        from .u3 import U3Gate
-
         q = QuantumRegister(1, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])]
