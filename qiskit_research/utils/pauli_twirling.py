@@ -20,6 +20,7 @@ from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate, RZXGate
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
+from qiskit.quantum_info import Operator
 
 if TYPE_CHECKING:
     from qiskit.transpiler.basepasses import BasePass
@@ -28,6 +29,7 @@ def add_pauli_twirls(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     entangler_str: str,
     num_seeds: int,
+    verify=False,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
     Add pairs of gates before/after entangling gate randomly
@@ -59,11 +61,15 @@ def add_pauli_twirls(
                 mini_dag.apply_operation_back(twirl_gates[twirl_idxs[twirl_idx]][1], qargs=[p[1]])
 
                 twirl_node = this_dag.op_nodes(op=twirl_op).pop()
-                this_dag.substitute_node_with_dag(node=twirl_node, input_dag=mini_dag, wires=[p[0], p[1]])
+                this_dag.substitute_node_with_dag(node=run[0], input_dag=mini_dag)
 
             twirled_circs.append(dag_to_circuit(this_dag))
 
         all_twirled_circs.append(twirled_circs)
+
+    if verify:
+        if not verify_equiv_circuits(circuits, all_twirled_circs):
+            print("Twirled circuits are not equivalent!")
 
     return all_twirled_circs
 
@@ -79,3 +85,22 @@ def get_twirl_gates_list(entangler_str: str) -> List[Gate]:
                             [YGate(), YGate()], [ZGate(), XGate()]])
     else:
         print("Twirling gates not defined for entangler "+entangler_str)
+
+def verify_equiv_circuits(circuits, all_twirled_circs):
+    if isinstance(circuits, QuantumCircuit):
+        circuits = [circuits]
+    if isinstance(all_twirled_circs, QuantumCircuit):
+        all_twirled_circs = [all_twirled_circs]
+
+    all_equiv_circuits = True
+    for cidx, circ in enumerate(circuits):
+        for t_circ in all_twirled_circs[cidx]:
+            param_bind = {}
+            for param in circ.parameters:
+                param_bind[param] = np.random.random()
+
+            all_equiv_circuits = all_equiv_circuits and Operator(
+                circ.bind_parameters(param_bind)).equiv(Operator(t_circ.bind_parameters(param_bind))
+            )
+
+    return all_equiv_circuits
