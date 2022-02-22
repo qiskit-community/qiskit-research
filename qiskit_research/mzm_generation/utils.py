@@ -11,13 +11,13 @@
 # that they have been altered from the originals.
 
 import functools
-import random
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
     Callable,
     Dict,
     FrozenSet,
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -44,6 +44,23 @@ if TYPE_CHECKING:
 
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
+
+
+def orbital_combinations(
+    n_modes: int, threshold: Optional[int] = None
+) -> Iterable[tuple[int]]:
+    """Yields orbital combinations with 0 or 1 particles or holes."""
+    if threshold is None:
+        threshold = n_modes
+    # no particles
+    yield ()
+    # no holes
+    yield tuple(range(n_modes))
+    for i in range(threshold):
+        # one particle
+        yield ((i,))
+        # one hole
+        yield tuple(range(i)) + tuple(range(i + 1, n_modes))
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
@@ -92,6 +109,22 @@ def kitaev_hamiltonian(
     hermitian_part = -tunneling * (upper_diag + lower_diag) + chemical_potential * eye
     antisymmetric_part = superconducting * (upper_diag - lower_diag)
     return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
+
+
+@functools.lru_cache
+def diagonalizing_bogoliubov_transform(
+    n_modes: int,
+    tunneling: float,
+    superconducting: Union[float, complex],
+    chemical_potential: float,
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """Diagonalize a Kitaev Hamiltonian."""
+    return kitaev_hamiltonian(
+        n_modes,
+        tunneling=tunneling,
+        superconducting=superconducting,
+        chemical_potential=chemical_potential,
+    ).diagonalizing_bogoliubov_transform()
 
 
 def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
@@ -601,6 +634,5 @@ def pick_qubit_layout(
     circuit = FermionicGaussianState(
         transformation_matrix, occupied_orbitals=occupied_orbitals
     )
-    transpiled = transpile(circuit, random.choice(backends), optimization_level=3)
-    deflated = mapomatic.deflate_circuit(transpiled)
-    return mapomatic.best_overall_layout(deflated, backends)
+    # TODO check that mapomatic returns a line
+    return mapomatic.best_overall_layout(circuit, backends)
