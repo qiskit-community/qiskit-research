@@ -10,22 +10,19 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import Iterable, List, Optional, TYPE_CHECKING, Union
+from typing import Iterable, List, Union
 from qiskit.qasm import pi
 
 from qiskit import pulse
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import XGate, YGate
-from qiskit.providers import BaseBackend
 from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel
 from qiskit.transpiler import InstructionDurations, PassManager
+from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes import ALAPSchedule, DynamicalDecoupling
 from qiskit_research.utils.gates import XpGate, XmGate, YpGate, YmGate
-
-if TYPE_CHECKING:
-    from qiskit.transpiler.basepasses import BasePass
 
 
 DD_SEQUENCE = {
@@ -49,9 +46,9 @@ DD_SEQUENCE = {
 
 def add_dynamical_decoupling(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
-    backend: Union[Backend, BaseBackend],
+    backend: Backend,
     dd_str: str,
-    scheduler: "BasePass" = ALAPSchedule,
+    scheduler: BasePass = ALAPSchedule,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """Add dynamical decoupling sequences and calibrations to circuits.
 
@@ -64,22 +61,17 @@ def add_dynamical_decoupling(
 
 
 def get_dd_sequence(dd_str: str) -> List[Gate]:
-    """
-    Returns dynamical decoupling sequence based on input string.
-    We will define standard dynamical decoupling sequences via the
-    strings:
-
-        'X2': X-X
-        'X2pm': Xp-Xm
-        'XY4': X-Y-X-Y
-        'XY4pm': Xp-Yp-Xm-Ym
-        'XY8': X-Y-X-Y-Y-X-Y-X
-        'XY8pm': Xp-Yp-Xm-Ym-Ym-Xm-Yp-Xp
-    """
-    return DD_SEQUENCE.get(dd_str, [])
+    """Return dynamical decoupling sequence based on input string."""
+    if dd_str not in DD_SEQUENCE:
+        raise ValueError(
+            f'The string "{dd_str}" does not describe a valid '
+            "dynamical decoupling sequence. Please use one of the following: "
+            f"{list(DD_SEQUENCE.keys())}."
+        )
+    return DD_SEQUENCE[dd_str]
 
 
-def get_timing(backend) -> InstructionDurations:
+def get_instruction_durations(backend: Backend) -> InstructionDurations:
     """
     Retrieves gate timing information for the backend from the instruction
     schedule map, and returns the type InstructionDurations for use by
@@ -122,14 +114,11 @@ def get_timing(backend) -> InstructionDurations:
 
 def add_dd_sequence(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
-    backend: Union[Backend, BaseBackend],
+    backend: Backend,
     dd_str: str,
-    scheduler: "BasePass" = ALAPSchedule,
+    scheduler: BasePass = ALAPSchedule,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
-    """
-    Schedules the circuit accoring to sched_method string, followed by
-    inserting the dynamical decoupling sequence into the circuit(s).
-    """
+    """Add dynamical decoupling sequences to a circuit or circuits."""
     pass_manager = PassManager(
         list(dynamical_decoupling_passes(backend, dd_str, scheduler))
     )
@@ -137,10 +126,10 @@ def add_dd_sequence(
 
 
 def dynamical_decoupling_passes(
-    backend, dd_str: str, scheduler: "BasePass" = ALAPSchedule
-) -> Iterable["BasePass"]:
+    backend, dd_str: str, scheduler: BasePass = ALAPSchedule
+) -> Iterable[BasePass]:
     """Yields transpilation passes for dynamical decoupling."""
-    durations = get_timing(backend)
+    durations = get_instruction_durations(backend)
     sequence = get_dd_sequence(dd_str)
     yield scheduler(durations)
     yield DynamicalDecoupling(durations, sequence)
@@ -148,7 +137,7 @@ def dynamical_decoupling_passes(
 
 def add_dd_pulse_calibrations(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
-    backend: Union[Backend, BaseBackend],
+    backend: Backend,
 ):
     """
     Build the pulse schedule and attach as pulse gate to all the
