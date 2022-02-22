@@ -11,13 +11,13 @@
 # that they have been altered from the originals.
 
 import functools
-import random
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
     Callable,
     Dict,
     FrozenSet,
+    Iterable,
     List,
     Optional,
     Tuple,
@@ -29,6 +29,7 @@ import mthree
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import XYGate
+from qiskit.providers import Backend
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
@@ -39,17 +40,37 @@ from qiskit_nature.operators.second_quantization import (
 from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 
 if TYPE_CHECKING:
-    from qiskit.providers.ibmq import IBMQBackend
     from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
 
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
 
+def orbital_combinations(
+    n_modes: int, threshold: Optional[int] = None
+) -> Iterable[tuple[int]]:
+    """Yields orbital combinations with 0 or 1 particles or holes."""
+    if threshold is None:
+        threshold = n_modes
+    # no particles
+    yield ()
+    # no holes
+    yield tuple(range(n_modes))
+    for i in range(threshold):
+        # one particle
+        yield ((i,))
+        # one hole
+        yield tuple(range(i)) + tuple(range(i + 1, n_modes))
+
+
 def majorana_op(index: int, action: int) -> FermionicOp:
     if action == 0:
         return FermionicOp(f"-_{index}") + FermionicOp(f"+_{index}")
     return -1j * (FermionicOp(f"-_{index}") - FermionicOp(f"+_{index}"))
+
+
+def site_correlation_op(site: int) -> FermionicOp:
+    return -1j * majorana_op(0, 0) @ majorana_op(site // 2, site % 2)
 
 
 def edge_correlation_op(n_modes: int) -> FermionicOp:
@@ -88,6 +109,22 @@ def kitaev_hamiltonian(
     hermitian_part = -tunneling * (upper_diag + lower_diag) + chemical_potential * eye
     antisymmetric_part = superconducting * (upper_diag - lower_diag)
     return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
+
+
+@functools.lru_cache
+def diagonalizing_bogoliubov_transform(
+    n_modes: int,
+    tunneling: float,
+    superconducting: Union[float, complex],
+    chemical_potential: float,
+) -> tuple[np.ndarray, np.ndarray, float]:
+    """Diagonalize a Kitaev Hamiltonian."""
+    return kitaev_hamiltonian(
+        n_modes,
+        tunneling=tunneling,
+        superconducting=superconducting,
+        chemical_potential=chemical_potential,
+    ).diagonalizing_bogoliubov_transform()
 
 
 def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
@@ -515,7 +552,9 @@ def evaluate_diagonal_op(operator: str, bitstring: str):
     return prod
 
 
-def compute_parity(quasis: Dict[str, Dict[str, float]]) -> Tuple[float, float]:
+def compute_parity(
+    quasis: Dict[Tuple[Tuple[int, ...], str], mthree.classes.QuasiDistribution]
+) -> Tuple[float, float]:
     """Compute parity from quasiprobabilities."""
     # TODO maybe use probs instead of quasis to avoid value outside [-1, 1]
     n = len(next(iter(next(iter(quasis.values())))))
@@ -578,7 +617,7 @@ def purify_idempotent_matrix(
 
 
 def pick_qubit_layout(
-    n_modes: int, backends: List["IBMQBackend"]
+    n_modes: int, backends: List[Backend]
 ) -> Tuple[List[int], str, float]:
     """Pick qubit layout using mapomatic."""
     tunneling = -1.0
@@ -595,6 +634,5 @@ def pick_qubit_layout(
     circuit = FermionicGaussianState(
         transformation_matrix, occupied_orbitals=occupied_orbitals
     )
-    transpiled = transpile(circuit, random.choice(backends), optimization_level=3)
-    deflated = mapomatic.deflate_circuit(transpiled)
-    return mapomatic.best_overall_layout(deflated, backends)
+    # TODO check that mapomatic returns a line
+    return mapomatic.best_overall_layout(circuit, backends)
