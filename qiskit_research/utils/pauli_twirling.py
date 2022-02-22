@@ -15,11 +15,14 @@ from typing import Iterable, List, Optional, TYPE_CHECKING, Union
 from qiskit.qasm import pi
 import numpy as np
 
+from qiskit import pulse
 from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate, RZXGate
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
+from qiskit.providers.ibmq import IBMQBackend
+from qiskit.pulse import DriveChannel
 from qiskit.quantum_info import Operator
 
 if TYPE_CHECKING:
@@ -27,25 +30,49 @@ if TYPE_CHECKING:
 
 def add_pauli_twirls(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
+    backend: IBMQBackend,
     entangler_str: str,
-    num_seeds: int,
+    seeds: Union[int, List[int]],
     verify=False,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
     Add pairs of gates before/after entangling gate randomly
     such that they commute. This helps turn coherent error into stochastic
     error.
+
+    Args:
+        circuits (:class:`QuantumCircuit` or list(:class:`QuantumCircuit`)):
+                  Circuits to be twirled.
+        backend: (:class:`IBMQBackend`): backend the circtui will be run on, so
+                 that non-basis gates have appropriate calibrations added.
+        entangler_str (str): name of the entangling gate which will be twirled.
+        seeds (int or list(int)): number of seeds or range of randome seeds to use
+        verify (bool): verify Pauli twirls construct equivalent unitaries
     """
     if isinstance(circuits, QuantumCircuit):
         circuits = [circuits]
 
     twirl_op, twirl_gates = get_twirl_gates_list(entangler_str)
+    inst_sched_map = backend.defaults().instruction_schedule_map
+
+    # find non-basis gates which are not defined by backend
+    extra_gate_defs = []
+    for twirl_pair in twirl_gates:
+        for twirl_gate in twirl_pair:
+            if twirl_gate.name not in inst_sched_map.instructions:
+                if twirl_gate.name not in extra_gate_defs:
+                    extra_gate_defs.append(twirl_gate.name)
 
     all_twirled_circs = []
     for circ in circuits:
         dag = circuit_to_dag(circ)
         twirled_circs = []
-        for seed in range(num_seeds):
+        if isinstance(seeds, int):
+            seed_array = range(seeds)
+        else:
+            seed_array = seeds
+
+        for seed in seed_array:
             this_dag = deepcopy(dag)
             runs = this_dag.collect_runs([entangler_str])
             np.random.seed(seed)
@@ -60,10 +87,25 @@ def add_pauli_twirls(
                 mini_dag.apply_operation_back(twirl_gates[twirl_idxs[twirl_idx]][0], qargs=[p[0]])
                 mini_dag.apply_operation_back(twirl_gates[twirl_idxs[twirl_idx]][1], qargs=[p[1]])
 
-                twirl_node = this_dag.op_nodes(op=twirl_op).pop()
                 this_dag.substitute_node_with_dag(node=run[0], input_dag=mini_dag)
 
             twirled_circs.append(dag_to_circuit(this_dag))
+
+            # add pulse gates (calibrations) for non-basis gates
+            if 'y' in extra_gate_defs:
+                for qubit in range(backend.configuration().num_qubits):
+                    with pulse.build('y gate for qubit '+str(qubit)) as sched:
+                        # def of YGate() in terms of XGate() and phase_offset
+                        with pulse.phase_offset(np.pi/2, DriveChannel(qubit)):
+                            x_gate = inst_sched_map.get('x', qubits=[qubit])
+                            pulse.call(x_gate)
+
+                    # for each Y twirl
+                    for t_circ in twirled_circs:
+                        t_circ.add_calibration('y', [qubit], sched)
+
+            if 'z' in extra_gate_defs:
+                continue # qiskit knows how to handle these
 
         all_twirled_circs.append(twirled_circs)
 
@@ -100,7 +142,9 @@ def verify_equiv_circuits(circuits, all_twirled_circs):
                 param_bind[param] = np.random.random()
 
             all_equiv_circuits = all_equiv_circuits and Operator(
-                circ.bind_parameters(param_bind)).equiv(Operator(t_circ.bind_parameters(param_bind))
+                circ.bind_parameters(param_bind)).equiv(Operator(
+                    t_circ.bind_parameters(param_bind)
+                )
             )
 
     return all_equiv_circuits
