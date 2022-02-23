@@ -108,7 +108,12 @@ def kitaev_hamiltonian(
     lower_diag = np.diag(np.ones(n_modes - 1), k=-1)
     hermitian_part = -tunneling * (upper_diag + lower_diag) + chemical_potential * eye
     antisymmetric_part = superconducting * (upper_diag - lower_diag)
-    return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
+    constant = -0.5 * chemical_potential * n_modes
+    return QuadraticHamiltonian(
+        hermitian_part=hermitian_part,
+        antisymmetric_part=antisymmetric_part,
+        constant=constant,
+    )
 
 
 @functools.lru_cache
