@@ -27,7 +27,7 @@ from typing import (
 import mapomatic
 import mthree
 import numpy as np
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit
 from qiskit.circuit.library import XYGate
 from qiskit.providers import Backend
 from qiskit.quantum_info import SparsePauliOp
@@ -108,7 +108,12 @@ def kitaev_hamiltonian(
     lower_diag = np.diag(np.ones(n_modes - 1), k=-1)
     hermitian_part = -tunneling * (upper_diag + lower_diag) + chemical_potential * eye
     antisymmetric_part = superconducting * (upper_diag - lower_diag)
-    return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
+    constant = -0.5 * chemical_potential * n_modes
+    return QuadraticHamiltonian(
+        hermitian_part=hermitian_part,
+        antisymmetric_part=antisymmetric_part,
+        constant=constant,
+    )
 
 
 @functools.lru_cache
@@ -462,6 +467,18 @@ def compute_interaction_matrix(
         - Interaction matrix
         - Dictionary containing covariances between entries of the interaction matrix
     """
+    n = experiment.n_modes
+    mat = np.zeros((n, n))
+    cov = defaultdict(float)  # _CovarianceDict
+
+    permutation = tuple(range(n))
+    if (permutation, f"{label}_even") not in quasis and (
+        permutation,
+        f"{label}_odd",
+    ) not in quasis:
+        # the interaction was not measured, so it is assumed to be zero
+        return mat, cov
+
     if label == "tunneling_plus":
         sign = -1
         symmetry = 1
@@ -475,10 +492,7 @@ def compute_interaction_matrix(
         sign = 1
         symmetry = -1
 
-    n = experiment.n_modes
-
     # compute interaction matrix
-    mat = np.zeros((n, n))
     for permutation in experiment.permutations():
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
@@ -496,7 +510,6 @@ def compute_interaction_matrix(
                 mat[q, p] = symmetry * val
 
     # compute covariance
-    cov = defaultdict(float)  # _CovarianceDict
     for permutation in experiment.permutations():
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
@@ -516,8 +529,8 @@ def compute_interaction_matrix(
                         r, s = s, r
                     cov[frozenset([(p, q), (r, s)])] = 0.25 * (
                         covariance(quasi_dist, z0, z2)
-                        - covariance(quasi_dist, z0, z3)
-                        - covariance(quasi_dist, z1, z2)
+                        + sign * covariance(quasi_dist, z0, z3)
+                        + sign * covariance(quasi_dist, z1, z2)
                         + covariance(quasi_dist, z1, z3)
                     )
 

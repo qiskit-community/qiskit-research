@@ -188,24 +188,25 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                             label,
                             dynamical_decoupling_sequence=dd_sequence,
                         )
-                        counts = data[params]["counts"]
-                        # raw quasis
-                        quasis_raw[permutation, label] = counts_to_quasis(counts)
-                        # measurement error mitigation
-                        quasis_mem[permutation, label] = mit.apply_correction(
-                            counts,
-                            experiment.qubits,
-                            return_mitigation_overhead=True,
-                        )
-                        # post-selection
-                        new_quasis, removed_mass = post_select_quasis(
-                            quasis_mem[permutation, label],
-                            lambda bitstring: (-1)
-                            ** sum(1 for b in bitstring if b == "1")
-                            == exact_parity,
-                        )
-                        quasis_ps[permutation, label] = new_quasis
-                        ps_removed_mass[permutation, label] = removed_mass
+                        if params in data:
+                            counts = data[params]["counts"]
+                            # raw quasis
+                            quasis_raw[permutation, label] = counts_to_quasis(counts)
+                            # measurement error mitigation
+                            quasis_mem[permutation, label] = mit.apply_correction(
+                                counts,
+                                experiment.qubits,
+                                return_mitigation_overhead=True,
+                            )
+                            # post-selection
+                            new_quasis, removed_mass = post_select_quasis(
+                                quasis_mem[permutation, label],
+                                lambda bitstring: (-1)
+                                ** sum(1 for b in bitstring if b == "1")
+                                == exact_parity,
+                            )
+                            quasis_ps[permutation, label] = new_quasis
+                            ps_removed_mass[permutation, label] = removed_mass
                     # save data
                     quasi_dists_raw[
                         tunneling,
@@ -492,7 +493,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            energy_shift = -0.5 * chemical_potential * experiment.n_modes
             # compute parity
             W1 = transformation_matrix[:, : experiment.n_modes]
             W2 = transformation_matrix[:, experiment.n_modes :]
@@ -523,7 +523,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     np.sum(np.diag(corr_exact)[: experiment.n_modes])
                 )
                 # add computed values to data storage objects
-                energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
+                energy_exact[occupied_orbitals].append(exact_energy)
                 edge_correlation_exact[occupied_orbitals].append(exact_edge_correlation)
                 parity_exact[occupied_orbitals].append(exact_parity)
                 number_exact[occupied_orbitals].append(exact_number)
@@ -606,12 +606,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     dynamical_decoupling_sequence,
                 ]
                 fidelity_wit, stddev = fidelity_witness(corr_mat, corr_exact, cov)
-                data[occupied_orbitals].append(
-                    (
-                        fidelity_wit,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((fidelity_wit, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"fidelity_witness_{label}", data_zipped)
 
@@ -661,12 +656,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            energy_shift = -0.5 * chemical_potential * n_modes
             for occupied_orbitals in occupied_orbitals_list:
                 exact_energy = (
                     np.sum(orbital_energies[list(occupied_orbitals)]) + constant
                 )
-                energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
+                energy_exact[occupied_orbitals].append(exact_energy)
 
                 corr_mat, cov = corr[
                     tunneling,
@@ -678,12 +672,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 energy, stddevs = np.real(
                     expectation_from_correlation_matrix(hamiltonian_quad, corr_mat, cov)
                 )
-                data[occupied_orbitals].append(
-                    (
-                        energy + energy_shift,
-                        stddevs,
-                    )
-                )
+                data[occupied_orbitals].append((energy, stddevs))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"energy_{label}", data_zipped)
 
@@ -754,12 +743,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 edge_correlation_val, stddev = np.real(
                     expectation_from_correlation_matrix(edge_correlation, corr_mat, cov)
                 )
-                data[occupied_orbitals].append(
-                    (
-                        edge_correlation_val,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((edge_correlation_val, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"edge_correlation_{label}", data_zipped)
 
@@ -791,12 +775,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 number_val, stddev = np.real(
                     expectation_from_correlation_matrix(number, corr_mat, cov)
                 )
-                data[occupied_orbitals].append(
-                    (
-                        number_val,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((number_val, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"number_{label}", data_zipped)
 
@@ -824,11 +803,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     dynamical_decoupling_sequence,
                 ]
                 parity, stddev = compute_parity(quasis)
-                data[occupied_orbitals].append(
-                    (
-                        parity,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((parity, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"parity_{label}", data_zipped)

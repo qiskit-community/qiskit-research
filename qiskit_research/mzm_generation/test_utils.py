@@ -86,15 +86,18 @@ class TestMZMGenerationUtils(unittest.TestCase):
         superconducting = 1 + 2j
         chemical_potential = 1.0
         occupied_orbitals = ()
+        backend = AerSimulator(method="statevector")
         experiment = KitaevHamiltonianExperiment(
             experiment_id="test",
+            backend=backend,
+            readout_calibration_date="test",
             qubits=list(range(n_modes)),
             tunneling_values=[tunneling],
             superconducting_values=[superconducting],
             chemical_potential_values=[chemical_potential],
             occupied_orbitals_list=[occupied_orbitals],
         )
-        backend = AerSimulator(method="statevector")
+
         experiment_data = experiment.run(backend=backend, shots=1000)
         experiment_data.block_for_results()
         data = {}
@@ -106,6 +109,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 _occupied_orbitals,
                 permutation,
                 measurement_label,
+                dynamical_decoupling_sequence,
             ) = result["metadata"]["params"]
             params = CircuitParameters(
                 tunneling=_tunneling,
@@ -116,6 +120,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 occupied_orbitals=tuple(_occupied_orbitals),
                 permutation=tuple(permutation),
                 measurement_label=measurement_label,
+                dynamical_decoupling_sequence=dynamical_decoupling_sequence,
             )
             data[params] = result
         quasis = {}
@@ -127,6 +132,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 occupied_orbitals,
                 permutation,
                 label,
+                dynamical_decoupling_sequence,
             )
             counts = data[params]["counts"]
             quasis[permutation, label] = counts_to_quasis(counts)
