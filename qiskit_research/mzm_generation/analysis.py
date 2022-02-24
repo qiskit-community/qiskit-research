@@ -188,24 +188,25 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                             label,
                             dynamical_decoupling_sequence=dd_sequence,
                         )
-                        counts = data[params]["counts"]
-                        # raw quasis
-                        quasis_raw[permutation, label] = counts_to_quasis(counts)
-                        # measurement error mitigation
-                        quasis_mem[permutation, label] = mit.apply_correction(
-                            counts,
-                            experiment.qubits,
-                            return_mitigation_overhead=True,
-                        )
-                        # post-selection
-                        new_quasis, removed_mass = post_select_quasis(
-                            quasis_mem[permutation, label],
-                            lambda bitstring: (-1)
-                            ** sum(1 for b in bitstring if b == "1")
-                            == exact_parity,
-                        )
-                        quasis_ps[permutation, label] = new_quasis
-                        ps_removed_mass[permutation, label] = removed_mass
+                        if params in data:
+                            counts = data[params]["counts"]
+                            # raw quasis
+                            quasis_raw[permutation, label] = counts_to_quasis(counts)
+                            # measurement error mitigation
+                            quasis_mem[permutation, label] = mit.apply_correction(
+                                counts,
+                                experiment.qubits,
+                                return_mitigation_overhead=True,
+                            )
+                            # post-selection
+                            new_quasis, removed_mass = post_select_quasis(
+                                quasis_mem[permutation, label],
+                                lambda bitstring: (-1)
+                                ** sum(1 for b in bitstring if b == "1")
+                                == exact_parity,
+                            )
+                            quasis_ps[permutation, label] = new_quasis
+                            ps_removed_mass[permutation, label] = removed_mass
                     # save data
                     quasi_dists_raw[
                         tunneling,

@@ -467,6 +467,18 @@ def compute_interaction_matrix(
         - Interaction matrix
         - Dictionary containing covariances between entries of the interaction matrix
     """
+    n = experiment.n_modes
+    mat = np.zeros((n, n))
+    cov = defaultdict(float)  # _CovarianceDict
+
+    permutation = tuple(range(n))
+    if (permutation, f"{label}_even") not in quasis and (
+        permutation,
+        f"{label}_odd",
+    ) not in quasis:
+        # the interaction was not measured, so it is assumed to be zero
+        return mat, cov
+
     if label == "tunneling_plus":
         sign = -1
         symmetry = 1
@@ -480,10 +492,7 @@ def compute_interaction_matrix(
         sign = 1
         symmetry = -1
 
-    n = experiment.n_modes
-
     # compute interaction matrix
-    mat = np.zeros((n, n))
     for permutation in experiment.permutations():
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
@@ -501,7 +510,6 @@ def compute_interaction_matrix(
                 mat[q, p] = symmetry * val
 
     # compute covariance
-    cov = defaultdict(float)  # _CovarianceDict
     for permutation in experiment.permutations():
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
