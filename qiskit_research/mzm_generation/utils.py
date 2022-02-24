@@ -529,8 +529,8 @@ def compute_interaction_matrix(
                         r, s = s, r
                     cov[frozenset([(p, q), (r, s)])] = 0.25 * (
                         covariance(quasi_dist, z0, z2)
-                        - covariance(quasi_dist, z0, z3)
-                        - covariance(quasi_dist, z1, z2)
+                        + sign * covariance(quasi_dist, z0, z3)
+                        + sign * covariance(quasi_dist, z1, z2)
                         + covariance(quasi_dist, z1, z3)
                     )
 
