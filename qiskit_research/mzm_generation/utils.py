@@ -27,7 +27,7 @@ from typing import (
 import mapomatic
 import mthree
 import numpy as np
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit
 from qiskit.circuit.library import XYGate
 from qiskit.providers import Backend
 from qiskit.quantum_info import SparsePauliOp
