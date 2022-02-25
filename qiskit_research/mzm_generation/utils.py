@@ -201,7 +201,7 @@ def fidelity_witness(
     # compute fidelity witness
     dim, _ = corr.shape
     n = dim // 2
-    witness = 1 + np.trace((corr - corr_target) @ (corr_target - 0.5 * np.eye(dim)))
+    witness = 1 - np.trace((corr_target - corr) @ (corr_target - 0.5 * np.eye(dim)))
 
     # compute variance
     var = 0.0
