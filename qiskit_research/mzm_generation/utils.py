@@ -648,4 +648,4 @@ def pick_qubit_layout(
         transformation_matrix, occupied_orbitals=occupied_orbitals
     )
     # TODO check that mapomatic returns a line
-    return mapomatic.best_overall_layout(circuit, backends)
+    return mapomatic.best_overall_layout(circuit.decompose(), backends)
