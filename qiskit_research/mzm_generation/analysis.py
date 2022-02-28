@@ -705,15 +705,38 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             bdg_stddev = np.zeros((2 * threshold, len(chemical_potential_values)))
             low, low_stddev = data_zipped[()]
             high, high_stddev = data_zipped[tuple(range(n_modes))]
+            error = np.zeros(len(chemical_potential_values))
+            error_stddev = np.zeros(len(chemical_potential_values))
+            low_exact = energy_exact[()]
+            high_exact = energy_exact[tuple(range(n_modes))]
             for i in range(threshold):
+                # data
                 particle, particle_stddev = data_zipped[combs[2 * i + 2]]
                 hole, hole_stddev = data_zipped[combs[2 * i + 3]]
+                # exact values
+                particle_exact = np.array(energy_exact[combs[2 * i + 2]])
+                hole_exact = np.array(energy_exact[combs[2 * i + 3]])
+                # energy
                 bdg_energy[i] = low - particle
                 bdg_energy[threshold + i] = high - hole
+                # stddev
                 bdg_stddev[i] = low_stddev ** 2 + particle_stddev ** 2
                 bdg_stddev[threshold + i] = high_stddev ** 2 + hole_stddev ** 2
+                # error
+                error += np.abs((low - particle) - (low_exact - particle_exact))
+                error += np.abs((high - hole) - (high_exact - hole_exact))
+                # error stddev
+                error_stddev += (
+                    np.array(low_stddev) ** 2
+                    + np.array(particle_stddev) ** 2
+                    + np.array(high_stddev) ** 2
+                    + np.array(hole_stddev) ** 2
+                )
             bdg_stddev = np.sqrt(bdg_stddev)
+            error /= 2 * threshold
+            error_stddev = np.sqrt(error_stddev) / (2 * threshold)
             yield AnalysisResultData(f"bdg_energy_{label}", (bdg_energy, bdg_stddev))
+            yield AnalysisResultData(f"bdg_energy_error_{label}", (error, error_stddev))
 
     def _compute_edge_correlation(
         self,
