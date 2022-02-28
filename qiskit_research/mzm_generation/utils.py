@@ -211,36 +211,34 @@ def fidelity_witness(
             for j in range(i + 1, n):
                 for k in range(n):
                     for ell in range(k + 1, n):
-                        var += 2 * np.real(
-                            corr_target[i, j].conjugate()
-                            * corr_target[k, ell].conjugate()
-                            * cov[frozenset([(i, j), (k, ell)])]
-                        )
-                        var += 2 * np.real(
-                            corr_target[i, j].conjugate()
+                        var += 8 * np.real(
+                            corr_target[i, j]
                             * corr_target[k, ell]
                             * cov[frozenset([(i, j), (k, ell)])]
                         )
-                        var += 2 * np.real(
-                            corr_target[i, j + n].conjugate()
-                            * corr_target[k, ell + n].conjugate()
+                        var += 8 * np.real(
+                            corr_target[i, j]
+                            * corr_target[k, ell].conjugate()
+                            * cov[frozenset([(i, j), (k, ell)])]
+                        )
+                        var += 8 * np.real(
+                            corr_target[i, j + n]
+                            * corr_target[k, ell + n]
                             * cov[frozenset([(i, j + n), (k, ell + n)])]
                         )
-                        var += 2 * np.real(
-                            corr_target[i, j + n].conjugate()
-                            * corr_target[k, ell + n]
+                        var += 8 * np.real(
+                            corr_target[i, j + n]
+                            * corr_target[k, ell + n].conjugate()
                             * cov[frozenset([(i, j + n), (k, ell + n)])]
                         )
         # diagonal entries
         for i in range(n):
             for j in range(i, n):
                 var += (1 + (i != j)) * (
-                    (corr_target[i, i] - float(i == j))
-                    * (corr_target[j, j] - float(i == j))
+                    (1 - 2 * corr_target[i, i])
+                    * (1 - 2 * corr_target[j, j])
                     * cov[frozenset([(i, i), (j, j)])]
                 )
-        # account for lower half of correlation matrices
-        var *= 4
 
     return np.real(witness), np.sqrt(np.real(var))
 
