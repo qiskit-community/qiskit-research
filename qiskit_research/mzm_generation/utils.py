@@ -327,19 +327,29 @@ def expectation_from_correlation_matrix(
                 if not term_ij:
                     continue
                 (action_i, i), (action_j, j) = term_ij
+                sign_ij = 1
                 if i > j:
                     i, j = j, i
                     action_i, action_j = action_j, action_i
+                    sign_ij *= -1
+                if action_i == "-":
+                    sign_ij *= -1
                 for term_kl, coeff_kl in operator._data:
                     if not term_kl:
                         continue
                     (action_k, k), (action_l, ell) = term_kl
+                    sign_kl = 1
                     if k > ell:
                         k, ell = ell, k
                         action_k, action_l = action_l, action_k
+                        sign_kl = -1
+                    if action_k == "-":
+                        sign_kl *= -1
                     var += (
                         coeff_ij
                         * coeff_kl.conjugate()
+                        * sign_ij
+                        * sign_kl
                         * cov[
                             frozenset(
                                 [
