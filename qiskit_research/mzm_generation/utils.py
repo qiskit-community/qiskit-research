@@ -74,7 +74,7 @@ def site_correlation_op(site: int) -> FermionicOp:
 
 
 def edge_correlation_op(n_modes: int) -> FermionicOp:
-    return -1j * majorana_op(0, 0) @ majorana_op(n_modes - 1, 1)
+    return site_correlation_op(2 * n_modes - 1)
 
 
 def number_op(n_modes: int) -> FermionicOp:

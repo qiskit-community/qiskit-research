@@ -41,6 +41,7 @@ from qiskit_research.mzm_generation.utils import (
     orbital_combinations,
     post_select_quasis,
     purify_idempotent_matrix,
+    site_correlation_op,
 )
 
 
@@ -457,6 +458,46 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 experiment.occupied_orbitals_list,
                 dd_sequence,
             )
+            yield from self._compute_site_correlation(
+                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_raw,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
+            yield from self._compute_site_correlation(
+                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_mem,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
+            yield from self._compute_site_correlation(
+                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_ps,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
+            yield from self._compute_site_correlation(
+                "pur" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_pur,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
 
     def _compute_simulation_results(
         self,
@@ -561,6 +602,56 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             yield AnalysisResultData(
                 f"bdg_energy_exact", (bdg_energy, chemical_potential_values)
             )
+
+        # site correlation
+        # construct operators
+        site_correlation_ops = [
+            site_correlation_op(i) for i in range(1, 2 * experiment.n_modes)
+        ]
+
+        # create data storage objects
+        site_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+
+        for chemical_potential in experiment.chemical_potential_values:
+            # diagonalize Hamiltonian
+            (
+                transformation_matrix,
+                orbital_energies,
+                constant,
+            ) = diagonalizing_bogoliubov_transform(
+                experiment.n_modes,
+                tunneling=tunneling,
+                superconducting=superconducting,
+                chemical_potential=chemical_potential,
+            )
+            W1 = transformation_matrix[:, : experiment.n_modes]
+            W2 = transformation_matrix[:, experiment.n_modes :]
+            full_transformation_matrix = np.block([[W1, W2], [W2.conj(), W1.conj()]])
+            # compute results
+            for occupied_orbitals in experiment.occupied_orbitals_list:
+                # compute exact correlation matrix
+                occupation = np.zeros(experiment.n_modes)
+                occupation[list(occupied_orbitals)] = 1.0
+                corr_diag = np.diag(np.concatenate([occupation, 1 - occupation]))
+                corr_exact = (
+                    full_transformation_matrix.T.conj()
+                    @ corr_diag
+                    @ full_transformation_matrix
+                )
+                for site_correlation in site_correlation_ops:
+                    exact_site_correlation, _ = np.real(
+                        expectation_from_correlation_matrix(
+                            site_correlation, corr_exact
+                        )
+                    )
+                    site_correlation_exact[
+                        chemical_potential, occupied_orbitals
+                    ].append(exact_site_correlation)
+
+        yield AnalysisResultData(
+            "site_correlation_exact",
+            {k: np.array(v) for k, v in site_correlation_exact.items()},
+        )
 
     def _compute_fidelity_witness(
         self,
@@ -829,3 +920,40 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 data[occupied_orbitals].append((parity, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"parity_{label}", data_zipped)
+
+    def _compute_site_correlation(
+        self,
+        label: str,
+        corr: Dict[
+            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
+            Tuple[np.ndarray, _CovarianceDict],
+        ],
+        n_modes: int,
+        tunneling: float,
+        superconducting: Union[float, complex],
+        chemical_potential_values: Iterable[float],
+        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        dynamical_decoupling_sequence: Optional[str],
+    ) -> Iterable[AnalysisResultData]:
+        site_correlation_ops = [site_correlation_op(i) for i in range(1, 2 * n_modes)]
+        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        for chemical_potential in chemical_potential_values:
+            for occupied_orbitals in occupied_orbitals_list:
+                corr_mat, cov = corr[
+                    tunneling,
+                    superconducting,
+                    chemical_potential,
+                    occupied_orbitals,
+                    dynamical_decoupling_sequence,
+                ]
+                for site_correlation in site_correlation_ops:
+                    site_correlation_val, stddev = np.real(
+                        expectation_from_correlation_matrix(
+                            site_correlation, corr_mat, cov
+                        )
+                    )
+                    data[chemical_potential, occupied_orbitals].append(
+                        (site_correlation_val, stddev)
+                    )
+        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
+        yield AnalysisResultData(f"site_correlation_{label}", data_zipped)
