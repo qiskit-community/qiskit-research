@@ -506,15 +506,18 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         experiment: KitaevHamiltonianExperiment,
     ) -> Iterable[AnalysisResultData]:
         # set chemical potential values to the experiment range but with fixed resolution
+        start = experiment.chemical_potential_values[0]
+        # avoid discontinuities at 0
+        if start == 0:
+            start = 1e-8
         chemical_potential_values = np.linspace(
-            experiment.chemical_potential_values[0],
+            start,
             experiment.chemical_potential_values[-1],
             num=50,
         )
 
         # construct operators
         edge_correlation = edge_correlation_op(experiment.n_modes)
-        number = number_op(experiment.n_modes)
 
         # create data storage objects
         energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
