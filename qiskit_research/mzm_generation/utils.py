@@ -433,8 +433,7 @@ def compute_correlation_matrix(
     # diagonal entries
     num_quasis = quasis[(tuple(range(n)), "number")]
     for i in range(n):
-        # don't reverse pauli string because M3 does it internally!
-        num = "I" * i + "1" + "I" * (n - i - 1)
+        num = "I" * (n - i - 1) + "1" + "I" * i
         expval = num_quasis.expval(num)
         corr[i, i] = expval
         corr[i + n, i + n] = 1 - expval
@@ -456,9 +455,9 @@ def compute_correlation_matrix(
                     )
     # diagonal entries
     for i in range(n):
-        z0 = "I" * i + "Z" + "I" * (n - i - 1)
+        z0 = "I" * (n - i - 1) + "Z" + "I" * i
         for j in range(i, n):
-            z1 = "I" * j + "Z" + "I" * (n - j - 1)
+            z1 = "I" * (n - j - 1) + "Z" + "I" * j
             cov[frozenset([(i, i), (j, j)])] = 0.25 * covariance(num_quasis, z0, z1)
 
     return corr, cov
@@ -507,9 +506,8 @@ def compute_interaction_matrix(
         for start_index in [0, 1]:
             quasi_dist = odd_quasis if start_index else even_quasis
             for i in range(start_index, n - 1, 2):
-                # don't reverse pauli string because M3 does it internally!
-                z0 = "I" * i + "Z" + "I" * (n - i - 1)
-                z1 = "I" * (i + 1) + "Z" + "I" * (n - i - 2)
+                z0 = "I" * (n - i - 1) + "Z" + "I" * i
+                z1 = "I" * (n - i - 2) + "Z" + "I" * (i + 1)
                 z0_expval = quasi_dist.expval(z0)
                 z1_expval = quasi_dist.expval(z1)
                 val = 0.5 * (z1_expval + sign * z0_expval)
@@ -524,14 +522,14 @@ def compute_interaction_matrix(
         for start_index in [0, 1]:
             quasi_dist = odd_quasis if start_index else even_quasis
             for i in range(start_index, n - 1, 2):
-                z0 = "I" * i + "Z" + "I" * (n - i - 1)
-                z1 = "I" * (i + 1) + "Z" + "I" * (n - i - 2)
+                z0 = "I" * (n - i - 1) + "Z" + "I" * i
+                z1 = "I" * (n - i - 2) + "Z" + "I" * (i + 1)
                 p, q = permutation[i], permutation[i + 1]
                 if p > q:
                     p, q = q, p
                 for j in range(start_index, n - 1, 2):
-                    z2 = "I" * j + "Z" + "I" * (n - j - 1)
-                    z3 = "I" * (j + 1) + "Z" + "I" * (n - j - 2)
+                    z2 = "I" * (n - j - 1) + "Z" + "I" * j
+                    z3 = "I" * (n - j - 2) + "Z" + "I" * (j + 1)
                     r, s = permutation[j], permutation[j + 1]
                     if r > s:
                         r, s = s, r
@@ -561,11 +559,10 @@ def covariance(
     return cov * quasi_dist.mitigation_overhead / quasi_dist.shots
 
 
-def evaluate_diagonal_op(operator: str, bitstring: str):
+def evaluate_diagonal_op(operator: str, bitstring: str) -> int:
     """Evaluate a diagional operator on a bitstring."""
-    prod = 1.0
-    # reverse bitstring because Qiskit uses little endian
-    for op, bit in zip(operator, reversed(bitstring)):
+    prod = 1
+    for op, bit in zip(operator, bitstring):
         if op == "0" or op == "1":
             prod *= bit == op
         elif op == "Z":
@@ -577,7 +574,6 @@ def compute_parity(
     quasis: Dict[Tuple[Tuple[int, ...], str], mthree.classes.QuasiDistribution]
 ) -> Tuple[float, float]:
     """Compute parity from quasiprobabilities."""
-    # TODO maybe use probs instead of quasis to avoid value outside [-1, 1]
     n = len(next(iter(next(iter(quasis.values())))))
     quasi_dist = quasis[(tuple(range(n)), "number")]
     return quasi_dist.expval_and_stddev()
