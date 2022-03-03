@@ -41,6 +41,7 @@ from qiskit_research.mzm_generation.utils import (
     orbital_combinations,
     post_select_quasis,
     purify_idempotent_matrix,
+    site_correlation_op,
 )
 
 
@@ -188,24 +189,25 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                             label,
                             dynamical_decoupling_sequence=dd_sequence,
                         )
-                        counts = data[params]["counts"]
-                        # raw quasis
-                        quasis_raw[permutation, label] = counts_to_quasis(counts)
-                        # measurement error mitigation
-                        quasis_mem[permutation, label] = mit.apply_correction(
-                            counts,
-                            experiment.qubits,
-                            return_mitigation_overhead=True,
-                        )
-                        # post-selection
-                        new_quasis, removed_mass = post_select_quasis(
-                            quasis_mem[permutation, label],
-                            lambda bitstring: (-1)
-                            ** sum(1 for b in bitstring if b == "1")
-                            == exact_parity,
-                        )
-                        quasis_ps[permutation, label] = new_quasis
-                        ps_removed_mass[permutation, label] = removed_mass
+                        if params in data:
+                            counts = data[params]["counts"]
+                            # raw quasis
+                            quasis_raw[permutation, label] = counts_to_quasis(counts)
+                            # measurement error mitigation
+                            quasis_mem[permutation, label] = mit.apply_correction(
+                                counts,
+                                experiment.qubits,
+                                return_mitigation_overhead=True,
+                            )
+                            # post-selection
+                            new_quasis, removed_mass = post_select_quasis(
+                                quasis_mem[permutation, label],
+                                lambda bitstring: (-1)
+                                ** sum(1 for b in bitstring if b == "1")
+                                == exact_parity,
+                            )
+                            quasis_ps[permutation, label] = new_quasis
+                            ps_removed_mass[permutation, label] = removed_mass
                     # save data
                     quasi_dists_raw[
                         tunneling,
@@ -456,6 +458,46 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 experiment.occupied_orbitals_list,
                 dd_sequence,
             )
+            yield from self._compute_site_correlation(
+                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_raw,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
+            yield from self._compute_site_correlation(
+                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_mem,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
+            yield from self._compute_site_correlation(
+                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_ps,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
+            yield from self._compute_site_correlation(
+                "pur" + (f"_{dd_sequence}" if dd_sequence else ""),
+                corr_pur,
+                experiment.n_modes,
+                tunneling,
+                superconducting,
+                experiment.chemical_potential_values,
+                experiment.occupied_orbitals_list,
+                dd_sequence,
+            )
 
     def _compute_simulation_results(
         self,
@@ -464,15 +506,18 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         experiment: KitaevHamiltonianExperiment,
     ) -> Iterable[AnalysisResultData]:
         # set chemical potential values to the experiment range but with fixed resolution
+        start = experiment.chemical_potential_values[0]
+        # avoid discontinuities at 0
+        if start == 0:
+            start = 1e-8
         chemical_potential_values = np.linspace(
-            experiment.chemical_potential_values[0],
+            start,
             experiment.chemical_potential_values[-1],
             num=50,
         )
 
         # construct operators
         edge_correlation = edge_correlation_op(experiment.n_modes)
-        number = number_op(experiment.n_modes)
 
         # create data storage objects
         energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
@@ -492,7 +537,6 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            energy_shift = -0.5 * chemical_potential * experiment.n_modes
             # compute parity
             W1 = transformation_matrix[:, : experiment.n_modes]
             W2 = transformation_matrix[:, experiment.n_modes :]
@@ -523,7 +567,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     np.sum(np.diag(corr_exact)[: experiment.n_modes])
                 )
                 # add computed values to data storage objects
-                energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
+                energy_exact[occupied_orbitals].append(exact_energy)
                 edge_correlation_exact[occupied_orbitals].append(exact_edge_correlation)
                 parity_exact[occupied_orbitals].append(exact_parity)
                 number_exact[occupied_orbitals].append(exact_number)
@@ -561,6 +605,56 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             yield AnalysisResultData(
                 f"bdg_energy_exact", (bdg_energy, chemical_potential_values)
             )
+
+        # site correlation
+        # construct operators
+        site_correlation_ops = [
+            site_correlation_op(i) for i in range(1, 2 * experiment.n_modes)
+        ]
+
+        # create data storage objects
+        site_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+
+        for chemical_potential in experiment.chemical_potential_values:
+            # diagonalize Hamiltonian
+            (
+                transformation_matrix,
+                orbital_energies,
+                constant,
+            ) = diagonalizing_bogoliubov_transform(
+                experiment.n_modes,
+                tunneling=tunneling,
+                superconducting=superconducting,
+                chemical_potential=chemical_potential,
+            )
+            W1 = transformation_matrix[:, : experiment.n_modes]
+            W2 = transformation_matrix[:, experiment.n_modes :]
+            full_transformation_matrix = np.block([[W1, W2], [W2.conj(), W1.conj()]])
+            # compute results
+            for occupied_orbitals in experiment.occupied_orbitals_list:
+                # compute exact correlation matrix
+                occupation = np.zeros(experiment.n_modes)
+                occupation[list(occupied_orbitals)] = 1.0
+                corr_diag = np.diag(np.concatenate([occupation, 1 - occupation]))
+                corr_exact = (
+                    full_transformation_matrix.T.conj()
+                    @ corr_diag
+                    @ full_transformation_matrix
+                )
+                for site_correlation in site_correlation_ops:
+                    exact_site_correlation, _ = np.real(
+                        expectation_from_correlation_matrix(
+                            site_correlation, corr_exact
+                        )
+                    )
+                    site_correlation_exact[
+                        chemical_potential, occupied_orbitals
+                    ].append(exact_site_correlation)
+
+        yield AnalysisResultData(
+            "site_correlation_exact",
+            {k: np.array(v) for k, v in site_correlation_exact.items()},
+        )
 
     def _compute_fidelity_witness(
         self,
@@ -606,12 +700,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     dynamical_decoupling_sequence,
                 ]
                 fidelity_wit, stddev = fidelity_witness(corr_mat, corr_exact, cov)
-                data[occupied_orbitals].append(
-                    (
-                        fidelity_wit,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((fidelity_wit, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"fidelity_witness_{label}", data_zipped)
 
@@ -661,12 +750,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 superconducting=superconducting,
                 chemical_potential=chemical_potential,
             )
-            energy_shift = -0.5 * chemical_potential * n_modes
             for occupied_orbitals in occupied_orbitals_list:
                 exact_energy = (
                     np.sum(orbital_energies[list(occupied_orbitals)]) + constant
                 )
-                energy_exact[occupied_orbitals].append(exact_energy + energy_shift)
+                energy_exact[occupied_orbitals].append(exact_energy)
 
                 corr_mat, cov = corr[
                     tunneling,
@@ -678,12 +766,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 energy, stddevs = np.real(
                     expectation_from_correlation_matrix(hamiltonian_quad, corr_mat, cov)
                 )
-                data[occupied_orbitals].append(
-                    (
-                        energy + energy_shift,
-                        stddevs,
-                    )
-                )
+                data[occupied_orbitals].append((energy, stddevs))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"energy_{label}", data_zipped)
 
@@ -716,15 +799,38 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             bdg_stddev = np.zeros((2 * threshold, len(chemical_potential_values)))
             low, low_stddev = data_zipped[()]
             high, high_stddev = data_zipped[tuple(range(n_modes))]
+            error = np.zeros(len(chemical_potential_values))
+            error_stddev = np.zeros(len(chemical_potential_values))
+            low_exact = energy_exact[()]
+            high_exact = energy_exact[tuple(range(n_modes))]
             for i in range(threshold):
+                # data
                 particle, particle_stddev = data_zipped[combs[2 * i + 2]]
                 hole, hole_stddev = data_zipped[combs[2 * i + 3]]
+                # exact values
+                particle_exact = np.array(energy_exact[combs[2 * i + 2]])
+                hole_exact = np.array(energy_exact[combs[2 * i + 3]])
+                # energy
                 bdg_energy[i] = low - particle
                 bdg_energy[threshold + i] = high - hole
+                # stddev
                 bdg_stddev[i] = low_stddev ** 2 + particle_stddev ** 2
                 bdg_stddev[threshold + i] = high_stddev ** 2 + hole_stddev ** 2
+                # error
+                error += np.abs((low - particle) - (low_exact - particle_exact))
+                error += np.abs((high - hole) - (high_exact - hole_exact))
+                # error stddev
+                error_stddev += (
+                    np.array(low_stddev) ** 2
+                    + np.array(particle_stddev) ** 2
+                    + np.array(high_stddev) ** 2
+                    + np.array(hole_stddev) ** 2
+                )
             bdg_stddev = np.sqrt(bdg_stddev)
+            error /= 2 * threshold
+            error_stddev = np.sqrt(error_stddev) / (2 * threshold)
             yield AnalysisResultData(f"bdg_energy_{label}", (bdg_energy, bdg_stddev))
+            yield AnalysisResultData(f"bdg_energy_error_{label}", (error, error_stddev))
 
     def _compute_edge_correlation(
         self,
@@ -754,12 +860,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 edge_correlation_val, stddev = np.real(
                     expectation_from_correlation_matrix(edge_correlation, corr_mat, cov)
                 )
-                data[occupied_orbitals].append(
-                    (
-                        edge_correlation_val,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((edge_correlation_val, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"edge_correlation_{label}", data_zipped)
 
@@ -791,12 +892,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 number_val, stddev = np.real(
                     expectation_from_correlation_matrix(number, corr_mat, cov)
                 )
-                data[occupied_orbitals].append(
-                    (
-                        number_val,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((number_val, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"number_{label}", data_zipped)
 
@@ -824,11 +920,43 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     dynamical_decoupling_sequence,
                 ]
                 parity, stddev = compute_parity(quasis)
-                data[occupied_orbitals].append(
-                    (
-                        parity,
-                        stddev,
-                    )
-                )
+                data[occupied_orbitals].append((parity, stddev))
         data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
         yield AnalysisResultData(f"parity_{label}", data_zipped)
+
+    def _compute_site_correlation(
+        self,
+        label: str,
+        corr: Dict[
+            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
+            Tuple[np.ndarray, _CovarianceDict],
+        ],
+        n_modes: int,
+        tunneling: float,
+        superconducting: Union[float, complex],
+        chemical_potential_values: Iterable[float],
+        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        dynamical_decoupling_sequence: Optional[str],
+    ) -> Iterable[AnalysisResultData]:
+        site_correlation_ops = [site_correlation_op(i) for i in range(1, 2 * n_modes)]
+        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        for chemical_potential in chemical_potential_values:
+            for occupied_orbitals in occupied_orbitals_list:
+                corr_mat, cov = corr[
+                    tunneling,
+                    superconducting,
+                    chemical_potential,
+                    occupied_orbitals,
+                    dynamical_decoupling_sequence,
+                ]
+                for site_correlation in site_correlation_ops:
+                    site_correlation_val, stddev = np.real(
+                        expectation_from_correlation_matrix(
+                            site_correlation, corr_mat, cov
+                        )
+                    )
+                    data[chemical_potential, occupied_orbitals].append(
+                        (site_correlation_val, stddev)
+                    )
+        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
+        yield AnalysisResultData(f"site_correlation_{label}", data_zipped)

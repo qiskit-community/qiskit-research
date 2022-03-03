@@ -10,4 +10,4 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-#from qiskit_research.utils import dynamical_coupling
+from qiskit_research.utils.dynamical_decoupling import add_dynamical_decoupling

@@ -27,7 +27,7 @@ from typing import (
 import mapomatic
 import mthree
 import numpy as np
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit
 from qiskit.circuit.library import XYGate
 from qiskit.providers import Backend
 from qiskit.quantum_info import SparsePauliOp
@@ -74,7 +74,7 @@ def site_correlation_op(site: int) -> FermionicOp:
 
 
 def edge_correlation_op(n_modes: int) -> FermionicOp:
-    return -1j * majorana_op(0, 0) @ majorana_op(n_modes - 1, 1)
+    return site_correlation_op(2 * n_modes - 1)
 
 
 def number_op(n_modes: int) -> FermionicOp:
@@ -108,7 +108,12 @@ def kitaev_hamiltonian(
     lower_diag = np.diag(np.ones(n_modes - 1), k=-1)
     hermitian_part = -tunneling * (upper_diag + lower_diag) + chemical_potential * eye
     antisymmetric_part = superconducting * (upper_diag - lower_diag)
-    return QuadraticHamiltonian(hermitian_part, antisymmetric_part)
+    constant = -0.5 * chemical_potential * n_modes
+    return QuadraticHamiltonian(
+        hermitian_part=hermitian_part,
+        antisymmetric_part=antisymmetric_part,
+        constant=constant,
+    )
 
 
 @functools.lru_cache
@@ -196,7 +201,7 @@ def fidelity_witness(
     # compute fidelity witness
     dim, _ = corr.shape
     n = dim // 2
-    witness = 1 + np.trace((corr - corr_target) @ (corr_target - 0.5 * np.eye(dim)))
+    witness = 1 - np.trace((corr_target - corr) @ (corr_target - 0.5 * np.eye(dim)))
 
     # compute variance
     var = 0.0
@@ -206,36 +211,34 @@ def fidelity_witness(
             for j in range(i + 1, n):
                 for k in range(n):
                     for ell in range(k + 1, n):
-                        var += 2 * np.real(
-                            corr_target[i, j].conjugate()
-                            * corr_target[k, ell].conjugate()
-                            * cov[frozenset([(i, j), (k, ell)])]
-                        )
-                        var += 2 * np.real(
-                            corr_target[i, j].conjugate()
+                        var += 8 * np.real(
+                            corr_target[i, j]
                             * corr_target[k, ell]
                             * cov[frozenset([(i, j), (k, ell)])]
                         )
-                        var += 2 * np.real(
-                            corr_target[i, j + n].conjugate()
-                            * corr_target[k, ell + n].conjugate()
+                        var += 8 * np.real(
+                            corr_target[i, j]
+                            * corr_target[k, ell].conjugate()
+                            * cov[frozenset([(i, j), (k, ell)])]
+                        )
+                        var += 8 * np.real(
+                            corr_target[i, j + n]
+                            * corr_target[k, ell + n]
                             * cov[frozenset([(i, j + n), (k, ell + n)])]
                         )
-                        var += 2 * np.real(
-                            corr_target[i, j + n].conjugate()
-                            * corr_target[k, ell + n]
+                        var += 8 * np.real(
+                            corr_target[i, j + n]
+                            * corr_target[k, ell + n].conjugate()
                             * cov[frozenset([(i, j + n), (k, ell + n)])]
                         )
         # diagonal entries
         for i in range(n):
             for j in range(i, n):
                 var += (1 + (i != j)) * (
-                    (corr_target[i, i] - float(i == j))
-                    * (corr_target[j, j] - float(i == j))
+                    (1 - 2 * corr_target[i, i])
+                    * (1 - 2 * corr_target[j, j])
                     * cov[frozenset([(i, i), (j, j)])]
                 )
-        # account for lower half of correlation matrices
-        var *= 4
 
     return np.real(witness), np.sqrt(np.real(var))
 
@@ -324,19 +327,29 @@ def expectation_from_correlation_matrix(
                 if not term_ij:
                     continue
                 (action_i, i), (action_j, j) = term_ij
+                sign_ij = 1
                 if i > j:
                     i, j = j, i
                     action_i, action_j = action_j, action_i
+                    sign_ij *= -1
+                if action_i == "-":
+                    sign_ij *= -1
                 for term_kl, coeff_kl in operator._data:
                     if not term_kl:
                         continue
                     (action_k, k), (action_l, ell) = term_kl
+                    sign_kl = 1
                     if k > ell:
                         k, ell = ell, k
                         action_k, action_l = action_l, action_k
+                        sign_kl = -1
+                    if action_k == "-":
+                        sign_kl *= -1
                     var += (
                         coeff_ij
                         * coeff_kl.conjugate()
+                        * sign_ij
+                        * sign_kl
                         * cov[
                             frozenset(
                                 [
@@ -420,8 +433,7 @@ def compute_correlation_matrix(
     # diagonal entries
     num_quasis = quasis[(tuple(range(n)), "number")]
     for i in range(n):
-        # don't reverse pauli string because M3 does it internally!
-        num = "I" * i + "1" + "I" * (n - i - 1)
+        num = "I" * (n - i - 1) + "1" + "I" * i
         expval = num_quasis.expval(num)
         corr[i, i] = expval
         corr[i + n, i + n] = 1 - expval
@@ -443,9 +455,9 @@ def compute_correlation_matrix(
                     )
     # diagonal entries
     for i in range(n):
-        z0 = "I" * i + "Z" + "I" * (n - i - 1)
+        z0 = "I" * (n - i - 1) + "Z" + "I" * i
         for j in range(i, n):
-            z1 = "I" * j + "Z" + "I" * (n - j - 1)
+            z1 = "I" * (n - j - 1) + "Z" + "I" * j
             cov[frozenset([(i, i), (j, j)])] = 0.25 * covariance(num_quasis, z0, z1)
 
     return corr, cov
@@ -462,6 +474,18 @@ def compute_interaction_matrix(
         - Interaction matrix
         - Dictionary containing covariances between entries of the interaction matrix
     """
+    n = experiment.n_modes
+    mat = np.zeros((n, n))
+    cov = defaultdict(float)  # _CovarianceDict
+
+    permutation = tuple(range(n))
+    if (permutation, f"{label}_even") not in quasis and (
+        permutation,
+        f"{label}_odd",
+    ) not in quasis:
+        # the interaction was not measured, so it is assumed to be zero
+        return mat, cov
+
     if label == "tunneling_plus":
         sign = -1
         symmetry = 1
@@ -475,19 +499,15 @@ def compute_interaction_matrix(
         sign = 1
         symmetry = -1
 
-    n = experiment.n_modes
-
     # compute interaction matrix
-    mat = np.zeros((n, n))
     for permutation in experiment.permutations():
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
         for start_index in [0, 1]:
             quasi_dist = odd_quasis if start_index else even_quasis
             for i in range(start_index, n - 1, 2):
-                # don't reverse pauli string because M3 does it internally!
-                z0 = "I" * i + "Z" + "I" * (n - i - 1)
-                z1 = "I" * (i + 1) + "Z" + "I" * (n - i - 2)
+                z0 = "I" * (n - i - 1) + "Z" + "I" * i
+                z1 = "I" * (n - i - 2) + "Z" + "I" * (i + 1)
                 z0_expval = quasi_dist.expval(z0)
                 z1_expval = quasi_dist.expval(z1)
                 val = 0.5 * (z1_expval + sign * z0_expval)
@@ -496,28 +516,27 @@ def compute_interaction_matrix(
                 mat[q, p] = symmetry * val
 
     # compute covariance
-    cov = defaultdict(float)  # _CovarianceDict
     for permutation in experiment.permutations():
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
         for start_index in [0, 1]:
             quasi_dist = odd_quasis if start_index else even_quasis
             for i in range(start_index, n - 1, 2):
-                z0 = "I" * i + "Z" + "I" * (n - i - 1)
-                z1 = "I" * (i + 1) + "Z" + "I" * (n - i - 2)
+                z0 = "I" * (n - i - 1) + "Z" + "I" * i
+                z1 = "I" * (n - i - 2) + "Z" + "I" * (i + 1)
                 p, q = permutation[i], permutation[i + 1]
                 if p > q:
                     p, q = q, p
                 for j in range(start_index, n - 1, 2):
-                    z2 = "I" * j + "Z" + "I" * (n - j - 1)
-                    z3 = "I" * (j + 1) + "Z" + "I" * (n - j - 2)
+                    z2 = "I" * (n - j - 1) + "Z" + "I" * j
+                    z3 = "I" * (n - j - 2) + "Z" + "I" * (j + 1)
                     r, s = permutation[j], permutation[j + 1]
                     if r > s:
                         r, s = s, r
                     cov[frozenset([(p, q), (r, s)])] = 0.25 * (
                         covariance(quasi_dist, z0, z2)
-                        - covariance(quasi_dist, z0, z3)
-                        - covariance(quasi_dist, z1, z2)
+                        + sign * covariance(quasi_dist, z0, z3)
+                        + sign * covariance(quasi_dist, z1, z2)
                         + covariance(quasi_dist, z1, z3)
                     )
 
@@ -540,11 +559,10 @@ def covariance(
     return cov * quasi_dist.mitigation_overhead / quasi_dist.shots
 
 
-def evaluate_diagonal_op(operator: str, bitstring: str):
+def evaluate_diagonal_op(operator: str, bitstring: str) -> int:
     """Evaluate a diagional operator on a bitstring."""
-    prod = 1.0
-    # reverse bitstring because Qiskit uses little endian
-    for op, bit in zip(operator, reversed(bitstring)):
+    prod = 1
+    for op, bit in zip(operator, bitstring):
         if op == "0" or op == "1":
             prod *= bit == op
         elif op == "Z":
@@ -556,7 +574,6 @@ def compute_parity(
     quasis: Dict[Tuple[Tuple[int, ...], str], mthree.classes.QuasiDistribution]
 ) -> Tuple[float, float]:
     """Compute parity from quasiprobabilities."""
-    # TODO maybe use probs instead of quasis to avoid value outside [-1, 1]
     n = len(next(iter(next(iter(quasis.values())))))
     quasi_dist = quasis[(tuple(range(n)), "number")]
     return quasi_dist.expval_and_stddev()
@@ -635,4 +652,4 @@ def pick_qubit_layout(
         transformation_matrix, occupied_orbitals=occupied_orbitals
     )
     # TODO check that mapomatic returns a line
-    return mapomatic.best_overall_layout(circuit, backends)
+    return mapomatic.best_overall_layout(circuit.decompose(), backends)

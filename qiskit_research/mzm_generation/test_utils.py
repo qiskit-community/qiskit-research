@@ -12,12 +12,16 @@
 
 """Test mzm_generation utils."""
 
+from typing import Optional
 import unittest
 
 import numpy as np
 from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import random_hermitian, random_statevector
-from qiskit_nature.operators.second_quantization import QuadraticHamiltonian
+from qiskit_nature.operators.second_quantization import (
+    FermionicOp,
+    QuadraticHamiltonian,
+)
 from qiskit_research.mzm_generation.experiment import (
     CircuitParameters,
     KitaevHamiltonianExperiment,
@@ -29,8 +33,11 @@ from qiskit_research.mzm_generation.utils import (
     covariance_matrix,
     expectation,
     expectation_from_correlation_matrix,
+    fidelity_witness,
     jordan_wigner,
     kitaev_hamiltonian,
+    number_op,
+    _CovarianceDict,
 )
 
 
@@ -39,8 +46,23 @@ def _random_antisymmetric(dim: int):
     return mat - mat.T
 
 
+def _fidelity_witness_alt(
+    corr: np.ndarray, corr_target: np.ndarray, cov: Optional[_CovarianceDict] = None
+) -> float:
+    m, _ = corr.shape
+    n = m // 2
+    Tt = corr_target[:n, :n]
+    St = corr_target[:n, n:]
+    constant = np.trace(2 * Tt @ Tt - Tt - St @ St.conj() - St.conj() @ St)
+    hermitian_part = np.eye(n) - 2 * Tt.conj()
+    antisymmetric_part = -2 * St.conj()
+    op = QuadraticHamiltonian(hermitian_part, antisymmetric_part)
+    exp, std = expectation_from_correlation_matrix(op, corr, cov)
+    return 1 - exp - constant, std
+
+
 class TestMZMGenerationUtils(unittest.TestCase):
-    """Test PhasedXXMinusYYGate."""
+    """Test MZM utils."""
 
     def test_covariance_matrix(self):
         dim = 5
@@ -86,15 +108,18 @@ class TestMZMGenerationUtils(unittest.TestCase):
         superconducting = 1 + 2j
         chemical_potential = 1.0
         occupied_orbitals = ()
+        backend = AerSimulator(method="statevector")
         experiment = KitaevHamiltonianExperiment(
             experiment_id="test",
+            backend=backend,
+            readout_calibration_date="test",
             qubits=list(range(n_modes)),
             tunneling_values=[tunneling],
             superconducting_values=[superconducting],
             chemical_potential_values=[chemical_potential],
             occupied_orbitals_list=[occupied_orbitals],
         )
-        backend = AerSimulator(method="statevector")
+
         experiment_data = experiment.run(backend=backend, shots=1000)
         experiment_data.block_for_results()
         data = {}
@@ -106,6 +131,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 _occupied_orbitals,
                 permutation,
                 measurement_label,
+                dynamical_decoupling_sequence,
             ) = result["metadata"]["params"]
             params = CircuitParameters(
                 tunneling=_tunneling,
@@ -116,6 +142,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 occupied_orbitals=tuple(_occupied_orbitals),
                 permutation=tuple(permutation),
                 measurement_label=measurement_label,
+                dynamical_decoupling_sequence=dynamical_decoupling_sequence,
             )
             data[params] = result
         quasis = {}
@@ -127,6 +154,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 occupied_orbitals,
                 permutation,
                 label,
+                dynamical_decoupling_sequence,
             )
             counts = data[params]["counts"]
             quasis[permutation, label] = counts_to_quasis(counts)
@@ -138,7 +166,24 @@ class TestMZMGenerationUtils(unittest.TestCase):
             chemical_potential=chemical_potential,
         )
         hamiltonian = quad_ham._fermionic_op()
-        exp1, var1 = expectation_from_correlation_matrix(quad_ham, corr, cov)
-        exp2, var2 = expectation_from_correlation_matrix(hamiltonian, corr, cov)
+        exp1, std1 = expectation_from_correlation_matrix(quad_ham, corr, cov)
+        exp2, std2 = expectation_from_correlation_matrix(hamiltonian, corr, cov)
         np.testing.assert_allclose(exp1, exp2, atol=1e-8)
-        np.testing.assert_allclose(var1, var2, atol=1e-8)
+        np.testing.assert_allclose(std1, std2, atol=1e-8)
+
+        # test fidelity witness
+        transformation_matrix, _, _ = quad_ham.diagonalizing_bogoliubov_transform()
+        W1 = transformation_matrix[:, : experiment.n_modes]
+        W2 = transformation_matrix[:, experiment.n_modes :]
+        full_transformation_matrix = np.block([[W1, W2], [W2.conj(), W1.conj()]])
+        occupation = np.zeros(n_modes)
+        occupation[list(occupied_orbitals)] = 1.0
+        corr_diag = np.diag(np.concatenate([occupation, 1 - occupation]))
+        corr_exact = (
+            full_transformation_matrix.T.conj() @ corr_diag @ full_transformation_matrix
+        )
+
+        val1, std1 = fidelity_witness(corr, corr_exact, cov)
+        val2, std2 = _fidelity_witness_alt(corr, corr_exact, cov)
+        np.testing.assert_allclose(val1, val2, atol=1e-8)
+        np.testing.assert_allclose(std1, std2, atol=1e-8)

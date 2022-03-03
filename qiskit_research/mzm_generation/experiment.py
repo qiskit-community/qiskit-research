@@ -19,8 +19,9 @@ from typing import Iterable, Optional, Sequence, Union
 
 import numpy as np
 from qiskit import QuantumCircuit, transpile
+from qiskit.circuit.library import RZGate
 from qiskit.providers import Backend
-from qiskit_experiments.framework import BaseAnalysis, BaseExperiment, ExperimentData
+from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
@@ -88,20 +89,46 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         return list(self._circuits())
 
     def _circuits(self) -> Iterable[QuantumCircuit]:
-        for circuit_params in self.circuit_parameters():
-            yield self.generate_circuit(circuit_params)
-
-    def generate_circuit(self, circuit_params: CircuitParameters) -> QuantumCircuit:
-        base_circuit = self._base_circuit(
-            circuit_params.tunneling,
-            circuit_params.superconducting,
-            circuit_params.chemical_potential,
-            circuit_params.occupied_orbitals,
-            circuit_params.permutation,
-        )
-        circuit = measure_interaction_op(base_circuit, circuit_params.measurement_label)
-        circuit.metadata = {"params": circuit_params}
-        return circuit
+        dd_sequences = [None]
+        if self.dynamical_decoupling_sequences:
+            dd_sequences += self.dynamical_decoupling_sequences
+        for (
+            tunneling,
+            superconducting,
+            chemical_potential,
+            occupied_orbitals,
+        ) in itertools.product(
+            self.tunneling_values,
+            self.superconducting_values,
+            self.chemical_potential_values,
+            self.occupied_orbitals_list,
+        ):
+            for permutation, label in self.measurement_labels():
+                base_circuit = self._base_circuit(
+                    tunneling,
+                    superconducting,
+                    chemical_potential,
+                    occupied_orbitals,
+                    permutation,
+                )
+                # if the circuit is real-valued, the correlation matrix
+                # has zero imaginary part so the "minus" circuits are
+                # not needed
+                if "_minus_" in label and _all_real_rz_gates(base_circuit, atol=1e-6):
+                    continue
+                for dd_sequence in dd_sequences:
+                    params = CircuitParameters(
+                        tunneling=tunneling,
+                        superconducting=superconducting,
+                        chemical_potential=chemical_potential,
+                        occupied_orbitals=occupied_orbitals,
+                        permutation=permutation,
+                        measurement_label=label,
+                        dynamical_decoupling_sequence=dd_sequence,
+                    )
+                    circuit = measure_interaction_op(base_circuit, label)
+                    circuit.metadata = {"params": params}
+                    yield circuit
 
     @functools.lru_cache
     def _base_circuit(
@@ -124,33 +151,6 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         for i in range(self.n_modes):
             transformation_matrix[i, :] = transformation_matrix[i, full_permutation]
         return FermionicGaussianState(transformation_matrix, occupied_orbitals)
-
-    def circuit_parameters(self) -> Iterable[CircuitParameters]:
-        dd_sequences = [None]
-        if self.dynamical_decoupling_sequences:
-            dd_sequences += self.dynamical_decoupling_sequences
-        for (
-            tunneling,
-            superconducting,
-            chemical_potential,
-            occupied_orbitals,
-        ) in itertools.product(
-            self.tunneling_values,
-            self.superconducting_values,
-            self.chemical_potential_values,
-            self.occupied_orbitals_list,
-        ):
-            for permutation, label in self.measurement_labels():
-                for dd_sequence in dd_sequences:
-                    yield CircuitParameters(
-                        tunneling=tunneling,
-                        superconducting=superconducting,
-                        chemical_potential=chemical_potential,
-                        occupied_orbitals=occupied_orbitals,
-                        permutation=permutation,
-                        measurement_label=label,
-                        dynamical_decoupling_sequence=dd_sequence,
-                    )
 
     def permutations(self) -> Iterable[tuple[int, ...]]:
         """Fermionic mode permutations used to measure the full correlation matrix."""
@@ -190,3 +190,15 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                 )
             transpiled_circuits.append(transpiled)
         return transpiled_circuits
+
+
+def _all_real_rz_gates(circuit: QuantumCircuit, rtol=1e-5, atol=1e-8) -> bool:
+    """Check if all RZ gates in the circuit are real-valued up to global phase."""
+    for gate, _, _ in circuit:
+        if isinstance(gate, RZGate):
+            (theta,) = gate.params
+            if not np.isclose(
+                theta % np.pi, 0.0, rtol=rtol, atol=atol
+            ) and not np.isclose(theta % np.pi, np.pi, atol=1e-8):
+                return False
+    return True
