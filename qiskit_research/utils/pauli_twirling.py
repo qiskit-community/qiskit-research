@@ -21,6 +21,7 @@ from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate, RZXGate
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
+from qiskit.exceptions import QiskitError
 from qiskit.providers.ibmq import IBMQBackend
 from qiskit.pulse import DriveChannel
 from qiskit.quantum_info import Operator
@@ -28,13 +29,20 @@ from qiskit.quantum_info import Operator
 if TYPE_CHECKING:
     from qiskit.transpiler.basepasses import BasePass
 
+TWIRL_GATES = {
+    "rzx": [[IGate(), IGate()], [XGate(), ZGate()],
+        [YGate(), YGate()], [ZGate(), XGate()]],
+    "rzz": [[IGate(), IGate()], [XGate(), XGate()],
+        [YGate(), YGate()], [ZGate(), ZGate()]],
+}
+
 def add_pauli_twirls(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: IBMQBackend,
     entangler_str: str,
     seeds: Union[int, List[int]],
-    verify=False,
-) -> Union[QuantumCircuit, List[QuantumCircuit]]:
+    validate=True,
+) -> List[QuantumCircuit]:
     """
     Add pairs of gates before/after entangling gate randomly
     such that they commute. This helps turn coherent error into stochastic
@@ -47,12 +55,12 @@ def add_pauli_twirls(
                  that non-basis gates have appropriate calibrations added.
         entangler_str (str): name of the entangling gate which will be twirled.
         seeds (int or list(int)): number of seeds or range of randome seeds to use
-        verify (bool): verify Pauli twirls construct equivalent unitaries
+        validate (bool): verify Pauli twirls construct equivalent unitaries
     """
     if isinstance(circuits, QuantumCircuit):
         circuits = [circuits]
 
-    twirl_op, twirl_gates = get_twirl_gates_list(entangler_str)
+    twirl_gates = get_twirl_gates(entangler_str)
     inst_sched_map = backend.defaults().instruction_schedule_map
 
     # find non-basis gates which are not defined by backend
@@ -75,8 +83,8 @@ def add_pauli_twirls(
         for seed in seed_array:
             this_dag = deepcopy(dag)
             runs = this_dag.collect_runs([entangler_str])
-            np.random.seed(seed)
-            twirl_idxs = np.random.randint(0, len(twirl_gates), size=len(runs))
+            rng = np.random.default_rng(seed)
+            twirl_idxs = rng.integers(low=0, high=len(twirl_gates), size=len(runs))
             for twirl_idx, run in enumerate(runs):
                 mini_dag = DAGCircuit()
                 p = QuantumRegister(2, 'p')
@@ -109,24 +117,21 @@ def add_pauli_twirls(
 
         all_twirled_circs.append(twirled_circs)
 
-    if verify:
+    if validate:
         if not verify_equiv_circuits(circuits, all_twirled_circs):
-            print("Twirled circuits are not equivalent!")
+            raise QiskitError("Twirled circuits are not equivalent!")
 
     return all_twirled_circs
 
 
-def get_twirl_gates_list(entangler_str: str) -> List[Gate]:
+def get_twirl_gates(entangler_str: str) -> List[Gate]:
     """
-    Return information based on the entrangling gate to be twirled,
-    including the Gate operator and list of commuting pairs of gates.
+    Return list of twirling gates for the entrangling gate to be twirled.
     """
-
-    if entangler_str == 'rzx':
-        return (RZXGate, [[IGate(), IGate()], [XGate(), ZGate()],
-                            [YGate(), YGate()], [ZGate(), XGate()]])
-    else:
-        print("Twirling gates not defined for entangler "+entangler_str)
+    try:
+        return TWIRL_GATES[entangler_str]
+    except:
+        raise ValueError("Twirling gates not defined for entangler "+entangler_str)
 
 def verify_equiv_circuits(circuits, all_twirled_circs):
     if isinstance(circuits, QuantumCircuit):
@@ -135,12 +140,12 @@ def verify_equiv_circuits(circuits, all_twirled_circs):
         all_twirled_circs = [all_twirled_circs]
 
     all_equiv_circuits = True
-    for cidx, circ in enumerate(circuits):
-        for t_circ in all_twirled_circs[cidx]:
-            param_bind = {}
-            for param in circ.parameters:
-                param_bind[param] = np.random.random()
+    for circ, t_circs in zip(circuits, all_twirled_circs):
+        param_bind = {}
+        for param in circ.parameters:
+            param_bind[param] = np.random.random()
 
+        for t_circ in t_circs:
             all_equiv_circuits = all_equiv_circuits and Operator(
                 circ.bind_parameters(param_bind)).equiv(Operator(
                     t_circ.bind_parameters(param_bind)
