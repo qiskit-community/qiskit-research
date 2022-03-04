@@ -10,7 +10,10 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
+from qiskit_research.mzm_generation.experiment import (
+    KitaevHamiltonianExperiment,
+    KitaevHamiltonianExperimentParameters,
+)
 from qiskit_research.mzm_generation.analysis import KitaevHamiltonianAnalysis
 from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,

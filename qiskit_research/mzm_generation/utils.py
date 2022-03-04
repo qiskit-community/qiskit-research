@@ -11,6 +11,7 @@
 # that they have been altered from the originals.
 
 import functools
+import math
 from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
@@ -29,7 +30,8 @@ import mthree
 import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import XYGate
-from qiskit.providers import Backend
+from qiskit.providers import Backend, Provider
+from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import SparsePauliOp
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
@@ -40,10 +42,21 @@ from qiskit_nature.operators.second_quantization import (
 from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 
 if TYPE_CHECKING:
-    from qiskit_research.mzm_generation.experiment import KitaevHamiltonianExperiment
+    from qiskit_research.mzm_generation.experiment import (
+        KitaevHamiltonianExperimentParameters,
+    )
 
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
+
+
+def get_backend(name: str, provider: Optional[Provider]) -> Backend:
+    """Retrieve a backend."""
+    if name == "aer_simulator":
+        return AerSimulator()
+    if provider is None:
+        raise ValueError("To get a non-simulator backend, a provider must be provided.")
+    return provider.get_backend(name)
 
 
 def orbital_combinations(
@@ -58,7 +71,7 @@ def orbital_combinations(
     yield tuple(range(n_modes))
     for i in range(threshold):
         # one particle
-        yield ((i,))
+        yield (i,)
         # one hole
         yield tuple(range(i)) + tuple(range(i + 1, n_modes))
 
@@ -398,7 +411,7 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 
 
 def compute_correlation_matrix(
-    quasis: Dict[str, Dict[str, float]], experiment: "KitaevHamiltonianExperiment"
+    quasis: Dict[str, Dict[str, float]]
 ) -> Tuple[np.ndarray, _CovarianceDict]:
     """Compute correlation matrix from quasiprobabilities.
 
@@ -406,20 +419,20 @@ def compute_correlation_matrix(
         - Correlation matrix
         - Dictionary containing covariances between entries of the correlation matrix
     """
-    n = experiment.n_modes
+    n = len(next(iter(next(iter(quasis.values())))))
 
     # off-diagonal entries
     tunneling_plus, tunneling_plus_cov = compute_interaction_matrix(
-        quasis, experiment, "tunneling_plus"
+        quasis, "tunneling_plus"
     )
     tunneling_minus, tunneling_minus_cov = compute_interaction_matrix(
-        quasis, experiment, "tunneling_minus"
+        quasis, "tunneling_minus"
     )
     superconducting_plus, superconducting_plus_cov = compute_interaction_matrix(
-        quasis, experiment, "superconducting_plus"
+        quasis, "superconducting_plus"
     )
     superconducting_minus, superconducting_minus_cov = compute_interaction_matrix(
-        quasis, experiment, "superconducting_minus"
+        quasis, "superconducting_minus"
     )
     tunneling_mat = 0.5 * (tunneling_plus + 1j * tunneling_minus)
     superconducting_mat = 0.5 * (superconducting_plus + 1j * superconducting_minus)
@@ -465,7 +478,6 @@ def compute_correlation_matrix(
 
 def compute_interaction_matrix(
     quasis: Dict[str, Dict[str, float]],
-    experiment: "KitaevHamiltonianExperiment",
     label: str,
 ) -> Tuple[np.ndarray, _CovarianceDict]:
     """Compute interaction matrix from quasiprobabilities.
@@ -474,7 +486,7 @@ def compute_interaction_matrix(
         - Interaction matrix
         - Dictionary containing covariances between entries of the interaction matrix
     """
-    n = experiment.n_modes
+    n = len(next(iter(next(iter(quasis.values())))))
     mat = np.zeros((n, n))
     cov = defaultdict(float)  # _CovarianceDict
 
@@ -500,7 +512,7 @@ def compute_interaction_matrix(
         symmetry = -1
 
     # compute interaction matrix
-    for permutation in experiment.permutations():
+    for permutation in orbital_permutations(n):
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
         for start_index in [0, 1]:
@@ -516,7 +528,7 @@ def compute_interaction_matrix(
                 mat[q, p] = symmetry * val
 
     # compute covariance
-    for permutation in experiment.permutations():
+    for permutation in orbital_permutations(n):
         even_quasis = quasis[permutation, f"{label}_even"]
         odd_quasis = quasis[permutation, f"{label}_odd"]
         for start_index in [0, 1]:
@@ -653,3 +665,30 @@ def pick_qubit_layout(
     )
     # TODO check that mapomatic returns a line
     return mapomatic.best_overall_layout(circuit.decompose(), backends)
+
+
+def orbital_permutations(n_modes: int) -> Iterable[tuple[int, ...]]:
+    """Orbital permutations used to measure the full correlation matrix."""
+    permutation = list(range(n_modes))
+    for _ in range(math.ceil(n_modes / 2)):
+        yield tuple(permutation)
+        for i in range(0, n_modes - 1, 2):
+            a, b = permutation[i], permutation[i + 1]
+            permutation[i], permutation[i + 1] = b, a
+        for i in range(1, n_modes - 1, 2):
+            a, b = permutation[i], permutation[i + 1]
+            permutation[i], permutation[i + 1] = b, a
+
+
+def measurement_labels(n_modes: int) -> Iterable[tuple[tuple[int, ...], str]]:
+    """Measurement labels for experiment circuits."""
+    yield tuple(range(n_modes)), "number"
+    for permutation in orbital_permutations(n_modes):
+        yield permutation, "tunneling_plus_even"
+        yield permutation, "tunneling_plus_odd"
+        yield permutation, "tunneling_minus_even"
+        yield permutation, "tunneling_minus_odd"
+        yield permutation, "superconducting_plus_even"
+        yield permutation, "superconducting_plus_odd"
+        yield permutation, "superconducting_minus_even"
+        yield permutation, "superconducting_minus_odd"
