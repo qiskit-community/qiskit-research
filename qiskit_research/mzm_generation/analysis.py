@@ -10,6 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+import itertools
 import os
 from collections import defaultdict
 from typing import Dict, Iterable, List, Optional, Tuple, Union
@@ -108,13 +109,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield from self._compute_simulation_results(tunneling, superconducting, params)
 
         # create data storage objects
-        corr_raw = {}
-        corr_mem = {}
-        corr_ps = {}
-        corr_pur = {}
-        quasi_dists_raw = {}
-        quasi_dists_mem = {}
-        quasi_dists_ps = {}
+        corr_matrices = {}
+        quasi_dists = {}
         ps_removed_masses = {}
 
         # calculate results
@@ -178,26 +174,29 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                             quasis_ps[permutation, label] = new_quasis
                             ps_removed_mass[permutation, label] = removed_mass
                     # save data
-                    quasi_dists_raw[
+                    quasi_dists[
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
                         dd_sequence,
+                        "raw",
                     ] = quasis_raw
-                    quasi_dists_mem[
+                    quasi_dists[
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
                         dd_sequence,
+                        "mem",
                     ] = quasis_mem
-                    quasi_dists_ps[
+                    quasi_dists[
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
                         dd_sequence,
+                        "ps",
                     ] = quasis_ps
                     ps_removed_masses[
                         tunneling,
@@ -207,264 +206,99 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         dd_sequence,
                     ] = ps_removed_mass
                     # compute correlation matrices
-                    corr_raw[
+                    corr_matrices[
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
                         dd_sequence,
+                        "raw",
                     ] = compute_correlation_matrix(quasis_raw)
-                    corr_mem[
+                    corr_matrices[
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
                         dd_sequence,
+                        "mem",
                     ] = compute_correlation_matrix(quasis_mem)
                     corr_mat_ps, cov_ps = compute_correlation_matrix(quasis_ps)
-                    corr_ps[
+                    corr_matrices[
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
                         dd_sequence,
+                        "ps",
                     ] = (corr_mat_ps, cov_ps)
-                    corr_pur[
+                    corr_matrices[
                         tunneling,
                         superconducting,
                         chemical_potential,
                         occupied_orbitals,
                         dd_sequence,
+                        "pur",
                     ] = (purify_idempotent_matrix(corr_mat_ps), cov_ps)
 
-        for dd_sequence in dd_sequences:
-            yield from self._compute_fidelity_witness(
-                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_raw,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_fidelity_witness(
-                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_mem,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_fidelity_witness(
-                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_ps,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_fidelity_witness(
-                "pur" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_pur,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_energy(
-                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_raw,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_energy(
-                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_mem,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_energy(
-                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_ps,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_energy(
-                "pur" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_pur,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_edge_correlation(
-                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_raw,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_edge_correlation(
-                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_mem,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_edge_correlation(
-                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_ps,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_edge_correlation(
-                "pur" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_pur,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_number(
-                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_raw,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_number(
-                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_mem,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_number(
-                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_ps,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_number(
-                "pur" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_pur,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_parity(
-                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
-                quasi_dists_raw,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_parity(
-                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
-                quasi_dists_mem,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_parity(
-                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
-                quasi_dists_ps,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_site_correlation(
-                "raw" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_raw,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_site_correlation(
-                "mem" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_mem,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_site_correlation(
-                "ps" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_ps,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
-            yield from self._compute_site_correlation(
-                "pur" + (f"_{dd_sequence}" if dd_sequence else ""),
-                corr_pur,
-                params.n_modes,
-                tunneling,
-                superconducting,
-                params.chemical_potential_values,
-                params.occupied_orbitals_list,
-                dd_sequence,
-            )
+        yield from self._compute_fidelity_witness(
+            ["raw", "mem", "ps", "pur"],
+            corr_matrices,
+            params.n_modes,
+            tunneling,
+            superconducting,
+            params.chemical_potential_values,
+            params.occupied_orbitals_list,
+            dd_sequences,
+        )
+        yield from self._compute_energy(
+            ["raw", "mem", "ps", "pur"],
+            corr_matrices,
+            params.n_modes,
+            tunneling,
+            superconducting,
+            params.chemical_potential_values,
+            params.occupied_orbitals_list,
+            dd_sequences,
+        )
+        yield from self._compute_edge_correlation(
+            ["raw", "mem", "ps", "pur"],
+            corr_matrices,
+            params.n_modes,
+            tunneling,
+            superconducting,
+            params.chemical_potential_values,
+            params.occupied_orbitals_list,
+            dd_sequences,
+        )
+        yield from self._compute_number(
+            ["raw", "mem", "ps", "pur"],
+            corr_matrices,
+            params.n_modes,
+            tunneling,
+            superconducting,
+            params.chemical_potential_values,
+            params.occupied_orbitals_list,
+            dd_sequences,
+        )
+        yield from self._compute_site_correlation(
+            ["raw", "mem", "ps", "pur"],
+            corr_matrices,
+            params.n_modes,
+            tunneling,
+            superconducting,
+            params.chemical_potential_values,
+            params.occupied_orbitals_list,
+            dd_sequences,
+        )
+        yield from self._compute_parity(
+            ["raw", "mem", "ps"],
+            quasi_dists,
+            tunneling,
+            superconducting,
+            params.chemical_potential_values,
+            params.occupied_orbitals_list,
+            dd_sequences,
+        )
 
     def _compute_simulation_results(
         self,
@@ -623,7 +457,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _compute_fidelity_witness(
         self,
-        label: str,
+        labels: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
             Tuple[np.ndarray, _CovarianceDict],
@@ -633,9 +467,14 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
         occupied_orbitals_list: Iterable[Tuple[int, ...]],
-        dynamical_decoupling_sequence: Optional[str],
+        dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
-        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # type of defaultdict:
+        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        data = {
+            dd_sequence: {label: defaultdict(list) for label in labels}
+            for dd_sequence in dynamical_decoupling_sequences
+        }
         for chemical_potential in chemical_potential_values:
             # diagonalize Hamiltonian
             (transformation_matrix, _, _,) = diagonalizing_bogoliubov_transform(
@@ -657,36 +496,53 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     @ corr_diag
                     @ full_transformation_matrix
                 )
-                corr_mat, cov = corr[
-                    tunneling,
-                    superconducting,
-                    chemical_potential,
-                    occupied_orbitals,
-                    dynamical_decoupling_sequence,
-                ]
-                fidelity_wit, stddev = fidelity_witness(corr_mat, corr_exact, cov)
-                data[occupied_orbitals].append((fidelity_wit, stddev))
-        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
-        yield AnalysisResultData(f"fidelity_witness_{label}", data_zipped)
+                for dd_sequence, label in itertools.product(
+                    dynamical_decoupling_sequences, labels
+                ):
+                    corr_mat, cov = corr[
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        dd_sequence,
+                        label,
+                    ]
+                    fidelity_wit, stddev = fidelity_witness(corr_mat, corr_exact, cov)
+                    data[dd_sequence][label][occupied_orbitals].append(
+                        (fidelity_wit, stddev)
+                    )
 
-        fidelity_witness_avg = np.zeros(len(chemical_potential_values))
-        fidelity_witness_stddev = np.zeros(len(chemical_potential_values))
-        for occupied_orbitals in occupied_orbitals_list:
-            values, stddevs = data_zipped[occupied_orbitals]
-            fidelity_witness_avg += np.array(values)
-            fidelity_witness_stddev += np.array(stddevs) ** 2
-        fidelity_witness_avg /= len(occupied_orbitals_list)
-        fidelity_witness_stddev = np.sqrt(fidelity_witness_stddev) / len(
-            occupied_orbitals_list
-        )
-        yield AnalysisResultData(
-            f"fidelity_witness_avg_{label}",
-            (fidelity_witness_avg, fidelity_witness_stddev),
-        )
+        def zip_dict(d):
+            return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
+
+        data_zipped = {
+            k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
+        }
+        yield AnalysisResultData(f"fidelity_witness", data_zipped)
+
+        data_avg = {dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences}
+        for dd_sequence, label in itertools.product(
+            dynamical_decoupling_sequences, labels
+        ):
+            fidelity_witness_avg = np.zeros(len(chemical_potential_values))
+            fidelity_witness_stddev = np.zeros(len(chemical_potential_values))
+            for occupied_orbitals in occupied_orbitals_list:
+                values, stddevs = data_zipped[dd_sequence][label][occupied_orbitals]
+                fidelity_witness_avg += np.array(values)
+                fidelity_witness_stddev += np.array(stddevs) ** 2
+            fidelity_witness_avg /= len(occupied_orbitals_list)
+            fidelity_witness_stddev = np.sqrt(fidelity_witness_stddev) / len(
+                occupied_orbitals_list
+            )
+            data_avg[dd_sequence][label] = (
+                fidelity_witness_avg,
+                fidelity_witness_stddev,
+            )
+        yield AnalysisResultData(f"fidelity_witness_avg", data_avg)
 
     def _compute_energy(
         self,
-        label: str,
+        labels: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
             Tuple[np.ndarray, _CovarianceDict],
@@ -696,10 +552,15 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
         occupied_orbitals_list: Iterable[Tuple[int, ...]],
-        dynamical_decoupling_sequence: Optional[str],
+        dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
-        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # type of defaultdict:
+        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        data = {
+            dd_sequence: {label: defaultdict(list) for label in labels}
+            for dd_sequence in dynamical_decoupling_sequences
+        }
         for chemical_potential in chemical_potential_values:
             # create Hamiltonian
             hamiltonian_quad = kitaev_hamiltonian(
@@ -721,32 +582,51 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 )
                 energy_exact[occupied_orbitals].append(exact_energy)
 
-                corr_mat, cov = corr[
-                    tunneling,
-                    superconducting,
-                    chemical_potential,
-                    occupied_orbitals,
-                    dynamical_decoupling_sequence,
-                ]
-                energy, stddevs = np.real(
-                    expectation_from_correlation_matrix(hamiltonian_quad, corr_mat, cov)
-                )
-                data[occupied_orbitals].append((energy, stddevs))
-        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
-        yield AnalysisResultData(f"energy_{label}", data_zipped)
+                for dd_sequence, label in itertools.product(
+                    dynamical_decoupling_sequences, labels
+                ):
+                    corr_mat, cov = corr[
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        dd_sequence,
+                        label,
+                    ]
+                    energy, stddevs = np.real(
+                        expectation_from_correlation_matrix(
+                            hamiltonian_quad, corr_mat, cov
+                        )
+                    )
+                    data[dd_sequence][label][occupied_orbitals].append(
+                        (energy, stddevs)
+                    )
+
+        def zip_dict(d):
+            return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
+
+        data_zipped = {
+            k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
+        }
+        yield AnalysisResultData(f"energy", data_zipped)
 
         # error
-        error = np.zeros(len(chemical_potential_values))
-        error_stddev = np.zeros(len(chemical_potential_values))
-        for occupied_orbitals in occupied_orbitals_list:
-            exact = np.array(energy_exact[occupied_orbitals])
-            values, stddevs = data_zipped[occupied_orbitals]
-            values = np.array(values)
-            error += np.abs(values - exact)
-            error_stddev += np.array(stddevs) ** 2
-        error /= len(occupied_orbitals_list)
-        error_stddev = np.sqrt(error_stddev) / len(occupied_orbitals_list)
-        yield AnalysisResultData(f"energy_error_{label}", (error, error_stddev))
+        data_error = {dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences}
+        for dd_sequence, label in itertools.product(
+            dynamical_decoupling_sequences, labels
+        ):
+            error = np.zeros(len(chemical_potential_values))
+            error_stddev = np.zeros(len(chemical_potential_values))
+            for occupied_orbitals in occupied_orbitals_list:
+                exact = np.array(energy_exact[occupied_orbitals])
+                values, stddevs = data_zipped[dd_sequence][label][occupied_orbitals]
+                values = np.array(values)
+                error += np.abs(values - exact)
+                error_stddev += np.array(stddevs) ** 2
+            error /= len(occupied_orbitals_list)
+            error_stddev = np.sqrt(error_stddev) / len(occupied_orbitals_list)
+            data_error[dd_sequence][label] = error, error_stddev
+        yield AnalysisResultData(f"energy_error", data_error)
 
         # BdG
         occupied_orbitals_set = set(occupied_orbitals_list)
@@ -760,46 +640,63 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 break
             threshold += 1
         if threshold >= 0:
-            bdg_energy = np.zeros((2 * threshold, len(chemical_potential_values)))
-            bdg_stddev = np.zeros((2 * threshold, len(chemical_potential_values)))
-            low, low_stddev = data_zipped[()]
-            high, high_stddev = data_zipped[tuple(range(n_modes))]
-            error = np.zeros(len(chemical_potential_values))
-            error_stddev = np.zeros(len(chemical_potential_values))
-            low_exact = energy_exact[()]
-            high_exact = energy_exact[tuple(range(n_modes))]
-            for i in range(threshold):
-                # data
-                particle, particle_stddev = data_zipped[combs[2 * i + 2]]
-                hole, hole_stddev = data_zipped[combs[2 * i + 3]]
-                # exact values
-                particle_exact = np.array(energy_exact[combs[2 * i + 2]])
-                hole_exact = np.array(energy_exact[combs[2 * i + 3]])
-                # energy
-                bdg_energy[i] = low - particle
-                bdg_energy[threshold + i] = high - hole
-                # stddev
-                bdg_stddev[i] = low_stddev ** 2 + particle_stddev ** 2
-                bdg_stddev[threshold + i] = high_stddev ** 2 + hole_stddev ** 2
-                # error
-                error += np.abs((low - particle) - (low_exact - particle_exact))
-                error += np.abs((high - hole) - (high_exact - hole_exact))
-                # error stddev
-                error_stddev += (
-                    np.array(low_stddev) ** 2
-                    + np.array(particle_stddev) ** 2
-                    + np.array(high_stddev) ** 2
-                    + np.array(hole_stddev) ** 2
-                )
-            bdg_stddev = np.sqrt(bdg_stddev)
-            error /= 2 * threshold
-            error_stddev = np.sqrt(error_stddev) / (2 * threshold)
-            yield AnalysisResultData(f"bdg_energy_{label}", (bdg_energy, bdg_stddev))
-            yield AnalysisResultData(f"bdg_energy_error_{label}", (error, error_stddev))
+            data_bdg = {
+                dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences
+            }
+            data_bdg_error = {
+                dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences
+            }
+            for dd_sequence, label in itertools.product(
+                dynamical_decoupling_sequences, labels
+            ):
+                bdg_energy = np.zeros((2 * threshold, len(chemical_potential_values)))
+                bdg_stddev = np.zeros((2 * threshold, len(chemical_potential_values)))
+                low, low_stddev = data_zipped[dd_sequence][label][()]
+                high, high_stddev = data_zipped[dd_sequence][label][
+                    tuple(range(n_modes))
+                ]
+                error = np.zeros(len(chemical_potential_values))
+                error_stddev = np.zeros(len(chemical_potential_values))
+                low_exact = energy_exact[()]
+                high_exact = energy_exact[tuple(range(n_modes))]
+                for i in range(threshold):
+                    # data
+                    particle, particle_stddev = data_zipped[dd_sequence][label][
+                        combs[2 * i + 2]
+                    ]
+                    hole, hole_stddev = data_zipped[dd_sequence][label][
+                        combs[2 * i + 3]
+                    ]
+                    # exact values
+                    particle_exact = np.array(energy_exact[combs[2 * i + 2]])
+                    hole_exact = np.array(energy_exact[combs[2 * i + 3]])
+                    # energy
+                    bdg_energy[i] = low - particle
+                    bdg_energy[threshold + i] = high - hole
+                    # stddev
+                    bdg_stddev[i] = low_stddev ** 2 + particle_stddev ** 2
+                    bdg_stddev[threshold + i] = high_stddev ** 2 + hole_stddev ** 2
+                    # error
+                    error += np.abs((low - particle) - (low_exact - particle_exact))
+                    error += np.abs((high - hole) - (high_exact - hole_exact))
+                    # error stddev
+                    error_stddev += (
+                        np.array(low_stddev) ** 2
+                        + np.array(particle_stddev) ** 2
+                        + np.array(high_stddev) ** 2
+                        + np.array(hole_stddev) ** 2
+                    )
+                bdg_stddev = np.sqrt(bdg_stddev)
+                error /= 2 * threshold
+                error_stddev = np.sqrt(error_stddev) / (2 * threshold)
+                data_bdg[dd_sequence][label] = bdg_energy, bdg_stddev
+                data_bdg_error[dd_sequence][label] = error, error_stddev
+            yield AnalysisResultData(f"bdg_energy", data_bdg)
+            yield AnalysisResultData(f"bdg_energy_error", data_bdg_error)
 
     def _compute_edge_correlation(
         self,
-        label: str,
+        labels: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
             Tuple[np.ndarray, _CovarianceDict],
@@ -809,29 +706,48 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
         occupied_orbitals_list: Iterable[Tuple[int, ...]],
-        dynamical_decoupling_sequence: Optional[str],
+        dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         edge_correlation = edge_correlation_op(n_modes)
-        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # type of defaultdict:
+        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        data = {
+            dd_sequence: {label: defaultdict(list) for label in labels}
+            for dd_sequence in dynamical_decoupling_sequences
+        }
         for chemical_potential in chemical_potential_values:
             for occupied_orbitals in occupied_orbitals_list:
-                corr_mat, cov = corr[
-                    tunneling,
-                    superconducting,
-                    chemical_potential,
-                    occupied_orbitals,
-                    dynamical_decoupling_sequence,
-                ]
-                edge_correlation_val, stddev = np.real(
-                    expectation_from_correlation_matrix(edge_correlation, corr_mat, cov)
-                )
-                data[occupied_orbitals].append((edge_correlation_val, stddev))
-        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
-        yield AnalysisResultData(f"edge_correlation_{label}", data_zipped)
+                for dd_sequence, label in itertools.product(
+                    dynamical_decoupling_sequences, labels
+                ):
+                    corr_mat, cov = corr[
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        dd_sequence,
+                        label,
+                    ]
+                    edge_correlation_val, stddev = np.real(
+                        expectation_from_correlation_matrix(
+                            edge_correlation, corr_mat, cov
+                        )
+                    )
+                    data[dd_sequence][label][occupied_orbitals].append(
+                        (edge_correlation_val, stddev)
+                    )
+
+        def zip_dict(d):
+            return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
+
+        data_zipped = {
+            k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
+        }
+        yield AnalysisResultData(f"edge_correlation", data_zipped)
 
     def _compute_number(
         self,
-        label: str,
+        labels: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
             Tuple[np.ndarray, _CovarianceDict],
@@ -841,29 +757,46 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
         occupied_orbitals_list: Iterable[Tuple[int, ...]],
-        dynamical_decoupling_sequence: Optional[str],
+        dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         number = number_op(n_modes)
-        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # type of defaultdict:
+        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        data = {
+            dd_sequence: {label: defaultdict(list) for label in labels}
+            for dd_sequence in dynamical_decoupling_sequences
+        }
         for chemical_potential in chemical_potential_values:
             for occupied_orbitals in occupied_orbitals_list:
-                corr_mat, cov = corr[
-                    tunneling,
-                    superconducting,
-                    chemical_potential,
-                    occupied_orbitals,
-                    dynamical_decoupling_sequence,
-                ]
-                number_val, stddev = np.real(
-                    expectation_from_correlation_matrix(number, corr_mat, cov)
-                )
-                data[occupied_orbitals].append((number_val, stddev))
-        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
-        yield AnalysisResultData(f"number_{label}", data_zipped)
+                for dd_sequence, label in itertools.product(
+                    dynamical_decoupling_sequences, labels
+                ):
+                    corr_mat, cov = corr[
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        dd_sequence,
+                        label,
+                    ]
+                    number_val, stddev = np.real(
+                        expectation_from_correlation_matrix(number, corr_mat, cov)
+                    )
+                    data[dd_sequence][label][occupied_orbitals].append(
+                        (number_val, stddev)
+                    )
+
+        def zip_dict(d):
+            return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
+
+        data_zipped = {
+            k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
+        }
+        yield AnalysisResultData(f"number", data_zipped)
 
     def _compute_parity(
         self,
-        label: str,
+        labels: str,
         quasi_dists: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
             Dict[Tuple[Tuple[int, ...], str], QuasiDistribution],
@@ -872,26 +805,41 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
         occupied_orbitals_list: Iterable[Tuple[int, ...]],
-        dynamical_decoupling_sequence: Optional[str],
+        dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
-        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # type of defaultdict:
+        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        data = {
+            dd_sequence: {label: defaultdict(list) for label in labels}
+            for dd_sequence in dynamical_decoupling_sequences
+        }
         for chemical_potential in chemical_potential_values:
             for occupied_orbitals in occupied_orbitals_list:
-                quasis = quasi_dists[
-                    tunneling,
-                    superconducting,
-                    chemical_potential,
-                    occupied_orbitals,
-                    dynamical_decoupling_sequence,
-                ]
-                parity, stddev = compute_parity(quasis)
-                data[occupied_orbitals].append((parity, stddev))
-        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
-        yield AnalysisResultData(f"parity_{label}", data_zipped)
+                for dd_sequence, label in itertools.product(
+                    dynamical_decoupling_sequences, labels
+                ):
+                    quasis = quasi_dists[
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        dd_sequence,
+                        label,
+                    ]
+                    parity, stddev = compute_parity(quasis)
+                    data[dd_sequence][label][occupied_orbitals].append((parity, stddev))
+
+        def zip_dict(d):
+            return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
+
+        data_zipped = {
+            k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
+        }
+        yield AnalysisResultData(f"parity", data_zipped)
 
     def _compute_site_correlation(
         self,
-        label: str,
+        labels: str,
         corr: Dict[
             Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
             Tuple[np.ndarray, _CovarianceDict],
@@ -901,27 +849,42 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
         occupied_orbitals_list: Iterable[Tuple[int, ...]],
-        dynamical_decoupling_sequence: Optional[str],
+        dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         site_correlation_ops = [site_correlation_op(i) for i in range(1, 2 * n_modes)]
-        data = defaultdict(list)  # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # type of defaultdict:
+        # Dict[Tuple[float, Tuple[int, ...]], List[Tuple[float, float]]]
+        data = {
+            dd_sequence: {label: defaultdict(list) for label in labels}
+            for dd_sequence in dynamical_decoupling_sequences
+        }
         for chemical_potential in chemical_potential_values:
             for occupied_orbitals in occupied_orbitals_list:
-                corr_mat, cov = corr[
-                    tunneling,
-                    superconducting,
-                    chemical_potential,
-                    occupied_orbitals,
-                    dynamical_decoupling_sequence,
-                ]
-                for site_correlation in site_correlation_ops:
-                    site_correlation_val, stddev = np.real(
-                        expectation_from_correlation_matrix(
-                            site_correlation, corr_mat, cov
+                for dd_sequence, label in itertools.product(
+                    dynamical_decoupling_sequences, labels
+                ):
+                    corr_mat, cov = corr[
+                        tunneling,
+                        superconducting,
+                        chemical_potential,
+                        occupied_orbitals,
+                        dd_sequence,
+                        label,
+                    ]
+                    for site_correlation in site_correlation_ops:
+                        site_correlation_val, stddev = np.real(
+                            expectation_from_correlation_matrix(
+                                site_correlation, corr_mat, cov
+                            )
                         )
-                    )
-                    data[chemical_potential, occupied_orbitals].append(
-                        (site_correlation_val, stddev)
-                    )
-        data_zipped = {k: tuple(np.array(a) for a in zip(*v)) for k, v in data.items()}
-        yield AnalysisResultData(f"site_correlation_{label}", data_zipped)
+                        data[dd_sequence][label][
+                            chemical_potential, occupied_orbitals
+                        ].append((site_correlation_val, stddev))
+
+        def zip_dict(d):
+            return {k: tuple(np.array(a) for a in zip(*v)) for k, v in d.items()}
+
+        data_zipped = {
+            k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
+        }
+        yield AnalysisResultData(f"site_correlation", data_zipped)
