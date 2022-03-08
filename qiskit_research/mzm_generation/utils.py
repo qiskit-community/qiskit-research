@@ -646,9 +646,12 @@ def purify_idempotent_matrix(
 
 
 def pick_qubit_layout(
-    n_modes: int, backends: List[Backend]
+    n_modes: int, backend_name: str, provider: Optional[Provider] = None
 ) -> Tuple[List[int], str, float]:
     """Pick qubit layout using mapomatic."""
+    if backend_name == "aer_simulator":
+        return list(range(n_modes)), backend_name, 0.0
+    backend = get_backend(backend_name, provider)
     tunneling = -1.0
     superconducting = 1.0
     chemical_potential = 1.0
@@ -664,7 +667,7 @@ def pick_qubit_layout(
         transformation_matrix, occupied_orbitals=occupied_orbitals
     )
     # TODO check that mapomatic returns a line
-    return mapomatic.best_overall_layout(circuit.decompose(), backends)
+    return mapomatic.best_overall_layout(circuit.decompose(), [backend])
 
 
 def orbital_permutations(n_modes: int) -> Iterable[tuple[int, ...]]:

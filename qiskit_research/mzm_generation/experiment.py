@@ -96,9 +96,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         return list(self._circuits())
 
     def _circuits(self) -> Iterable[QuantumCircuit]:
-        dd_sequences = [None]
-        if self.params.dynamical_decoupling_sequences:
-            dd_sequences += self.params.dynamical_decoupling_sequences
+        dd_sequences = self.params.dynamical_decoupling_sequences or [None]
         for (
             tunneling,
             superconducting,

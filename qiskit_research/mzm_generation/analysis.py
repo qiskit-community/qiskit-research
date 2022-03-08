@@ -118,9 +118,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         ps_removed_masses = {}
 
         # calculate results
-        dd_sequences = [None]
-        if params.dynamical_decoupling_sequences:
-            dd_sequences += params.dynamical_decoupling_sequences
+        dd_sequences = params.dynamical_decoupling_sequences or [None]
         for chemical_potential in params.chemical_potential_values:
             # diagonalize
             (transformation_matrix, _, _,) = diagonalizing_bogoliubov_transform(
