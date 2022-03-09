@@ -40,8 +40,8 @@ def add_pauli_twirls(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: IBMQBackend,
     entangler_str: str,
-    seeds: Union[int, List[int]],
-    validate=True,
+    num_twirled_cicuits: int,
+    seed: Union[int, List[int]],
 ) -> List[QuantumCircuit]:
     """
     Add pairs of gates before/after entangling gate randomly
@@ -75,15 +75,11 @@ def add_pauli_twirls(
     for circ in circuits:
         dag = circuit_to_dag(circ)
         twirled_circs = []
-        if isinstance(seeds, int):
-            seed_array = range(seeds)
-        else:
-            seed_array = seeds
+        rng = np.random.default_rng(seed)
 
-        for seed in seed_array:
+        for _ in range(num_twirled_cicuits):
             this_dag = deepcopy(dag)
             runs = this_dag.collect_runs([entangler_str])
-            rng = np.random.default_rng(seed)
             twirl_idxs = rng.integers(low=0, high=len(twirl_gates), size=len(runs))
             for twirl_idx, run in enumerate(runs):
                 mini_dag = DAGCircuit()
@@ -117,10 +113,6 @@ def add_pauli_twirls(
 
         all_twirled_circs.append(twirled_circs)
 
-    if validate:
-        if not verify_equiv_circuits(circuits, all_twirled_circs):
-            raise QiskitError("Twirled circuits are not equivalent!")
-
     return all_twirled_circs
 
 
@@ -132,24 +124,3 @@ def get_twirl_gates(entangler_str: str) -> List[Gate]:
         return TWIRL_GATES[entangler_str]
     except:
         raise ValueError("Twirling gates not defined for entangler "+entangler_str)
-
-def verify_equiv_circuits(circuits, all_twirled_circs):
-    if isinstance(circuits, QuantumCircuit):
-        circuits = [circuits]
-    if isinstance(all_twirled_circs, QuantumCircuit):
-        all_twirled_circs = [all_twirled_circs]
-
-    all_equiv_circuits = True
-    for circ, t_circs in zip(circuits, all_twirled_circs):
-        param_bind = {}
-        for param in circ.parameters:
-            param_bind[param] = np.random.random()
-
-        for t_circ in t_circs:
-            all_equiv_circuits = all_equiv_circuits and Operator(
-                circ.bind_parameters(param_bind)).equiv(Operator(
-                    t_circ.bind_parameters(param_bind)
-                )
-            )
-
-    return all_equiv_circuits

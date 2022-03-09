@@ -15,25 +15,59 @@
 import unittest
 
 from qiskit import transpile
-from qiskit.circuit import QuantumCircuit
+from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.quantum_info import Operator
 from qiskit.test.mock import FakeMumbai
-from qiskit_research.utils.pauli_twirling import add_pauli_twirls
+from qiskit_research.utils.pauli_twirling import add_pauli_twirls, TWIRL_GATES
+
+import numpy as np
 
 
 class TestPauliTwirling(unittest.TestCase):
     """Test Pauli twirling."""
 
-    def test_add_pauli_twirls(self):
+    def test_add_pauli_twirls_to_rzx(self):
         backend = FakeMumbai()
+        theta = Parameter('$\\theta$')
+        phi = Parameter('$\\phi')
         circuit = QuantumCircuit(3)
         circuit.h([1, 2])
-        circuit.rzx(0.37, 0, 1)
+        circuit.rzx(theta, 0, 1)
         circuit.h(1)
-        circuit.rzx(0.37, 1, 2)
+        circuit.rzx(phi, 1, 2)
         circuit.h(2)
-        twirled_circs = add_pauli_twirls(circuit, backend, "rzx", 10)
+        twirled_circs = add_pauli_twirls(circuit, backend, "rzx", 5, 1)
 
+        rng = np.random.default_rng()
+        param_bind = {}
+        for param in circuit.parameters:
+            param_bind[param] = rng.random()
+
+        circuit.assign_parameters(param_bind, inplace=True)
         for t_circ in twirled_circs[0]:
+            t_circ.assign_parameters(param_bind, inplace=True)
+            self.assertNotEqual(t_circ, circuit)
+            self.assertTrue(Operator(t_circ).equiv(Operator(circuit)))
+
+    def test_add_pauli_twirls_to_rzz(self):
+        backend = FakeMumbai()
+        theta = Parameter('$\\theta$')
+        phi = Parameter('$\\phi')
+        circuit = QuantumCircuit(3)
+        circuit.h([1, 2])
+        circuit.rzz(theta, 0, 1)
+        circuit.h(1)
+        circuit.rzz(phi, 1, 2)
+        circuit.h(2)
+        twirled_circs = add_pauli_twirls(circuit, backend, "rzz", 5, 1)
+
+        rng = np.random.default_rng()
+        param_bind = {}
+        for param in circuit.parameters:
+            param_bind[param] = rng.random()
+
+        circuit.assign_parameters(param_bind, inplace=True)
+        for t_circ in twirled_circs[0]:
+            t_circ.assign_parameters(param_bind, inplace=True)
             self.assertNotEqual(t_circ, circuit)
             self.assertTrue(Operator(t_circ).equiv(Operator(circuit)))
