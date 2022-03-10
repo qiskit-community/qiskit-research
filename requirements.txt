@@ -1,5 +1,7 @@
+mapomatic
 mthree
 pylatexenc
+qiskit-aer
 qiskit-experiments @ git+https://github.com/Qiskit/qiskit-experiments.git#egg=qiskit-experiments
 qiskit-ibmq-provider
 qiskit-nature @ git+https://github.com/kevinsung/qiskit-nature.git@slater-determinants#egg=qiskit-nature
