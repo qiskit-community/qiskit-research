@@ -28,7 +28,7 @@ from typing import (
 import mapomatic
 import mthree
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import BasicAer, QuantumCircuit
 from qiskit.circuit.library import XYGate
 from qiskit.providers import Backend, Provider
 from qiskit.providers.aer import AerSimulator
@@ -52,11 +52,14 @@ _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
 def get_backend(name: str, provider: Optional[Provider]) -> Backend:
     """Retrieve a backend."""
-    if name == "aer_simulator":
+    if provider is not None:
+        return provider.get_backend(name)
+    elif name == "aer_simulator":
         return AerSimulator()
-    if provider is None:
-        raise ValueError("To get a non-simulator backend, a provider must be provided.")
-    return provider.get_backend(name)
+    elif name == "statevector_simulator":
+        return BasicAer.get_backend("statevector_simulator")
+    else:
+        raise ValueError("The given name does not match any supported backends.")
 
 
 def orbital_combinations(
@@ -649,7 +652,7 @@ def pick_qubit_layout(
     n_modes: int, backend_name: str, provider: Optional[Provider] = None
 ) -> Tuple[List[int], str, float]:
     """Pick qubit layout using mapomatic."""
-    if backend_name == "aer_simulator":
+    if provider is None:
         return list(range(n_modes)), backend_name, 0.0
     backend = get_backend(backend_name, provider)
     tunneling = -1.0
