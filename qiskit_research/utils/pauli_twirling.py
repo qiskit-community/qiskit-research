@@ -63,6 +63,8 @@ def add_pauli_twirls(
     Args:
         circuits: Circuit or list of circuits to be twirled.
         num_twirled_circuits: Number of twirled circuits to return for each input circuit.
+        gates_to_twirl: Names of gates to twirl. The default behavior is to twirl all
+            supported gates.
         seed: Seed for the pseudorandom number generator.
 
     Returns:
