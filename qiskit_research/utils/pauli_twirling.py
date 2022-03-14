@@ -23,6 +23,12 @@ X = XGate()
 Y = YGate()
 Z = ZGate()
 
+# this dictionary stores the twirl sets for each supported gate
+# each key is the name of a supported gate
+# each value is a tuple that represents the twirl set for the gate
+# the twirl set is a list of (before, after) pairs describing twirl gates
+# "before" and "after" are tuples of single-qubit gates to be applied
+#   before and after the gate to be twirled
 TWIRL_GATES = {
     "rzx": (
         ((I, I), (I, I)),
