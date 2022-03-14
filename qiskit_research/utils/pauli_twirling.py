@@ -10,7 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import Any, List, Union, cast
+from typing import Any, Iterable, List, Optional, Union, cast
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit, QuantumRegister
@@ -55,6 +55,7 @@ def parse_random_seed(seed: Any) -> np.random.Generator:
 def add_pauli_twirls(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     num_twirled_circuits: int = 1,
+    gates_to_twirl: Optional[Iterable[str]] = None,
     seed: Any = None,
 ) -> Union[List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """Add Pauli twirls to circuits.
@@ -68,19 +69,28 @@ def add_pauli_twirls(
         If the input is a single circuit, then a list of circuits is returned.
         If the input is a list of circuit, then a list of lists of circuits is returned.
     """
+    if gates_to_twirl is None:
+        gates_to_twirl = TWIRL_GATES.keys()
     rng = parse_random_seed(seed)
     if isinstance(circuits, QuantumCircuit):
-        return [_twirl_circuit(circuits, rng) for _ in range(num_twirled_circuits)]
+        return [
+            _twirl_circuit(circuits, gates_to_twirl, rng)
+            for _ in range(num_twirled_circuits)
+        ]
     return [
-        [_twirl_circuit(circuit, rng) for _ in range(num_twirled_circuits)]
+        [
+            _twirl_circuit(circuit, gates_to_twirl, rng)
+            for _ in range(num_twirled_circuits)
+        ]
         for circuit in circuits
     ]
 
 
-def _twirl_circuit(circuit: QuantumCircuit, rng: np.random.Generator) -> QuantumCircuit:
+def _twirl_circuit(
+    circuit: QuantumCircuit, gates_to_twirl: Iterable[str], rng: np.random.Generator
+) -> QuantumCircuit:
     dag = circuit_to_dag(circuit)
-    gates_to_twirl = list(TWIRL_GATES)
-    for run in dag.collect_runs(gates_to_twirl):
+    for run in dag.collect_runs(list(gates_to_twirl)):
         for node in run:
             twirl_gates = TWIRL_GATES[node.op.name]
             (before0, before1), (after0, after1) = twirl_gates[
