@@ -17,7 +17,7 @@ import unittest
 import numpy as np
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.quantum_info import Operator
-from qiskit_research.utils.pauli_twirling import add_pauli_twirls
+from qiskit_research.utils import add_pauli_twirls
 
 
 class TestPauliTwirling(unittest.TestCase):

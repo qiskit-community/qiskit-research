@@ -11,3 +11,4 @@
 # that they have been altered from the originals.
 
 from qiskit_research.utils.dynamical_decoupling import add_dynamical_decoupling
+from qiskit_research.utils.pauli_twirling import add_pauli_twirls
