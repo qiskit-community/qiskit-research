@@ -152,10 +152,13 @@ def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
     return np.block(
         [
             [
-                -hamiltonian.hermitian_part.conj(),
-                -hamiltonian.antisymmetric_part.conj(),
+                hamiltonian.hermitian_part,
+                hamiltonian.antisymmetric_part,
             ],
-            [hamiltonian.antisymmetric_part, hamiltonian.hermitian_part],
+            [
+                -hamiltonian.antisymmetric_part.conj(),
+                -hamiltonian.hermitian_part.conj(),
+            ],
         ]
     )
 
