@@ -14,7 +14,7 @@ from __future__ import annotations
 import functools
 import math
 from collections import defaultdict
-from typing import TYPE_CHECKING, Callable, Dict, FrozenSet, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Union
 
 import mapomatic
 import mthree
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     )
 
 
-_CovarianceDict = Dict[FrozenSet[tuple[int, int]], float]
+_CovarianceDict = dict[frozenset[tuple[int, int]], float]
 
 
 def get_backend(name: str, provider: Optional[Provider]) -> Backend:
@@ -405,7 +405,7 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 
 
 def compute_correlation_matrix(
-    quasis: Dict[str, Dict[str, float]]
+    quasis: dict[str, dict[str, float]]
 ) -> tuple[np.ndarray, _CovarianceDict]:
     """Compute correlation matrix from quasiprobabilities.
 
@@ -471,7 +471,7 @@ def compute_correlation_matrix(
 
 
 def compute_interaction_matrix(
-    quasis: Dict[str, Dict[str, float]],
+    quasis: dict[str, dict[str, float]],
     label: str,
 ) -> tuple[np.ndarray, _CovarianceDict]:
     """Compute interaction matrix from quasiprobabilities.
@@ -577,7 +577,7 @@ def evaluate_diagonal_op(operator: str, bitstring: str) -> int:
 
 
 def compute_parity(
-    quasis: Dict[tuple[tuple[int, ...], str], mthree.classes.QuasiDistribution]
+    quasis: dict[tuple[tuple[int, ...], str], mthree.classes.QuasiDistribution]
 ) -> tuple[float, float]:
     """Compute parity from quasiprobabilities."""
     n = len(next(iter(next(iter(quasis.values())))))
@@ -615,7 +615,7 @@ def post_select_quasis(
     )
 
 
-def counts_to_quasis(counts: Dict[str, int]) -> mthree.classes.QuasiDistribution:
+def counts_to_quasis(counts: dict[str, int]) -> mthree.classes.QuasiDistribution:
     """Convert counts to quasiprobabilities."""
     shots = sum(counts.values())
     data = {bitstring: count / shots for bitstring, count in counts.items()}

@@ -14,7 +14,7 @@ from __future__ import annotations
 import itertools
 import os
 from collections import defaultdict
-from typing import Dict, Iterable, Optional, Union
+from typing import Iterable, Optional, Union
 
 import mthree
 import numpy as np
@@ -99,7 +99,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _compute_analysis_results(
         self,
         params: KitaevHamiltonianExperimentParameters,
-        data: Dict[CircuitParameters, Dict],
+        data: dict[CircuitParameters, dict],
         mit: mthree.M3Mitigation,
     ) -> Iterable[AnalysisResultData]:
         # fix tunneling and superconducting
@@ -137,14 +137,14 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 for dd_sequence in dd_sequences:
                     quasis_raw = (
                         {}
-                    )  # Dict[tuple[tuple[int, ...], str], QuasiDistribution]
+                    )  # dict[tuple[tuple[int, ...], str], QuasiDistribution]
                     quasis_mem = (
                         {}
-                    )  # Dict[tuple[tuple[int, ...], str], QuasiDistribution]
+                    )  # dict[tuple[tuple[int, ...], str], QuasiDistribution]
                     quasis_ps = (
                         {}
-                    )  # Dict[tuple[tuple[int, ...], str], QuasiDistribution]
-                    ps_removed_mass = {}  # Dict[tuple[tuple[int, ...], str], float]
+                    )  # dict[tuple[tuple[int, ...], str], QuasiDistribution]
+                    ps_removed_mass = {}  # dict[tuple[tuple[int, ...], str], float]
                     for permutation, label in measurement_labels(params.n_modes):
                         circuit_params = CircuitParameters(
                             tunneling,
@@ -322,10 +322,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         edge_correlation = edge_correlation_op(params.n_modes)
 
         # create data storage objects
-        energy_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
-        edge_correlation_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
-        parity_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
-        number_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
+        energy_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
+        edge_correlation_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
+        parity_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
+        number_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
 
         for chemical_potential in chemical_potential_values:
             # diagonalize Hamiltonian
@@ -413,7 +413,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         ]
 
         # create data storage objects
-        site_correlation_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
+        site_correlation_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
 
         for chemical_potential in params.chemical_potential_values:
             # diagonalize Hamiltonian
@@ -459,7 +459,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _compute_fidelity_witness(
         self,
         labels: str,
-        corr: Dict[
+        corr: dict[
             tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
             tuple[np.ndarray, _CovarianceDict],
         ],
@@ -471,7 +471,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         # type of defaultdict:
-        # Dict[tuple[int, ...], list[tuple[float, float]]]
+        # dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -544,7 +544,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _compute_energy(
         self,
         labels: str,
-        corr: Dict[
+        corr: dict[
             tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
             tuple[np.ndarray, _CovarianceDict],
         ],
@@ -555,9 +555,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
-        energy_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
+        energy_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
         # type of defaultdict:
-        # Dict[tuple[int, ...], list[tuple[float, float]]]
+        # dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -698,7 +698,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _compute_edge_correlation(
         self,
         labels: str,
-        corr: Dict[
+        corr: dict[
             tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
             tuple[np.ndarray, _CovarianceDict],
         ],
@@ -711,7 +711,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     ) -> Iterable[AnalysisResultData]:
         edge_correlation = edge_correlation_op(n_modes)
         # type of defaultdict:
-        # Dict[tuple[int, ...], list[tuple[float, float]]]
+        # dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -749,7 +749,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _compute_number(
         self,
         labels: str,
-        corr: Dict[
+        corr: dict[
             tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
             tuple[np.ndarray, _CovarianceDict],
         ],
@@ -762,7 +762,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     ) -> Iterable[AnalysisResultData]:
         number = number_op(n_modes)
         # type of defaultdict:
-        # Dict[tuple[int, ...], list[tuple[float, float]]]
+        # dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -798,9 +798,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _compute_parity(
         self,
         labels: str,
-        quasi_dists: Dict[
+        quasi_dists: dict[
             tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
-            Dict[tuple[tuple[int, ...], str], QuasiDistribution],
+            dict[tuple[tuple[int, ...], str], QuasiDistribution],
         ],
         tunneling: float,
         superconducting: Union[float, complex],
@@ -809,7 +809,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         # type of defaultdict:
-        # Dict[tuple[int, ...], list[tuple[float, float]]]
+        # dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -841,7 +841,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     def _compute_site_correlation(
         self,
         labels: str,
-        corr: Dict[
+        corr: dict[
             tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
             tuple[np.ndarray, _CovarianceDict],
         ],
@@ -854,7 +854,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
     ) -> Iterable[AnalysisResultData]:
         site_correlation_ops = [site_correlation_op(i) for i in range(1, 2 * n_modes)]
         # type of defaultdict:
-        # Dict[tuple[float, tuple[int, ...]], list[tuple[float, float]]]
+        # dict[tuple[float, tuple[int, ...]], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
