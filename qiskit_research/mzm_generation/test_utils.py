@@ -74,7 +74,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
         constant = np.random.randn()
         quad_ham = QuadraticHamiltonian(hermitian_part, antisymmetric_part, constant)
 
-        hamiltonian = quad_ham._fermionic_op()
+        hamiltonian = quad_ham.to_fermionic_op()
         hamiltonian_jw = jordan_wigner(hamiltonian).to_matrix()
         _, vecs = np.linalg.eigh(hamiltonian_jw)
         state = vecs[:, 0]
@@ -92,7 +92,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
         constant = np.random.randn()
         quad_ham = QuadraticHamiltonian(hermitian_part, antisymmetric_part, constant)
 
-        hamiltonian = quad_ham._fermionic_op()
+        hamiltonian = quad_ham.to_fermionic_op()
         hamiltonian_jw = jordan_wigner(hamiltonian).to_matrix()
         state = np.array(random_statevector(2**dim))
         corr = correlation_matrix(state)
@@ -169,7 +169,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
             superconducting=superconducting,
             chemical_potential=chemical_potential,
         )
-        hamiltonian = quad_ham._fermionic_op()
+        hamiltonian = quad_ham.to_fermionic_op()
         exp1, std1 = expectation_from_correlation_matrix(quad_ham, corr, cov)
         exp2, std2 = expectation_from_correlation_matrix(hamiltonian, corr, cov)
         np.testing.assert_allclose(exp1, exp2, atol=1e-8)

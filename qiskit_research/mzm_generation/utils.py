@@ -14,7 +14,16 @@ from __future__ import annotations
 import functools
 import math
 from collections import defaultdict
-from typing import TYPE_CHECKING, Callable, Iterable, Optional, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    FrozenSet,
+    Iterable,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import mapomatic
 import mthree
@@ -38,7 +47,7 @@ if TYPE_CHECKING:
     )
 
 
-_CovarianceDict = dict[frozenset[tuple[int, int]], float]
+_CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
 
 def get_backend(name: str, provider: Optional[Provider]) -> Backend:
