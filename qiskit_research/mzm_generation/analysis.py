@@ -9,11 +9,12 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
+from __future__ import annotations
 
 import itertools
 import os
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Dict, Iterable, Optional, Union
 
 import mthree
 import numpy as np
@@ -52,7 +53,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _run_analysis(
         self, experiment_data: ExperimentData
-    ) -> Tuple[List[AnalysisResultData], List[Figure]]:
+    ) -> tuple[list[AnalysisResultData], list[Figure]]:
         experiment_params = experiment_data.metadata["params"]
 
         # put data into dictionary for easier handling
@@ -136,14 +137,14 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 for dd_sequence in dd_sequences:
                     quasis_raw = (
                         {}
-                    )  # Dict[Tuple[Tuple[int, ...], str], QuasiDistribution]
+                    )  # Dict[tuple[tuple[int, ...], str], QuasiDistribution]
                     quasis_mem = (
                         {}
-                    )  # Dict[Tuple[Tuple[int, ...], str], QuasiDistribution]
+                    )  # Dict[tuple[tuple[int, ...], str], QuasiDistribution]
                     quasis_ps = (
                         {}
-                    )  # Dict[Tuple[Tuple[int, ...], str], QuasiDistribution]
-                    ps_removed_mass = {}  # Dict[Tuple[Tuple[int, ...], str], float]
+                    )  # Dict[tuple[tuple[int, ...], str], QuasiDistribution]
+                    ps_removed_mass = {}  # Dict[tuple[tuple[int, ...], str], float]
                     for permutation, label in measurement_labels(params.n_modes):
                         circuit_params = CircuitParameters(
                             tunneling,
@@ -321,10 +322,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         edge_correlation = edge_correlation_op(params.n_modes)
 
         # create data storage objects
-        energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
-        edge_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
-        parity_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
-        number_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+        energy_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
+        edge_correlation_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
+        parity_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
+        number_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
 
         for chemical_potential in chemical_potential_values:
             # diagonalize Hamiltonian
@@ -412,7 +413,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         ]
 
         # create data storage objects
-        site_correlation_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+        site_correlation_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
 
         for chemical_potential in params.chemical_potential_values:
             # diagonalize Hamiltonian
@@ -459,18 +460,18 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: Dict[
-            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
-            Tuple[np.ndarray, _CovarianceDict],
+            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         # type of defaultdict:
-        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # Dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -544,19 +545,19 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: Dict[
-            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
-            Tuple[np.ndarray, _CovarianceDict],
+            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
-        energy_exact = defaultdict(list)  # Dict[Tuple[int, ...], List[float]]
+        energy_exact = defaultdict(list)  # Dict[tuple[int, ...], list[float]]
         # type of defaultdict:
-        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # Dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -674,8 +675,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     bdg_energy[i] = low - particle
                     bdg_energy[threshold + i] = high - hole
                     # stddev
-                    bdg_stddev[i] = low_stddev ** 2 + particle_stddev ** 2
-                    bdg_stddev[threshold + i] = high_stddev ** 2 + hole_stddev ** 2
+                    bdg_stddev[i] = low_stddev**2 + particle_stddev**2
+                    bdg_stddev[threshold + i] = high_stddev**2 + hole_stddev**2
                     # error
                     error += np.abs((low - particle) - (low_exact - particle_exact))
                     error += np.abs((high - hole) - (high_exact - hole_exact))
@@ -698,19 +699,19 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: Dict[
-            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
-            Tuple[np.ndarray, _CovarianceDict],
+            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         edge_correlation = edge_correlation_op(n_modes)
         # type of defaultdict:
-        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # Dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -749,19 +750,19 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: Dict[
-            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
-            Tuple[np.ndarray, _CovarianceDict],
+            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         number = number_op(n_modes)
         # type of defaultdict:
-        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # Dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -798,17 +799,17 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         quasi_dists: Dict[
-            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
-            Dict[Tuple[Tuple[int, ...], str], QuasiDistribution],
+            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            Dict[tuple[tuple[int, ...], str], QuasiDistribution],
         ],
         tunneling: float,
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         # type of defaultdict:
-        # Dict[Tuple[int, ...], List[Tuple[float, float]]]
+        # Dict[tuple[int, ...], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
@@ -841,19 +842,19 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: Dict[
-            Tuple[int, float, Union[float, complex], Tuple[int, ...], Optional[str]],
-            Tuple[np.ndarray, _CovarianceDict],
+            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
         superconducting: Union[float, complex],
         chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[Tuple[int, ...]],
+        occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         site_correlation_ops = [site_correlation_op(i) for i in range(1, 2 * n_modes)]
         # type of defaultdict:
-        # Dict[Tuple[float, Tuple[int, ...]], List[Tuple[float, float]]]
+        # Dict[tuple[float, tuple[int, ...]], list[tuple[float, float]]]
         data = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences

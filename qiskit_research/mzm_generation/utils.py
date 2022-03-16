@@ -9,21 +9,12 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
+from __future__ import annotations
 
 import functools
 import math
 from collections import defaultdict
-from typing import (
-    TYPE_CHECKING,
-    Callable,
-    Dict,
-    FrozenSet,
-    Iterable,
-    List,
-    Optional,
-    Tuple,
-    Union,
-)
+from typing import TYPE_CHECKING, Callable, Dict, FrozenSet, Iterable, Optional, Union
 
 import mapomatic
 import mthree
@@ -47,7 +38,7 @@ if TYPE_CHECKING:
     )
 
 
-_CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
+_CovarianceDict = Dict[FrozenSet[tuple[int, int]], float]
 
 
 def get_backend(name: str, provider: Optional[Provider]) -> Backend:
@@ -200,7 +191,7 @@ def fidelity_witness(
     corr: np.ndarray,
     corr_target: np.ndarray,
     cov: Optional[_CovarianceDict] = None,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Compute fidelity witness from correlation matrix.
 
     Reference: arXiv:1703.03152
@@ -263,7 +254,7 @@ def expectation_from_correlation_matrix(
     operator: Union[QuadraticHamiltonian, FermionicOp],
     corr: np.ndarray,
     cov: Optional[_CovarianceDict] = None,
-) -> Tuple[complex, float]:
+) -> tuple[complex, float]:
     """Compute expectation value of operator from correlation matrix.
 
     Raises:
@@ -415,7 +406,7 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 
 def compute_correlation_matrix(
     quasis: Dict[str, Dict[str, float]]
-) -> Tuple[np.ndarray, _CovarianceDict]:
+) -> tuple[np.ndarray, _CovarianceDict]:
     """Compute correlation matrix from quasiprobabilities.
 
     Returns:
@@ -482,7 +473,7 @@ def compute_correlation_matrix(
 def compute_interaction_matrix(
     quasis: Dict[str, Dict[str, float]],
     label: str,
-) -> Tuple[np.ndarray, _CovarianceDict]:
+) -> tuple[np.ndarray, _CovarianceDict]:
     """Compute interaction matrix from quasiprobabilities.
 
     Returns:
@@ -586,8 +577,8 @@ def evaluate_diagonal_op(operator: str, bitstring: str) -> int:
 
 
 def compute_parity(
-    quasis: Dict[Tuple[Tuple[int, ...], str], mthree.classes.QuasiDistribution]
-) -> Tuple[float, float]:
+    quasis: Dict[tuple[tuple[int, ...], str], mthree.classes.QuasiDistribution]
+) -> tuple[float, float]:
     """Compute parity from quasiprobabilities."""
     n = len(next(iter(next(iter(quasis.values())))))
     quasi_dist = quasis[(tuple(range(n)), "number")]
@@ -596,7 +587,7 @@ def compute_parity(
 
 def post_select_quasis(
     quasis: mthree.classes.QuasiDistribution, predicate: Callable[[str], bool]
-) -> Tuple[mthree.classes.QuasiDistribution, float]:
+) -> tuple[mthree.classes.QuasiDistribution, float]:
     """Post-select quasiprobabilities to enforce a given bitstring predicate.
 
     Returns:
@@ -650,7 +641,7 @@ def purify_idempotent_matrix(
 
 def pick_qubit_layout(
     n_modes: int, backend_name: str, provider: Optional[Provider] = None
-) -> Tuple[List[int], str, float]:
+) -> tuple[list[int], str, float]:
     """Pick qubit layout using mapomatic."""
     if provider is None:
         return list(range(n_modes)), backend_name, 0.0
