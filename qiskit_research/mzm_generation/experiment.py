@@ -9,19 +9,19 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
+from __future__ import annotations
 
 import copy
 import dataclasses
 import functools
 import itertools
-import math
 from collections import namedtuple
-from typing import Iterable, Optional, Sequence, Union
+from typing import Iterable, Optional
 
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import RZGate
-from qiskit.providers import Backend, Provider
+from qiskit.providers import Provider
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_research.mzm_generation.utils import (
@@ -83,7 +83,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
     def __init__(
         self,
         params: KitaevHamiltonianExperimentParameters,
-        provider: Optional[Provider],
+        provider: Optional[Provider] = None,
     ) -> None:
         self.params = params
         backend = get_backend(params.backend_name, provider)
