@@ -15,7 +15,8 @@ from typing import Optional, Union
 import numpy
 from qiskit import QuantumCircuit, QuantumRegister, pulse
 from qiskit.circuit.gate import Gate
-from qiskit.circuit.library import U3Gate
+from qiskit.circuit.library import CXGate, HGate, RZGate, U3Gate, XGate
+from qiskit.circuit.parameterexpression import ParameterValueType
 from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel
 from qiskit.qasm import pi
@@ -134,6 +135,53 @@ class YmGate(Gate):
         """Return a numpy.array for the Ym gate."""
         return numpy.array([[0, -1j], [1j, 0]], dtype=dtype)
 
+class ECRGate(Gate):
+    r"""The echoed cross resonance gate, as detailed in
+    https://arxiv.org/abs/1603.04821
+
+    Definitions are derived by appending an XGate() to q0
+    of an RZXGate.
+    """
+
+    def __init__(self, theta: ParameterValueType, label: Optional[str] = None):
+        """Create new ECR gate."""
+        super().__init__("ecr", 2, [theta], label=label)
+
+    def _define(self):
+        """
+        gate ecr(theta) a, b { h b; cx a, b; u1(theta) b; cx a, b; h b; x a}
+        """
+        theta = self.params[0]
+        q = QuantumRegister(2, "q")
+        qc = QuantumCircuit(q, name=self.name)
+        rules = [
+            (HGate(), [q[1]], []),
+            (CXGate(), [q[0], q[1]], []),
+            (RZGate(theta), [q[1]], []),
+            (CXGate(), [q[0], q[1]], []),
+            (HGate(), [q[1]], []),
+            (XGate(), [q[0]], [])
+        ]
+        for instr, qargs, cargs in rules:
+            qc._append(instr, qargs, cargs)
+
+        self.definition = qc
+
+    def inverse(self):
+        r"""Return inverted Xm gate (Xp)."""
+        return ECR(-self.params[0])
+
+    def __array__(self, dtype=None):
+        """Return a numpy.array for the RZX gate."""
+        import numpy
+
+        half_theta = float(self.params[0]) / 2
+        cos = numpy.cos(half_theta)
+        isin = 1j * numpy.sin(half_theta)
+        return numpy.array(
+            [[0, cos, 0, isin], [cos, 0, -isin, 0], [0, isin, 0, cos], [-isin, 0, cos, 0]],
+            dtype=dtype,
+        )
 
 def add_pulse_calibrations(
     circuits: Union[QuantumCircuit, list[QuantumCircuit]],
