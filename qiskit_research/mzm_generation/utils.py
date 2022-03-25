@@ -29,7 +29,7 @@ import mapomatic
 import mthree
 import numpy as np
 from qiskit import BasicAer, QuantumCircuit
-from qiskit.circuit.library import XYGate
+from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.providers import Backend, Provider
 from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import SparsePauliOp
@@ -39,7 +39,6 @@ from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
-from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 
 if TYPE_CHECKING:
     from qiskit_research.mzm_generation.experiment import (
@@ -404,16 +403,16 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 
     if label.startswith("tunneling_plus"):
         # this gate transforms a^\dagger_i a_j + h.c into (IZ - ZI) / 2
-        gate = XYGate(np.pi / 2, -np.pi / 2)
+        gate = XXPlusYYGate(np.pi / 2, -np.pi / 2)
     elif label.startswith("tunneling_minus"):
         # this gate transforms -i * (a^\dagger_i a_j - h.c) into (IZ - ZI) / 2
-        gate = XYGate(np.pi / 2, -np.pi)
+        gate = XXPlusYYGate(np.pi / 2, -np.pi)
     elif label.startswith("superconducting_plus"):
         # this gate transforms a^\dagger_i a^_\dagger_j + h.c into (IZ + ZI) / 2
-        gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi / 2)
+        gate = XXMinusYYGate(np.pi / 2, -np.pi / 2)
     else:  # label.startswith("superconducting_minus")
         # this gate transforms -i * (a^\dagger_i a^_\dagger_j - h.c) into (IZ + ZI) / 2
-        gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi)
+        gate = XXMinusYYGate(np.pi / 2, -np.pi)
 
     if label.endswith("even"):
         start_index = 0
