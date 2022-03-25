@@ -47,7 +47,11 @@ from qiskit.qasm import pi
 
 class RZXtoEchoedCR(TransformationPass):
     """
-    Class for the RZX to echoed CR pass.
+    Class for the RZXGate to echoed cross resonance gate pass. The RZXGate
+    is equivalent to the ECR gate plus a second XGate on the control qubit
+    to return it to the initial state.
+
+    See: https://arxiv.org/abs/1603.04821
     """
 
     def __init__(
@@ -93,7 +97,10 @@ class RZXtoEchoedCR(TransformationPass):
 
 class CombineRuns(TransformationPass):
     """
-    Class to combine consecutive gates.
+    Class to combine consecutive gates of same type. This works with
+    Parameters whereas other transpiling passes do  not.
+
+    TODO: Check to see if this can be fixed in Optimize1qGatesDecomposition
     """
 
     def __init__(
@@ -143,7 +150,9 @@ class CombineRuns(TransformationPass):
 
 class BindParameters(TransformationPass):
     """
-    Bind Parameters
+    Bind Parameters to circuit.
+
+    TODO: Must this convert the DAG back to a QuantumCircuit?
     """
 
     def __init__(
@@ -174,6 +183,8 @@ class ECRCalibrationBuilder(CalibrationBuilder):
     If the rotation angle is small such that the width disappears then the amplitude of the
     zero width Gaussian square pulse (i.e. a Gaussian) is reduced to reach the target rotation
     angle. Additional details can be found in https://arxiv.org/abs/2012.11660.
+
+    Note this is modified from RZXCalibrationBuilder in qiskit.transpiler.passes.calibrations
     """
 
     def __init__(

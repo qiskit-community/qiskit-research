@@ -52,6 +52,7 @@ def cr_scaling_passes(
     inst_sched_map = backend.defaults().instruction_schedule_map
     yield TemplateOptimization(**templates)
     yield CombineRuns(['rzx'])
+    # pauli twirl here
     yield RZXtoEchoedCR(inst_sched_map)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()
