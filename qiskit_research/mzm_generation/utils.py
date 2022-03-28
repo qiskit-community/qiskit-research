@@ -29,7 +29,7 @@ import mapomatic
 import mthree
 import numpy as np
 from qiskit import BasicAer, QuantumCircuit
-from qiskit.circuit.library import XYGate
+from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.providers import Backend, Provider
 from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import SparsePauliOp
@@ -39,7 +39,6 @@ from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
-from qiskit_research.mzm_generation.phased_xx_minus_yy import PhasedXXMinusYYGate
 
 if TYPE_CHECKING:
     from qiskit_research.mzm_generation.experiment import (
@@ -163,7 +162,21 @@ def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
     )
 
 
-def correlation_matrix(state: np.ndarray) -> np.ndarray:
+def correlation_matrix(
+    transformation_matrix: np.ndarray, occupied_orbitals: Iterable[int]
+) -> np.ndarray:
+    """Compute correlation matrix of a fermionic Gaussian state."""
+    n_modes, _ = transformation_matrix.shape
+    W1 = transformation_matrix[:, :n_modes]
+    W2 = transformation_matrix[:, n_modes:]
+    full_transformation_matrix = np.block([[W1, W2], [W2.conj(), W1.conj()]])
+    occupation = np.zeros(n_modes)
+    occupation[list(occupied_orbitals)] = 1.0
+    corr_diag = np.diag(np.concatenate([occupation, 1 - occupation]))
+    return full_transformation_matrix.T.conj() @ corr_diag @ full_transformation_matrix
+
+
+def correlation_matrix_from_state_vector(state: np.ndarray) -> np.ndarray:
     """Compute correlation matrix from state vector."""
     (N,) = state.shape
     n = N.bit_length() - 1
@@ -185,7 +198,6 @@ def correlation_matrix(state: np.ndarray) -> np.ndarray:
             corr[j + n, i] = -val
             corr[i, j + n] = -val.conj()
             corr[j, i + n] = val.conj()
-
     return corr
 
 
@@ -391,16 +403,16 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 
     if label.startswith("tunneling_plus"):
         # this gate transforms a^\dagger_i a_j + h.c into (IZ - ZI) / 2
-        gate = XYGate(np.pi / 2, -np.pi / 2)
+        gate = XXPlusYYGate(np.pi / 2, -np.pi / 2)
     elif label.startswith("tunneling_minus"):
         # this gate transforms -i * (a^\dagger_i a_j - h.c) into (IZ - ZI) / 2
-        gate = XYGate(np.pi / 2, -np.pi)
+        gate = XXPlusYYGate(np.pi / 2, -np.pi)
     elif label.startswith("superconducting_plus"):
         # this gate transforms a^\dagger_i a^_\dagger_j + h.c into (IZ + ZI) / 2
-        gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi / 2)
+        gate = XXMinusYYGate(np.pi / 2, -np.pi / 2)
     else:  # label.startswith("superconducting_minus")
         # this gate transforms -i * (a^\dagger_i a^_\dagger_j - h.c) into (IZ + ZI) / 2
-        gate = PhasedXXMinusYYGate(np.pi / 2, -np.pi)
+        gate = XXMinusYYGate(np.pi / 2, -np.pi)
 
     if label.endswith("even"):
         start_index = 0

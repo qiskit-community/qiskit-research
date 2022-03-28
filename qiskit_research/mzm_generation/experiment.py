@@ -167,7 +167,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
             dd_sequence = circuit.metadata["params"].dynamical_decoupling_sequence
             if dd_sequence:
                 transpiled = add_dynamical_decoupling(
-                    transpiled, self.backend, dd_sequence
+                    transpiled, self.backend, dd_sequence, add_pulse_cals=True
                 )
             transpiled_circuits.append(transpiled)
         return transpiled_circuits

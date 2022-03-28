@@ -29,7 +29,7 @@ from qiskit_research.mzm_generation.experiment import (
 )
 from qiskit_research.mzm_generation.utils import (
     compute_correlation_matrix,
-    correlation_matrix,
+    correlation_matrix_from_state_vector,
     counts_to_quasis,
     covariance_matrix,
     expectation,
@@ -78,7 +78,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
         hamiltonian_jw = jordan_wigner(hamiltonian).to_matrix()
         _, vecs = np.linalg.eigh(hamiltonian_jw)
         state = vecs[:, 0]
-        corr = correlation_matrix(state)
+        corr = correlation_matrix_from_state_vector(state)
         cov = covariance_matrix(corr)
 
         np.testing.assert_allclose(corr @ corr, corr, atol=1e-8)
@@ -95,7 +95,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
         hamiltonian = quad_ham.to_fermionic_op()
         hamiltonian_jw = jordan_wigner(hamiltonian).to_matrix()
         state = np.array(random_statevector(2**dim))
-        corr = correlation_matrix(state)
+        corr = correlation_matrix_from_state_vector(state)
 
         exp1, var1 = expectation_from_correlation_matrix(hamiltonian, corr)
         exp2, var2 = expectation_from_correlation_matrix(quad_ham, corr)
