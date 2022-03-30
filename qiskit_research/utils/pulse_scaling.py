@@ -12,7 +12,7 @@
 
 from typing import Iterable, List, Optional, Union
 
-from .passes import BindParameters, CombineRuns, ECRCalibrationBuilder, RZXtoEchoedCR
+from .passes import BindParameters, CombineRuns, SECRCalibrationBuilder, RZXtoEchoedCR
 
 
 from qiskit.circuit import Parameter, QuantumCircuit, QuantumRegister
@@ -61,4 +61,4 @@ def cr_scaling_passes(
         yield BindParameters(param_bind)
         yield Optimize1qGatesDecomposition(BASIS_GATES)
         yield CXCancellation()
-        yield ECRCalibrationBuilder(backend)
+        yield SECRCalibrationBuilder(backend)

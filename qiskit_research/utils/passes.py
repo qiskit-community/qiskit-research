@@ -16,7 +16,7 @@ import warnings
 import math
 import numpy as np
 
-from .gates import ECRGate
+from .gates import SECRGate
 
 import numpy
 from qiskit import QuantumCircuit, QuantumRegister
@@ -48,7 +48,7 @@ from qiskit.qasm import pi
 class RZXtoEchoedCR(TransformationPass):
     """
     Class for the RZXGate to echoed cross resonance gate pass. The RZXGate
-    is equivalent to the ECR gate plus a second XGate on the control qubit
+    is equivalent to the SECR gate plus a second XGate on the control qubit
     to return it to the initial state.
 
     See: https://arxiv.org/abs/1603.04821
@@ -81,12 +81,12 @@ class RZXtoEchoedCR(TransformationPass):
                 rzx_angle = node.op.params[0]
 
                 if cr_forward_dir:
-                    mini_dag.apply_operation_back(ECRGate(rzx_angle), [register[0], register[1]])
+                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [register[0], register[1]])
                     mini_dag.apply_operation_back(XGate(), [register[0]])
                 else:
                     mini_dag.apply_operation_back(HGate(), [register[0]])
                     mini_dag.apply_operation_back(HGate(), [register[1]])
-                    mini_dag.apply_operation_back(ECRGate(rzx_angle), [register[0], register[1]])
+                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [register[0], register[1]])
                     mini_dag.apply_operation_back(XGate(), [register[1]])
                     mini_dag.apply_operation_back(HGate(), [register[0]])
                     mini_dag.apply_operation_back(HGate(), [register[1]])
@@ -172,9 +172,9 @@ class BindParameters(TransformationPass):
         return circuit_to_dag(circuit)
 
 
-class ECRCalibrationBuilder(CalibrationBuilder):
+class SECRCalibrationBuilder(CalibrationBuilder):
     """
-    Creates calibrations for ECRGate(theta) by stretching and compressing
+    Creates calibrations for SECRGate(theta) by stretching and compressing
     Gaussian square pulses in the CX gate. This is done by retrieving (for a given pair of
     qubits) the CX schedule in the instruction schedule map of the backend defaults.
     The CX schedule must be an echoed cross-resonance gate optionally with rotary tones.
@@ -189,18 +189,13 @@ class ECRCalibrationBuilder(CalibrationBuilder):
 
     def __init__(
         self,
-        backend: Union[BaseBackend, BackendV1] = None,
         instruction_schedule_map: InstructionScheduleMap = None,
         qubit_channel_mapping: List[List[str]] = None,
     ):
         """
-        Initializes a ECRGate calibration builder.
+        Initializes a SECRGate calibration builder.
 
         Args:
-            backend: DEPRECATED a backend object to build the calibrations for.
-                Use of this argument is deprecated in favor of directly
-                specifying ``instruction_schedule_map`` and
-                ``qubit_channel_map``.
             instruction_schedule_map: The :obj:`InstructionScheduleMap` object representing the
                 default pulse calibrations for the target backend
             qubit_channel_mapping: The list mapping qubit indices to the list of
@@ -210,30 +205,11 @@ class ECRCalibrationBuilder(CalibrationBuilder):
             QiskitError: if open pulse is not supported by the backend.
         """
         super().__init__()
-        if backend is not None:
-            warnings.warn(
-                "Passing a backend object directly to this pass (either as the first positional "
-                "argument or as the named 'backend' kwarg is deprecated and will no long be "
-                "supported in a future release. Instead use the instruction_schedule_map and "
-                "qubit_channel_mapping kwargs.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+        if instruction_schedule_map is None or qubit_channel_mapping is None:
+            raise QiskitError("Calibrations can only be added to Pulse-enabled backends")
 
-            if not backend.configuration().open_pulse:
-                raise QiskitError(
-                    "Calibrations can only be added to Pulse-enabled backends, "
-                    "but {} is not enabled with Pulse.".format(backend.name())
-                )
-            self._inst_map = backend.defaults().instruction_schedule_map
-            self._channel_map = backend.configuration().qubit_channel_mapping
-
-        else:
-            if instruction_schedule_map is None or qubit_channel_mapping is None:
-                raise QiskitError("Calibrations can only be added to Pulse-enabled backends")
-
-            self._inst_map = instruction_schedule_map
-            self._channel_map = qubit_channel_mapping
+        self._inst_map = instruction_schedule_map
+        self._channel_map = qubit_channel_mapping
 
     def supported(self, node_op: CircuitInst, qubits: List) -> bool:
         """Determine if a given node supports the calibration.
@@ -245,7 +221,7 @@ class ECRCalibrationBuilder(CalibrationBuilder):
         Returns:
             Return ``True`` is calibration can be provided.
         """
-        return isinstance(node_op, ECRGate)
+        return isinstance(node_op, SECRGate)
 
     @staticmethod
     def rescale_cr_inst(instruction: Play, theta: float, sample_mult: int = 16) -> Play:
@@ -292,18 +268,18 @@ class ECRCalibrationBuilder(CalibrationBuilder):
                     channel=instruction.channel,
                 )
         else:
-            raise QiskitError("ECRCalibrationBuilder only stretches/compresses GaussianSquare.")
+            raise ValueError("SECRCalibrationBuilder only stretches/compresses GaussianSquare.")
 
     def get_calibration(self, node_op: CircuitInst, qubits: List) -> Union[Schedule, ScheduleBlock]:
-        """Builds the calibration schedule for the ECRGate(theta).
+        """Builds the calibration schedule for the SECRGate(theta).
 
         Args:
-            node_op: Instruction of the ECRGate(theta). I.e. params[0] is theta.
+            node_op: Instruction of the SECRGate(theta). I.e. params[0] is theta.
             qubits: List of qubits for which to get the schedules. The first qubit is
                 the control and the second is the target.
 
         Returns:
-            schedule: The calibration schedule for the ECRGate(theta).
+            schedule: The calibration schedule for the SECRGate(theta).
 
         Raises:
             QiskitError: If the control and target
@@ -327,11 +303,11 @@ class ECRCalibrationBuilder(CalibrationBuilder):
             )
 
         cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
-        ecr_theta = Schedule(name="ecr(%.3f)" % theta)
-        ecr_theta.metadata["publisher"] = CalibrationPublisher.QISKIT
+        secr_theta = Schedule(name="secr(%.3f)" % theta)
+        secr_theta.metadata["publisher"] = CalibrationPublisher.QISKIT
 
         if theta == 0.0:
-            return ecr_theta
+            return secr_theta
 
         crs, comp_tones = [], []
         control, target = None, None
@@ -374,17 +350,17 @@ class ECRCalibrationBuilder(CalibrationBuilder):
                 "but %i were found." % (control, target, len(comp_tones))
             )
 
-        # Build the schedule for the ECRGate
-        ecr_theta = ecr_theta.insert(0, cr1)
+        # Build the schedule for the SECRGate
+        secr_theta = secr_theta.insert(0, cr1)
 
         if comp1 is not None:
-            ecr_theta = ecr_theta.insert(0, comp1)
+            secr_theta = secr_theta.insert(0, comp1)
 
-        ecr_theta = ecr_theta.insert(comp1.duration, echo_x)
+        secr_theta = secr_theta.insert(comp1.duration, echo_x)
         time = comp1.duration + echo_x.duration
-        ecr_theta = ecr_theta.insert(time, cr2)
+        secr_theta = secr_theta.insert(time, cr2)
 
         if comp2 is not None:
-            ecr_theta = ecr_theta.insert(time, comp2)
+            secr_theta = secr_theta.insert(time, comp2)
 
-        return ecr_theta
+        return secr_theta

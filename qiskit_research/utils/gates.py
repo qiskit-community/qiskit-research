@@ -136,31 +136,28 @@ class YmGate(Gate):
         """Return a numpy.array for the Ym gate."""
         return numpy.array([[0, -1j], [1j, 0]], dtype=dtype)
 
-class ECRGate(Gate):
-    r"""The echoed cross resonance gate, as detailed in
-    https://arxiv.org/abs/1603.04821
+class SECRGate(Gate):
+    r"""The scaled echoed cross resonance gate, as detailed in
+    https://arxiv.org/abs/1603.04821 and
+    https://arxiv.org/abs/2202.12910.
 
     Definitions are derived by appending an XGate() to q0
     of an RZXGate.
     """
 
     def __init__(self, theta: ParameterValueType, label: Optional[str] = None):
-        """Create new ECR gate."""
-        super().__init__("ecr", 2, [theta], label=label)
+        """Create new SECR gate."""
+        super().__init__("secr", 2, [theta], label=label)
 
     def _define(self):
         """
-        gate ecr(theta) a, b { h b; cx a, b; u1(theta) b; cx a, b; h b; x a}
+        gate secr(theta) a, b { h b; cx a, b; u1(theta) b; cx a, b; h b; x a}
         """
         theta = self.params[0]
         q = QuantumRegister(2, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [
-            (HGate(), [q[1]], []),
-            (CXGate(), [q[0], q[1]], []),
-            (RZGate(theta), [q[1]], []),
-            (CXGate(), [q[0], q[1]], []),
-            (HGate(), [q[1]], []),
+            (RZXGate(), [q[0], q[1]], []),
             (XGate(), [q[0]], [])
         ]
         for instr, qargs, cargs in rules:
@@ -169,8 +166,8 @@ class ECRGate(Gate):
         self.definition = qc
 
     def inverse(self):
-        r"""Return inverted Xm gate (Xp)."""
-        return ECR(-self.params[0])
+        r"""Return inverted SECR gate."""
+        return SECR(-self.params[0])
 
     def __array__(self, dtype=None):
         """Return a numpy.array for the RZX gate."""
