@@ -50,6 +50,8 @@ def cr_scaling_passes(
     """Yields transpilation passes for CR pulse scaling."""
 
     inst_sched_map = backend.defaults().instruction_schedule_map
+    channel_map = backend.configuration().qubit_channel_mapping
+    
     yield TemplateOptimization(**templates)
     yield CombineRuns(['rzx'])
     # pauli twirl here
@@ -61,4 +63,4 @@ def cr_scaling_passes(
         yield BindParameters(param_bind)
         yield Optimize1qGatesDecomposition(BASIS_GATES)
         yield CXCancellation()
-        yield SECRCalibrationBuilder(backend)
+        yield SECRCalibrationBuilder(inst_sched_map, channel_map)
