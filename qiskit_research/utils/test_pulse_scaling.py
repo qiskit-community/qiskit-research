@@ -1,0 +1,87 @@
+# This code is part of Qiskit.
+#
+# (C) Copyright IBM 2022.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""Test Pauli twirling."""
+
+import unittest
+
+import numpy as np
+from qiskit.circuit import Parameter, QuantumCircuit
+from qiskit.quantum_info import Operator
+from qiskit.test.mock import FakeMumbai
+from qiskit_research.utils.pulse_scaling import scale_cr_pulses
+
+
+class TestPulseScaling(unittest.TestCase):
+    """Test Pauli twirling."""
+
+    def test_rzx_to_secr_forward(self):
+        backend = FakeMumbai()
+        rng = np.random.default_rng()
+
+        JJ = Parameter('$J$')
+        hh = Parameter('$h$')
+        dt = Parameter('$dt$')
+
+        param_bind = {
+            JJ: rng.uniform(0, 1),
+            hh: rng.uniform(0, 2),
+            dt: rng.uniform(0, .5),
+        }
+
+        qc = QuantumCircuit(3)
+        qc.cx(0, 1)
+        qc.rz(-2*JJ*dt, 1)
+        qc.cx(0, 1)
+        qc.rx(2*hh*dt, [0, 1, 2])
+        qc.cx(1, 2)
+        qc.rz(-2*JJ*dt, 2)
+        qc.cx(1, 2)
+
+
+        #import pdb; pdb.set_trace()
+        #scaled_qc = scale_cr_pulses(qc, backend, param_bind)
+        scaled_qc = scale_cr_pulses(qc, backend)
+        scaled_qc.assign_parameters(param_bind, inplace=True)
+        qc.assign_parameters(param_bind, inplace=True)
+
+        self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
+
+    def test_rzx_to_secr_reverse(self):
+        backend = FakeMumbai()
+        rng = np.random.default_rng()
+
+        JJ = Parameter('$J$')
+        hh = Parameter('$h$')
+        dt = Parameter('$dt$')
+
+        param_bind = {
+            JJ: rng.uniform(0, 1),
+            hh: rng.uniform(0, 2),
+            dt: rng.uniform(0, .5),
+        }
+
+        qc = QuantumCircuit(3)
+        qc.cx(2, 1)
+        qc.rz(-2*JJ*dt, 1)
+        qc.cx(2, 1)
+        qc.rx(2*hh*dt, [0, 1, 2])
+        qc.cx(1, 0)
+        qc.rz(-2*JJ*dt, 0)
+        qc.cx(1, 0)
+
+        scaled_qc = scale_cr_pulses(qc, backend, param_bind)
+        #scaled_qc = scale_cr_pulses(qc, backend)
+        #scaled_qc.assign_parameters(param_bind, inplace=True)
+        qc.assign_parameters(param_bind, inplace=True)
+
+        self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))

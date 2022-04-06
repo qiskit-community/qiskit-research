@@ -51,7 +51,7 @@ def cr_scaling_passes(
 
     inst_sched_map = backend.defaults().instruction_schedule_map
     channel_map = backend.configuration().qubit_channel_mapping
-    
+
     yield TemplateOptimization(**templates)
     yield CombineRuns(['rzx'])
     # pauli twirl here

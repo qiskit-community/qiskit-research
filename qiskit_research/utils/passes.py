@@ -86,7 +86,7 @@ class RZXtoEchoedCR(TransformationPass):
                 else:
                     mini_dag.apply_operation_back(HGate(), [register[0]])
                     mini_dag.apply_operation_back(HGate(), [register[1]])
-                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [register[0], register[1]])
+                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [register[1], register[0]])
                     mini_dag.apply_operation_back(XGate(), [register[1]])
                     mini_dag.apply_operation_back(HGate(), [register[0]])
                     mini_dag.apply_operation_back(HGate(), [register[1]])

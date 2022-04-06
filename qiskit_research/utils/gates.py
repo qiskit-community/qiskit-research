@@ -16,7 +16,8 @@ from typing import Optional, Union
 import numpy
 from qiskit import QuantumCircuit, QuantumRegister, pulse
 from qiskit.circuit.gate import Gate
-from qiskit.circuit.library import CXGate, HGate, RZGate, U3Gate, XGate
+#from qiskit.circuit.library import CXGate, HGate, RZGate, U3Gate, XGate
+from qiskit.circuit.library import RXGate, RZXGate, U3Gate, XGate
 from qiskit.circuit.parameterexpression import ParameterValueType
 from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel
@@ -157,7 +158,7 @@ class SECRGate(Gate):
         q = QuantumRegister(2, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [
-            (RZXGate(), [q[0], q[1]], []),
+            (RZXGate(theta), [q[0], q[1]], []),
             (XGate(), [q[0]], [])
         ]
         for instr, qargs, cargs in rules:
