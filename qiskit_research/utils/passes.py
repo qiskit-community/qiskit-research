@@ -10,40 +10,114 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import List, Optional, Union
-import warnings
-
 import math
+from collections.abc import Iterator
+from typing import List, Union
+
 import numpy as np
-
-from .gates import SECRGate
-
-import numpy
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumRegister
+from qiskit.circuit import Gate
 from qiskit.circuit import Instruction as CircuitInst
-from qiskit.circuit.gate import Gate
-from qiskit.circuit.library import HGate, XGate
-from qiskit.converters import dag_to_circuit, circuit_to_dag
+from qiskit.circuit import Qubit
+from qiskit.circuit.library import HGate, RXGate, RZGate, RZXGate, XGate, XXPlusYYGate
+from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.exceptions import QiskitError
-from qiskit.providers.backend import Backend, BackendV1
-from qiskit.providers.basebackend import BaseBackend
 from qiskit.pulse import (
-    Play,
-    Delay,
-    ShiftPhase,
-    Schedule,
-    ScheduleBlock,
     ControlChannel,
     DriveChannel,
     GaussianSquare,
+    Play,
+    Schedule,
+    ScheduleBlock,
+    ShiftPhase,
 )
-from qiskit.pulse.instruction_schedule_map import InstructionScheduleMap, CalibrationPublisher
-from qiskit.pulse.instructions.instruction import Instruction as PulseInst
+from qiskit.pulse.instruction_schedule_map import (
+    CalibrationPublisher,
+    InstructionScheduleMap,
+)
+from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import TransformationPass
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.passes.calibration.builders import CalibrationBuilder
-from qiskit.qasm import pi
+
+from .gates import SECRGate
+
+
+class XXPlusYYtoRZX(TransformationPass):
+    """Transformation pass to decompose XXPlusYYGate to RZXGate."""
+
+    def __init__(
+        self,
+        instruction_schedule_map: InstructionScheduleMap = None,
+    ):
+        super().__init__()
+        self._inst_map = instruction_schedule_map
+
+    def _decomposition(
+        self,
+        register: QuantumRegister,
+        gate: XXPlusYYGate,
+    ) -> Iterator[tuple[Gate, tuple[Qubit, ...]]]:
+        a, b = register
+        theta, beta = gate.params
+
+        yield RZGate(beta), (b,)
+
+        yield HGate(), (a,)
+        yield HGate(), (b,)
+
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZXGate(-0.5 * theta), (a, b)
+        yield RXGate(0.5 * theta), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * theta), (b,)
+
+        yield RZGate(0.5 * pi), (a,)
+        yield HGate(), (a,)
+        yield RZGate(0.5 * pi), (b,)
+        yield HGate(), (b,)
+
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZXGate(-0.5 * theta), (a, b)
+        yield RXGate(0.5 * theta), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * theta), (b,)
+
+        yield HGate(), (a,)
+        yield RZGate(-0.5 * pi), (a,)
+        yield HGate(), (a,)
+        yield HGate(), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield HGate(), (b,)
+
+        yield RZGate(-beta), (b,)
+
+    def run(
+        self,
+        dag: DAGCircuit,
+    ) -> DAGCircuit:
+        for run in dag.collect_runs(["xx_plus_yy"]):
+            for node in run:
+                mini_dag = DAGCircuit()
+                register = QuantumRegister(2)
+                mini_dag.add_qreg(register)
+
+                for instr, qargs in self._decomposition(register, node.op):
+                    mini_dag.apply_operation_back(instr, qargs)
+
+                dag.substitute_node_with_dag(node, mini_dag)
+
+        return dag
+
 
 class RZXtoEchoedCR(TransformationPass):
     """
@@ -66,11 +140,11 @@ class RZXtoEchoedCR(TransformationPass):
         dag: DAGCircuit,
     ) -> DAGCircuit:
 
-        for rzx_run in dag.collect_runs(['rzx']):
+        for rzx_run in dag.collect_runs(["rzx"]):
             qc = rzx_run[0].qargs[0].index
             qt = rzx_run[0].qargs[1].index
-            cx_f_sched = self._inst_map.get('cx', qubits=[qc, qt])
-            cx_r_sched = self._inst_map.get('cx', qubits=[qt, qc])
+            cx_f_sched = self._inst_map.get("cx", qubits=[qc, qt])
+            cx_r_sched = self._inst_map.get("cx", qubits=[qt, qc])
             cr_forward_dir = cx_f_sched.duration < cx_r_sched.duration
 
             for node in rzx_run:
@@ -81,12 +155,16 @@ class RZXtoEchoedCR(TransformationPass):
                 rzx_angle = node.op.params[0]
 
                 if cr_forward_dir:
-                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [register[0], register[1]])
+                    mini_dag.apply_operation_back(
+                        SECRGate(rzx_angle), [register[0], register[1]]
+                    )
                     mini_dag.apply_operation_back(XGate(), [register[0]])
                 else:
                     mini_dag.apply_operation_back(HGate(), [register[0]])
                     mini_dag.apply_operation_back(HGate(), [register[1]])
-                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [register[1], register[0]])
+                    mini_dag.apply_operation_back(
+                        SECRGate(rzx_angle), [register[1], register[0]]
+                    )
                     mini_dag.apply_operation_back(XGate(), [register[1]])
                     mini_dag.apply_operation_back(HGate(), [register[0]])
                     mini_dag.apply_operation_back(HGate(), [register[1]])
@@ -94,6 +172,7 @@ class RZXtoEchoedCR(TransformationPass):
                 dag.substitute_node_with_dag(node, mini_dag)
 
         return dag
+
 
 class CombineRuns(TransformationPass):
     """
@@ -119,11 +198,11 @@ class CombineRuns(TransformationPass):
             for grun in dag.collect_runs([gate_str]):
                 partition = []
                 chunk = []
-                for ii in range(len(grun)-1):
+                for ii in range(len(grun) - 1):
                     chunk.append(grun[ii])
 
                     qargs0 = grun[ii].qargs
-                    qargs1 = grun[ii+1].qargs
+                    qargs1 = grun[ii + 1].qargs
 
                     if qargs0 != qargs1:
                         partition.append(chunk)
@@ -206,7 +285,9 @@ class SECRCalibrationBuilder(CalibrationBuilder):
         """
         super().__init__()
         if instruction_schedule_map is None or qubit_channel_mapping is None:
-            raise QiskitError("Calibrations can only be added to Pulse-enabled backends")
+            raise QiskitError(
+                "Calibrations can only be added to Pulse-enabled backends"
+            )
 
         self._inst_map = instruction_schedule_map
         self._channel_map = qubit_channel_mapping
@@ -255,22 +336,32 @@ class SECRCalibrationBuilder(CalibrationBuilder):
 
             if target_area > gaussian_area:
                 width = (target_area - gaussian_area) / abs(amp)
-                duration = math.ceil((width + n_sigmas * sigma) / sample_mult) * sample_mult
+                duration = (
+                    math.ceil((width + n_sigmas * sigma) / sample_mult) * sample_mult
+                )
                 return Play(
-                    GaussianSquare(amp=sign * amp, width=width, sigma=sigma, duration=duration),
+                    GaussianSquare(
+                        amp=sign * amp, width=width, sigma=sigma, duration=duration
+                    ),
                     channel=instruction.channel,
                 )
             else:
                 amp_scale = sign * target_area / gaussian_area
                 duration = math.ceil(n_sigmas * sigma / sample_mult) * sample_mult
                 return Play(
-                    GaussianSquare(amp=amp * amp_scale, width=0, sigma=sigma, duration=duration),
+                    GaussianSquare(
+                        amp=amp * amp_scale, width=0, sigma=sigma, duration=duration
+                    ),
                     channel=instruction.channel,
                 )
         else:
-            raise ValueError("SECRCalibrationBuilder only stretches/compresses GaussianSquare.")
+            raise ValueError(
+                "SECRCalibrationBuilder only stretches/compresses GaussianSquare."
+            )
 
-    def get_calibration(self, node_op: CircuitInst, qubits: List) -> Union[Schedule, ScheduleBlock]:
+    def get_calibration(
+        self, node_op: CircuitInst, qubits: List
+    ) -> Union[Schedule, ScheduleBlock]:
         """Builds the calibration schedule for the SECRGate(theta).
 
         Args:
@@ -320,7 +411,9 @@ class SECRCalibrationBuilder(CalibrationBuilder):
                     crs.append((time, inst))
 
             # Identify the compensation tones.
-            if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
+            if isinstance(inst.channel, DriveChannel) and not isinstance(
+                inst, ShiftPhase
+            ):
                 if isinstance(inst.pulse, GaussianSquare):
                     comp_tones.append((time, inst))
                     target = inst.channel.index
