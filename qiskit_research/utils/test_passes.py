@@ -16,11 +16,11 @@ import unittest
 
 import numpy as np
 from qiskit.circuit import Parameter, QuantumCircuit, QuantumRegister
-from qiskit.circuit.library import XXPlusYYGate
+from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.transpiler import PassManager
 from qiskit.quantum_info import Operator
 from qiskit.test.mock import FakeMumbai
-from qiskit_research.utils.passes import XXPlusYYtoRZX
+from qiskit_research.utils.passes import XXMinusYYtoRZX, XXPlusYYtoRZX
 
 
 class TestPasses(unittest.TestCase):
@@ -34,6 +34,18 @@ class TestPasses(unittest.TestCase):
         circuit = QuantumCircuit(register)
         circuit.append(gate, register)
         pass_ = XXPlusYYtoRZX()
+        pass_manager = PassManager([pass_])
+        decomposed = pass_manager.run(circuit)
+        self.assertTrue(Operator(circuit).equiv(Operator(decomposed)))
+
+    def test_xxminusyy_to_rzx(self):
+        theta = np.random.uniform(-10, 10)
+        beta = np.random.uniform(-10, 10)
+        gate = XXMinusYYGate(theta, beta)
+        register = QuantumRegister(2)
+        circuit = QuantumCircuit(register)
+        circuit.append(gate, register)
+        pass_ = XXMinusYYtoRZX()
         pass_manager = PassManager([pass_])
         decomposed = pass_manager.run(circuit)
         self.assertTrue(Operator(circuit).equiv(Operator(decomposed)))

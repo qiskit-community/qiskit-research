@@ -19,7 +19,15 @@ from qiskit import QuantumRegister
 from qiskit.circuit import Gate
 from qiskit.circuit import Instruction as CircuitInst
 from qiskit.circuit import Qubit
-from qiskit.circuit.library import HGate, RXGate, RZGate, RZXGate, XGate, XXPlusYYGate
+from qiskit.circuit.library import (
+    HGate,
+    RXGate,
+    RZGate,
+    RZXGate,
+    XGate,
+    XXMinusYYGate,
+    XXPlusYYGate,
+)
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.exceptions import QiskitError
@@ -106,6 +114,81 @@ class XXPlusYYtoRZX(TransformationPass):
         dag: DAGCircuit,
     ) -> DAGCircuit:
         for run in dag.collect_runs(["xx_plus_yy"]):
+            for node in run:
+                mini_dag = DAGCircuit()
+                register = QuantumRegister(2)
+                mini_dag.add_qreg(register)
+
+                for instr, qargs in self._decomposition(register, node.op):
+                    mini_dag.apply_operation_back(instr, qargs)
+
+                dag.substitute_node_with_dag(node, mini_dag)
+
+        return dag
+
+
+class XXMinusYYtoRZX(TransformationPass):
+    """Transformation pass to decompose XXMinusYYGate to RZXGate."""
+
+    def __init__(
+        self,
+        instruction_schedule_map: InstructionScheduleMap = None,
+    ):
+        super().__init__()
+        self._inst_map = instruction_schedule_map
+
+    def _decomposition(
+        self,
+        register: QuantumRegister,
+        gate: XXMinusYYGate,
+    ) -> Iterator[tuple[Gate, tuple[Qubit, ...]]]:
+        a, b = register
+        theta, beta = gate.params
+
+        yield RZGate(-beta), (b,)
+
+        yield HGate(), (a,)
+        yield HGate(), (b,)
+
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZXGate(0.5 * theta), (a, b)
+        yield RXGate(-0.5 * theta), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZGate(0.5 * theta), (b,)
+
+        yield RZGate(0.5 * pi), (a,)
+        yield HGate(), (a,)
+        yield RZGate(0.5 * pi), (b,)
+        yield HGate(), (b,)
+
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZXGate(-0.5 * theta), (a, b)
+        yield RXGate(0.5 * theta), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RXGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield RZGate(-0.5 * theta), (b,)
+
+        yield HGate(), (a,)
+        yield RZGate(-0.5 * pi), (a,)
+        yield HGate(), (a,)
+        yield HGate(), (b,)
+        yield RZGate(-0.5 * pi), (b,)
+        yield HGate(), (b,)
+
+        yield RZGate(beta), (b,)
+
+    def run(
+        self,
+        dag: DAGCircuit,
+    ) -> DAGCircuit:
+        for run in dag.collect_runs(["xx_minus_yy"]):
             for node in run:
                 mini_dag = DAGCircuit()
                 register = QuantumRegister(2)
