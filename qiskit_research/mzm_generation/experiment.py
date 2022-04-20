@@ -19,7 +19,7 @@ from collections import namedtuple
 from typing import Iterable, Optional
 
 import numpy as np
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit
 from qiskit.circuit.library import RZGate
 from qiskit.providers import Provider
 from qiskit_experiments.framework import BaseExperiment
@@ -29,8 +29,8 @@ from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
     measure_interaction_op,
     measurement_labels,
+    transpile_circuit,
 )
-from qiskit_research.utils.dynamical_decoupling import add_dynamical_decoupling
 
 # TODO make this a JSON serializable dataclass when Aer supports it
 # See https://github.com/Qiskit/qiskit-aer/issues/1435
@@ -61,6 +61,7 @@ class KitaevHamiltonianExperimentParameters:
     chemical_potential_values: list[float]
     occupied_orbitals_list: list[tuple[int, ...]]
     dynamical_decoupling_sequences: Optional[list[str]] = None
+    pulse_scaling: bool = False
 
     @property
     def filename(self) -> str:
@@ -162,18 +163,18 @@ class KitaevHamiltonianExperiment(BaseExperiment):
 
     def _transpiled_circuits(self) -> list[QuantumCircuit]:
         """Return a list of experiment circuits, transpiled."""
-        transpile_opts = copy.copy(self.transpile_options.__dict__)
-        transpile_opts["initial_layout"] = list(self.physical_qubits)
-        transpiled_circuits = []
-        for circuit in self.circuits():
-            transpiled = transpile(circuit, self.backend, **transpile_opts)
-            dd_sequence = circuit.metadata["params"].dynamical_decoupling_sequence
-            if dd_sequence:
-                transpiled = add_dynamical_decoupling(
-                    transpiled, self.backend, dd_sequence, add_pulse_cals=True
-                )
-            transpiled_circuits.append(transpiled)
-        return transpiled_circuits
+        return [
+            transpile_circuit(
+                circuit,
+                self.backend,
+                initial_layout=list(self.physical_qubits),
+                dynamical_decoupling_sequence=circuit.metadata[
+                    "params"
+                ].dynamical_decoupling_sequence,
+                pulse_scaling=self.params.pulse_scaling,
+            )
+            for circuit in self.circuits()
+        ]
 
 
 def _all_real_rz_gates(circuit: QuantumCircuit, rtol=1e-5, atol=1e-8) -> bool:

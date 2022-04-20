@@ -14,6 +14,8 @@ from __future__ import annotations
 import functools
 import math
 from collections import defaultdict
+from collections.abc import Iterator
+from mimetypes import init
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -29,22 +31,43 @@ import mapomatic
 import mthree
 import numpy as np
 from qiskit import BasicAer, QuantumCircuit
+from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary
 from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.providers import Backend, Provider
 from qiskit.providers.aer import AerSimulator
+from qiskit.providers.backend import Backend
 from qiskit.quantum_info import SparsePauliOp
+from qiskit.transpiler import CouplingMap, Layout, PassManager
+from qiskit.transpiler.basepasses import BasePass
+from qiskit.transpiler.passes import (
+    ALAPSchedule,
+    ApplyLayout,
+    BasisTranslator,
+    EnlargeWithAncilla,
+    FullAncillaAllocation,
+    Optimize1qGatesDecomposition,
+    SetLayout,
+    UnrollCustomDefinitions,
+    VF2Layout,
+)
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
-
-if TYPE_CHECKING:
-    from qiskit_research.mzm_generation.experiment import (
-        KitaevHamiltonianExperimentParameters,
-    )
-
+from qiskit_research.utils.dynamical_decoupling import (
+    add_pulse_calibrations,
+    dynamical_decoupling_passes,
+)
+from qiskit_research.utils.passes import (
+    CombineRuns,
+    RZXtoEchoedCR,
+    SECRCalibrationBuilder,
+    XXMinusYYtoRZX,
+    XXPlusYYtoRZX,
+)
+from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
@@ -713,3 +736,72 @@ def measurement_labels(n_modes: int) -> Iterable[tuple[tuple[int, ...], str]]:
         yield permutation, "superconducting_plus_odd"
         yield permutation, "superconducting_minus_even"
         yield permutation, "superconducting_minus_odd"
+
+
+def transpile_circuit(
+    circuit: QuantumCircuit,
+    backend: Backend,
+    initial_layout: Optional[list[int]] = None,
+    dynamical_decoupling_sequence: Optional[str] = None,
+    pulse_scaling: bool = False,
+) -> QuantumCircuit:
+    pass_manager = PassManager(
+        list(
+            transpilation_passes(
+                circuit,
+                backend,
+                initial_layout,
+                dynamical_decoupling_sequence,
+                pulse_scaling,
+            )
+        )
+    )
+    transpiled = pass_manager.run(circuit)
+    add_pulse_calibrations(transpiled, backend)
+    return transpiled
+
+
+def transpilation_passes(
+    circuit: QuantumCircuit,
+    backend: Backend,
+    initial_layout: Optional[list[int]] = None,
+    dynamical_decoupling_sequence: Optional[str] = None,
+    pulse_scaling: bool = False,
+) -> Iterator[BasePass]:
+    backend_config = backend.configuration()
+    # qubit layout
+    if initial_layout is None:
+        yield VF2Layout(CouplingMap(backend_config.coupling_map))
+    else:
+        yield SetLayout(Layout.from_intlist(initial_layout, circuit.qregs[0]))
+    yield FullAncillaAllocation(CouplingMap(backend_config.coupling_map))
+    yield EnlargeWithAncilla()
+    yield ApplyLayout()
+    # gate decomposition
+    if pulse_scaling:
+        # decompose to rzx and scaled pulses
+        inst_sched_map = backend.defaults().instruction_schedule_map
+        channel_map = backend.configuration().qubit_channel_mapping
+
+        yield XXPlusYYtoRZX()
+        yield XXMinusYYtoRZX()
+        yield CombineRuns(["rzx"])
+        # pauli twirl here
+        yield RZXtoEchoedCR(inst_sched_map)
+        yield Optimize1qGatesDecomposition(BASIS_GATES)
+        yield CombineRuns(["rz"])
+        yield SECRCalibrationBuilder(inst_sched_map, channel_map)
+    else:
+        # standard decomposition
+        yield UnrollCustomDefinitions(
+            SessionEquivalenceLibrary, ["id", "rz", "sx", "x", "cx", "reset"]
+        )
+        yield BasisTranslator(
+            SessionEquivalenceLibrary, ["id", "rz", "sx", "x", "cx", "reset"]
+        )
+        yield Optimize1qGatesDecomposition(BASIS_GATES)
+    # add dynamical decoupling if needed
+    if dynamical_decoupling_sequence:
+        yield from dynamical_decoupling_passes(
+            backend, dynamical_decoupling_sequence, ALAPSchedule
+        )
