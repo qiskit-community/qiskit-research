@@ -55,13 +55,6 @@ from .gates import SECRGate
 class XXPlusYYtoRZX(TransformationPass):
     """Transformation pass to decompose XXPlusYYGate to RZXGate."""
 
-    def __init__(
-        self,
-        instruction_schedule_map: InstructionScheduleMap = None,
-    ):
-        super().__init__()
-        self._inst_map = instruction_schedule_map
-
     def _decomposition(
         self,
         register: QuantumRegister,
@@ -129,13 +122,6 @@ class XXPlusYYtoRZX(TransformationPass):
 
 class XXMinusYYtoRZX(TransformationPass):
     """Transformation pass to decompose XXMinusYYGate to RZXGate."""
-
-    def __init__(
-        self,
-        instruction_schedule_map: InstructionScheduleMap = None,
-    ):
-        super().__init__()
-        self._inst_map = instruction_schedule_map
 
     def _decomposition(
         self,
