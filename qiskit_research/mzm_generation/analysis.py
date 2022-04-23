@@ -400,8 +400,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             for i in range(threshold):
                 particle = np.array(energy_exact[combs[2 * i + 2]])
                 hole = np.array(energy_exact[combs[2 * i + 3]])
-                bdg_energy[i] = low - particle
-                bdg_energy[threshold + i] = high - hole
+                bdg_energy[i] = particle - low
+                bdg_energy[threshold + i] = hole - high
             yield AnalysisResultData(
                 f"bdg_energy_exact", (bdg_energy, chemical_potential_values)
             )
@@ -672,14 +672,14 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                     particle_exact = np.array(energy_exact[combs[2 * i + 2]])
                     hole_exact = np.array(energy_exact[combs[2 * i + 3]])
                     # energy
-                    bdg_energy[i] = low - particle
-                    bdg_energy[threshold + i] = high - hole
+                    bdg_energy[i] = particle - low
+                    bdg_energy[threshold + i] = hole - high
                     # stddev
                     bdg_stddev[i] = low_stddev**2 + particle_stddev**2
                     bdg_stddev[threshold + i] = high_stddev**2 + hole_stddev**2
                     # error
-                    error += np.abs((low - particle) - (low_exact - particle_exact))
-                    error += np.abs((high - hole) - (high_exact - hole_exact))
+                    error += np.abs((particle - low) - (particle_exact - low_exact))
+                    error += np.abs((hole - high) - (hole_exact - high_exact))
                     # error stddev
                     error_stddev += (
                         np.array(low_stddev) ** 2

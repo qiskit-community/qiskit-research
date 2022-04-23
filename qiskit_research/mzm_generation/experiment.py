@@ -89,8 +89,11 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         backend = get_backend(params.backend_name, provider)
         super().__init__(qubits=params.qubits, backend=backend)
 
-    def _additional_metadata(self) -> dict:
-        return {"params": self.params}
+    def _metadata(self) -> dict:
+        metadata = super()._metadata()
+        additional_metadata = {"params": self.params}
+        metadata.update(additional_metadata)
+        return metadata
 
     def circuits(self) -> list[QuantumCircuit]:
         return list(self._circuits())

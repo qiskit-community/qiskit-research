@@ -139,9 +139,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
             ) = result["metadata"]["params"]
             params = CircuitParameters(
                 tunneling=_tunneling,
-                superconducting=_superconducting
-                if isinstance(_superconducting, float)
-                else complex(*_superconducting),
+                superconducting=_superconducting,
                 chemical_potential=_chemical_potential,
                 occupied_orbitals=tuple(_occupied_orbitals),
                 permutation=tuple(permutation),
