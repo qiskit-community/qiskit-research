@@ -10,7 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Test Pauli twirling."""
+"""Test pulse scaling."""
 
 import unittest
 
@@ -22,25 +22,25 @@ from qiskit_research.utils.pulse_scaling import scale_cr_pulses
 
 
 class TestPulseScaling(unittest.TestCase):
-    """Test Pauli twirling."""
+    """Test pulse scaling."""
 
     def test_rzx_to_secr_forward(self):
         backend = FakeMumbai()
         rng = np.random.default_rng()
 
-        JJ = Parameter('$J$')
-        hh = Parameter('$h$')
-        dt = Parameter('$dt$')
+        JJ = Parameter("$J$")
+        hh = Parameter("$h$")
+        dt = Parameter("$dt$")
 
         param_bind = {
             JJ: rng.uniform(0, 1),
             hh: rng.uniform(0, 2),
-            dt: rng.uniform(0, .5),
+            dt: rng.uniform(0, 0.5),
         }
 
         qc = QuantumCircuit(3)
         qc.cx(0, 1)
-        qc.rz(-2*JJ*dt, 1)
+        qc.rz(-2 * JJ * dt, 1)
         qc.cx(0, 1)
         qc.rx(2*hh*dt, [0, 1, 2])
         qc.cx(1, 2)
@@ -57,23 +57,23 @@ class TestPulseScaling(unittest.TestCase):
         backend = FakeMumbai()
         rng = np.random.default_rng()
 
-        JJ = Parameter('$J$')
-        hh = Parameter('$h$')
-        dt = Parameter('$dt$')
+        JJ = Parameter("$J$")
+        hh = Parameter("$h$")
+        dt = Parameter("$dt$")
 
         param_bind = {
             JJ: rng.uniform(0, 1),
             hh: rng.uniform(0, 2),
-            dt: rng.uniform(0, .5),
+            dt: rng.uniform(0, 0.5),
         }
 
         qc = QuantumCircuit(3)
         qc.cx(2, 1)
-        qc.rz(-2*JJ*dt, 1)
+        qc.rz(-2 * JJ * dt, 1)
         qc.cx(2, 1)
-        qc.rx(2*hh*dt, [0, 1, 2])
+        qc.rx(2 * hh * dt, [0, 1, 2])
         qc.cx(1, 0)
-        qc.rz(-2*JJ*dt, 0)
+        qc.rz(-2 * JJ * dt, 0)
         qc.cx(1, 0)
 
         scaled_qc = scale_cr_pulses(qc, backend, param_bind)
