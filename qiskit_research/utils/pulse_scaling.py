@@ -19,6 +19,7 @@ from qiskit.circuit import Parameter, QuantumCircuit, QuantumRegister
 from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary as sel
 from qiskit.qasm import pi
 from qiskit.providers.backend import Backend
+from qiskit.pulse import InstructionScheduleMap
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes import TemplateOptimization
@@ -37,20 +38,21 @@ def scale_cr_pulses(
     http://arxiv.org/abs/2012.11660
     """
     templates = rzx_templates()
+    inst_sched_map = backend.defaults().instruction_schedule_map
+    channel_map = backend.configuration().qubit_channel_mapping
+
     pass_manager = PassManager(
-        list(cr_scaling_passes(backend, templates, param_bind=param_bind))
+        list(cr_scaling_passes(inst_sched_map, channel_map, templates, param_bind=param_bind))
     )
     return pass_manager.run(circuits)
 
 def cr_scaling_passes(
-    backend: Backend,
+    inst_sched_map: InstructionScheduleMap,
+    channel_map: List[List[str]],
     templates: List[QuantumCircuit],
     param_bind: Optional[dict] = None,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for CR pulse scaling."""
-
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    channel_map = backend.configuration().qubit_channel_mapping
 
     yield TemplateOptimization(**templates)
     yield CombineRuns(['rzx'])
