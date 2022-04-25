@@ -67,6 +67,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 permutation,
                 measurement_label,
                 dynamical_decoupling_sequence,
+                pauli_twirl_index,
             ) = result["metadata"]["params"]
             circuit_params = CircuitParameters(
                 tunneling=tunneling,
@@ -78,6 +79,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 permutation=tuple(permutation),
                 measurement_label=measurement_label,
                 dynamical_decoupling_sequence=dynamical_decoupling_sequence,
+                pauli_twirl_index=pauli_twirl_index,
             )
             data[circuit_params] = result
 
@@ -154,6 +156,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                             permutation,
                             label,
                             dynamical_decoupling_sequence=dd_sequence,
+                            # TODO actually analyze pauli twirling
+                            pauli_twirl_index=None,
                         )
                         if circuit_params in data:
                             counts = data[circuit_params]["counts"]

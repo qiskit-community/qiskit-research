@@ -18,6 +18,7 @@ from collections.abc import Iterator
 from mimetypes import init
 from typing import (
     TYPE_CHECKING,
+    Any,
     Callable,
     Dict,
     FrozenSet,
@@ -60,6 +61,7 @@ from qiskit_research.utils.dynamical_decoupling import (
     add_pulse_calibrations,
     dynamical_decoupling_passes,
 )
+from qiskit_research.utils.pauli_twirling import PauliTwirl
 from qiskit_research.utils.passes import (
     CombineRuns,
     RZXtoEchoedCR,
@@ -744,6 +746,8 @@ def transpile_circuit(
     initial_layout: Optional[list[int]] = None,
     dynamical_decoupling_sequence: Optional[str] = None,
     pulse_scaling: bool = False,
+    pauli_twirling: bool = False,
+    seed: Any = None,
 ) -> QuantumCircuit:
     pass_manager = PassManager(
         list(
@@ -753,6 +757,8 @@ def transpile_circuit(
                 initial_layout,
                 dynamical_decoupling_sequence,
                 pulse_scaling,
+                pauli_twirling,
+                seed,
             )
         )
     )
@@ -767,6 +773,8 @@ def transpilation_passes(
     initial_layout: Optional[list[int]] = None,
     dynamical_decoupling_sequence: Optional[str] = None,
     pulse_scaling: bool = False,
+    pauli_twirling: bool = False,
+    seed: Any = None,
 ) -> Iterator[BasePass]:
     backend_config = backend.configuration()
     # qubit layout
@@ -786,7 +794,8 @@ def transpilation_passes(
         yield XXPlusYYtoRZX()
         yield XXMinusYYtoRZX()
         yield CombineRuns(["rzx"])
-        # pauli twirl here
+        if pauli_twirling:
+            yield PauliTwirl(seed=seed)
         yield RZXtoEchoedCR(inst_sched_map)
         yield Optimize1qGatesDecomposition(BASIS_GATES)
         yield CombineRuns(["rz"])

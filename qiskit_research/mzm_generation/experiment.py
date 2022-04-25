@@ -44,6 +44,7 @@ CircuitParameters = namedtuple(
         "permutation",
         "measurement_label",
         "dynamical_decoupling_sequence",
+        "pauli_twirl_index",
     ],
 )
 
@@ -62,6 +63,8 @@ class KitaevHamiltonianExperimentParameters:
     occupied_orbitals_list: list[tuple[int, ...]]
     dynamical_decoupling_sequences: Optional[list[str]] = None
     pulse_scaling: bool = False
+    num_twirled_circuits: int = 0
+    seed: Optional[int] = None
 
     @property
     def filename(self) -> str:
@@ -87,6 +90,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         provider: Optional[Provider] = None,
     ) -> None:
         self.params = params
+        self.rng = np.random.default_rng(params.seed)
         backend = get_backend(params.backend_name, provider)
         super().__init__(qubits=params.qubits, backend=backend)
 
@@ -126,18 +130,24 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                 if "_minus_" in label and _all_real_rz_gates(base_circuit, atol=1e-6):
                     continue
                 for dd_sequence in dd_sequences:
-                    params = CircuitParameters(
-                        tunneling=tunneling,
-                        superconducting=superconducting,
-                        chemical_potential=chemical_potential,
-                        occupied_orbitals=occupied_orbitals,
-                        permutation=permutation,
-                        measurement_label=label,
-                        dynamical_decoupling_sequence=dd_sequence,
-                    )
-                    circuit = measure_interaction_op(base_circuit, label)
-                    circuit.metadata = {"params": params}
-                    yield circuit
+                    for pauli_twirl_index in range(
+                        max(1, self.params.num_twirled_circuits)
+                    ):
+                        params = CircuitParameters(
+                            tunneling=tunneling,
+                            superconducting=superconducting,
+                            chemical_potential=chemical_potential,
+                            occupied_orbitals=occupied_orbitals,
+                            permutation=permutation,
+                            measurement_label=label,
+                            dynamical_decoupling_sequence=dd_sequence,
+                            pauli_twirl_index=pauli_twirl_index
+                            if self.params.num_twirled_circuits
+                            else None,
+                        )
+                        circuit = measure_interaction_op(base_circuit, label)
+                        circuit.metadata = {"params": params}
+                        yield circuit
 
     @functools.lru_cache
     def _base_circuit(
@@ -172,6 +182,8 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                     "params"
                 ].dynamical_decoupling_sequence,
                 pulse_scaling=self.params.pulse_scaling,
+                pauli_twirling=bool(self.params.num_twirled_circuits),
+                seed=self.rng,
             )
             for circuit in self.circuits()
         ]
