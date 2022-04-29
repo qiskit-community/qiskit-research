@@ -454,7 +454,7 @@ def measure_interaction_op(circuit: QuantumCircuit, label: str) -> QuantumCircui
 
 
 def compute_correlation_matrix(
-    quasis: dict[str, dict[str, float]]
+    quasis: dict[tuple[tuple[int, ...], str], mthree.classes.QuasiDistribution]
 ) -> tuple[np.ndarray, _CovarianceDict]:
     """Compute correlation matrix from quasiprobabilities.
 
@@ -520,7 +520,7 @@ def compute_correlation_matrix(
 
 
 def compute_interaction_matrix(
-    quasis: dict[str, dict[str, float]],
+    quasis: dict[tuple[tuple[int, ...], str], mthree.classes.QuasiDistribution],
     label: str,
 ) -> tuple[np.ndarray, _CovarianceDict]:
     """Compute interaction matrix from quasiprobabilities.

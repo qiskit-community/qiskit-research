@@ -20,6 +20,7 @@ import mthree
 import numpy as np
 from matplotlib.figure import Figure
 from mthree.classes import QuasiDistribution
+from qiskit.result import Counts
 from qiskit_experiments.framework import (
     AnalysisResultData,
     BaseAnalysis,
@@ -156,11 +157,33 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                             permutation,
                             label,
                             dynamical_decoupling_sequence=dd_sequence,
-                            # TODO actually analyze pauli twirling
-                            pauli_twirl_index=None,
+                            pauli_twirl_index=0
+                            if params.num_twirled_circuits
+                            else None,
                         )
                         if circuit_params in data:
-                            counts = data[circuit_params]["counts"]
+                            counts = Counts({})
+                            for pauli_twirl_index in range(
+                                max(1, params.num_twirled_circuits)
+                            ):
+                                circuit_params = CircuitParameters(
+                                    tunneling,
+                                    superconducting,
+                                    chemical_potential,
+                                    occupied_orbitals,
+                                    permutation,
+                                    label,
+                                    dynamical_decoupling_sequence=dd_sequence,
+                                    pauli_twirl_index=pauli_twirl_index
+                                    if params.num_twirled_circuits
+                                    else None,
+                                )
+                                these_counts = data[circuit_params]["counts"]
+                                for bitstring, count in these_counts.items():
+                                    if bitstring in counts:
+                                        counts[bitstring] += count
+                                    else:
+                                        counts[bitstring] = count
                             # raw quasis
                             quasis_raw[permutation, label] = counts_to_quasis(counts)
                             # measurement error mitigation
