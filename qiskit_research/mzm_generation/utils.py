@@ -808,6 +808,8 @@ def transpilation_passes(
         yield BasisTranslator(
             SessionEquivalenceLibrary, ["id", "rz", "sx", "x", "cx", "reset"]
         )
+        if pauli_twirling:
+            yield PauliTwirl(seed=seed)
         yield Optimize1qGatesDecomposition(BASIS_GATES)
     # add dynamical decoupling if needed
     if dynamical_decoupling_sequence:
