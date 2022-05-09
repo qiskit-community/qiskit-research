@@ -68,8 +68,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 permutation,
                 measurement_label,
                 dynamical_decoupling_sequence,
-                pauli_twirl_index,
-            ) = result["metadata"]["params"]
+            ) = result["metadata"]["params"][:7]
+            if len(result["metadata"]["params"]) == 8:
+                pauli_twirl_index = result["metadata"]["params"][7]
+            else:
+                pauli_twirl_index = None
             circuit_params = CircuitParameters(
                 tunneling=tunneling,
                 superconducting=superconducting
