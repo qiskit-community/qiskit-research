@@ -39,7 +39,6 @@ from qiskit.pulse import (
     Schedule,
     ScheduleBlock,
     ShiftPhase,
-    Waveform,
 )
 from qiskit.pulse.instruction_schedule_map import (
     CalibrationPublisher,
@@ -484,7 +483,7 @@ class SECRCalibrationBuilder(CalibrationBuilder):
             if isinstance(inst.channel, DriveChannel) and not isinstance(
                 inst, ShiftPhase
             ):
-                if isinstance(inst.pulse, GaussianSquare) or isinstance(inst.pulse, Waveform):
+                if isinstance(inst.pulse, GaussianSquare):
                     comp_tones.append((time, inst))
                     target = inst.channel.index
                     control = q1 if target == q2 else q2
