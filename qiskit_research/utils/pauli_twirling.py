@@ -15,11 +15,9 @@ from typing import Any, Iterable, List, Optional, Union, cast
 import numpy as np
 from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate
-from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.transpiler.basepasses import TransformationPass
 from qiskit.transpiler import PassManager
-
+from qiskit.transpiler.basepasses import TransformationPass
 
 I = IGate()
 X = XGate()
@@ -45,6 +43,24 @@ TWIRL_GATES = {
         ((Y, Y), (Y, Y)),
         ((Z, Z), (Z, Z)),
     ),
+    "cx": (
+        ((I, I), (I, I)),
+        ((I, X), (I, X)),
+        ((I, Y), (Z, Y)),
+        ((I, Z), (Z, Z)),
+        ((X, I), (X, X)),
+        ((X, X), (X, I)),
+        ((X, Y), (Y, Z)),
+        ((X, Z), (Y, Y)),
+        ((Y, I), (Y, X)),
+        ((Y, X), (Y, I)),
+        ((Y, Y), (X, Z)),
+        ((Y, Z), (X, Y)),
+        ((Z, I), (Z, I)),
+        ((Z, X), (Z, X)),
+        ((Z, Y), (I, Y)),
+        ((Z, Z), (I, Z)),
+    ),
 }
 
 
@@ -63,6 +79,12 @@ class PauliTwirl(TransformationPass):
         gates_to_twirl: Optional[Iterable[str]] = None,
         seed: Any = None,
     ):
+        """
+        Args:
+            gates_to_twirl: Names of gates to twirl. The default behavior is to twirl all
+                supported gates.
+            seed: Seed for the pseudorandom number generator.
+        """
         if gates_to_twirl is None:
             gates_to_twirl = TWIRL_GATES.keys()
         self.gates_to_twirl = gates_to_twirl
