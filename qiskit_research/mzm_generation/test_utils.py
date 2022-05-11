@@ -16,10 +16,8 @@ from typing import Optional
 import unittest
 
 import numpy as np
-from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import random_hermitian, random_statevector
 from qiskit_nature.operators.second_quantization import (
-    FermionicOp,
     QuadraticHamiltonian,
 )
 from qiskit_research.mzm_generation.experiment import (
@@ -38,7 +36,6 @@ from qiskit_research.mzm_generation.utils import (
     jordan_wigner,
     kitaev_hamiltonian,
     measurement_labels,
-    number_op,
     _CovarianceDict,
 )
 

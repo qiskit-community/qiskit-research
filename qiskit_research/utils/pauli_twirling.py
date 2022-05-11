@@ -10,13 +10,12 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import Any, Iterable, List, Optional, Union, cast
+from typing import Any, Iterable, Optional, cast
 
 import numpy as np
-from qiskit.circuit import QuantumCircuit, QuantumRegister
+from qiskit.circuit import QuantumRegister
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import TransformationPass
 
 I = IGate()

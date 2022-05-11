@@ -15,11 +15,10 @@
 import unittest
 
 import numpy as np
-from qiskit.circuit import Parameter, QuantumCircuit, QuantumRegister
+from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.transpiler import PassManager
 from qiskit.quantum_info import Operator
-from qiskit.test.mock import FakeMumbai
 from qiskit_research.utils.gate_decompositions import XXMinusYYtoRZX, XXPlusYYtoRZX
 
 

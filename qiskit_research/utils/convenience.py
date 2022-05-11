@@ -10,24 +10,14 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import Any, Iterable, List, Optional, Union, cast
+from typing import Any, Iterable, List, Optional, Union
 
-import numpy as np
-from qiskit.circuit import Parameter, QuantumCircuit, QuantumRegister
-from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary as sel
-from qiskit.circuit.library import IGate, XGate, YGate, ZGate
-from qiskit.dagcircuit import DAGCircuit
+from qiskit.circuit import QuantumCircuit
 from qiskit.providers.backend import Backend
-from qiskit.pulse import InstructionScheduleMap
-from qiskit.qasm import pi
-from qiskit.transpiler import InstructionDurations, PassManager
-from qiskit.transpiler.basepasses import BasePass, TransformationPass
+from qiskit.transpiler import PassManager
+from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes import (
     ALAPSchedule,
-    CXCancellation,
-    DynamicalDecoupling,
-    Optimize1qGatesDecomposition,
-    TemplateOptimization,
 )
 from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
 from qiskit_research.utils import (
@@ -36,10 +26,6 @@ from qiskit_research.utils import (
     cr_scaling_passes,
 )
 from qiskit_research.utils.gates import (
-    XmGate,
-    XpGate,
-    YmGate,
-    YpGate,
     add_pulse_calibrations,
 )
 

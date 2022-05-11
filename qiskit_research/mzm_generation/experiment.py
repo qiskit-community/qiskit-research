@@ -11,7 +11,6 @@
 # that they have been altered from the originals.
 from __future__ import annotations
 
-import copy
 import dataclasses
 import functools
 import itertools

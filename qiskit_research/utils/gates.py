@@ -17,7 +17,7 @@ import numpy
 from qiskit import QuantumCircuit, QuantumRegister, pulse
 from qiskit.circuit.gate import Gate
 #from qiskit.circuit.library import CXGate, HGate, RZGate, U3Gate, XGate
-from qiskit.circuit.library import RXGate, RZXGate, U3Gate, XGate
+from qiskit.circuit.library import RZXGate, U3Gate, XGate
 from qiskit.circuit.parameterexpression import ParameterValueType
 from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel

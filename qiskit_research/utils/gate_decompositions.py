@@ -10,14 +10,10 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-import math
 from collections.abc import Iterator
-from typing import List, Union
 
-import numpy as np
 from qiskit import QuantumRegister
 from qiskit.circuit import Gate
-from qiskit.circuit import Instruction as CircuitInst
 from qiskit.circuit import Qubit
 from qiskit.circuit.library import (
     HGate,
@@ -28,26 +24,12 @@ from qiskit.circuit.library import (
     XXMinusYYGate,
     XXPlusYYGate,
 )
-from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.exceptions import QiskitError
-from qiskit.pulse import (
-    ControlChannel,
-    DriveChannel,
-    GaussianSquare,
-    Play,
-    Schedule,
-    ScheduleBlock,
-    ShiftPhase,
-)
 from qiskit.pulse.instruction_schedule_map import (
-    CalibrationPublisher,
     InstructionScheduleMap,
 )
 from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import TransformationPass
-from qiskit.transpiler.exceptions import TranspilerError
-from qiskit.transpiler.passes.calibration.builders import CalibrationBuilder
 
 from .gates import SECRGate
 

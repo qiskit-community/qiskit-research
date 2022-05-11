@@ -10,12 +10,11 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import Iterable, List, Union
+from typing import Iterable
 
-from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.library import XGate, YGate
 from qiskit.providers.backend import Backend
-from qiskit.transpiler import InstructionDurations, PassManager
+from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes import ALAPSchedule, DynamicalDecoupling
 from qiskit_research.utils.gates import (
@@ -23,7 +22,6 @@ from qiskit_research.utils.gates import (
     XpGate,
     YmGate,
     YpGate,
-    add_pulse_calibrations,
 )
 
 X = XGate()

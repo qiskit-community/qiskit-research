@@ -15,9 +15,7 @@ import functools
 import math
 from collections import defaultdict
 from collections.abc import Iterator
-from mimetypes import init
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -64,11 +62,9 @@ from qiskit_research.utils import (
     SECRCalibrationBuilder,
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
-)
-from qiskit_research.utils.dynamical_decoupling import (
-    add_pulse_calibrations,
     dynamical_decoupling_passes,
 )
+from qiskit_research.utils.gates import add_pulse_calibrations
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
