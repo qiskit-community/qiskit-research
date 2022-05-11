@@ -16,7 +16,6 @@ from typing import Optional, Union
 import numpy
 from qiskit import QuantumCircuit, QuantumRegister, pulse
 from qiskit.circuit.gate import Gate
-#from qiskit.circuit.library import CXGate, HGate, RZGate, U3Gate, XGate
 from qiskit.circuit.library import RZXGate, U3Gate, XGate
 from qiskit.circuit.parameterexpression import ParameterValueType
 from qiskit.providers.backend import Backend
@@ -137,6 +136,7 @@ class YmGate(Gate):
         """Return a numpy.array for the Ym gate."""
         return numpy.array([[0, -1j], [1j, 0]], dtype=dtype)
 
+
 class SECRGate(Gate):
     r"""The scaled echoed cross resonance gate, as detailed in
     https://arxiv.org/abs/1603.04821 and
@@ -157,10 +157,7 @@ class SECRGate(Gate):
         theta = self.params[0]
         q = QuantumRegister(2, "q")
         qc = QuantumCircuit(q, name=self.name)
-        rules = [
-            (RZXGate(theta), [q[0], q[1]], []),
-            (XGate(), [q[0]], [])
-        ]
+        rules = [(RZXGate(theta), [q[0], q[1]], []), (XGate(), [q[0]], [])]
         for instr, qargs, cargs in rules:
             qc._append(instr, qargs, cargs)
 
@@ -178,9 +175,15 @@ class SECRGate(Gate):
         cos = numpy.cos(half_theta)
         isin = 1j * numpy.sin(half_theta)
         return numpy.array(
-            [[0, cos, 0, isin], [cos, 0, -isin, 0], [0, isin, 0, cos], [-isin, 0, cos, 0]],
+            [
+                [0, cos, 0, isin],
+                [cos, 0, -isin, 0],
+                [0, isin, 0, cos],
+                [-isin, 0, cos, 0],
+            ],
             dtype=dtype,
         )
+
 
 def add_pulse_calibrations(
     circuits: Union[QuantumCircuit, list[QuantumCircuit]],
