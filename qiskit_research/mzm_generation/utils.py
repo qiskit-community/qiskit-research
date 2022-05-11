@@ -57,17 +57,17 @@ from qiskit_nature.operators.second_quantization import (
     FermionicOp,
     QuadraticHamiltonian,
 )
-from qiskit_research.utils.dynamical_decoupling import (
-    add_pulse_calibrations,
-    dynamical_decoupling_passes,
-)
-from qiskit_research.utils.pauli_twirling import PauliTwirl
-from qiskit_research.utils.passes import (
+from qiskit_research.utils import (
     CombineRuns,
+    PauliTwirl,
     RZXtoEchoedCR,
     SECRCalibrationBuilder,
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
+)
+from qiskit_research.utils.dynamical_decoupling import (
+    add_pulse_calibrations,
+    dynamical_decoupling_passes,
 )
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 

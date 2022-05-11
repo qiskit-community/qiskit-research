@@ -111,31 +111,3 @@ class PauliTwirl(TransformationPass):
                 mini_dag.apply_operation_back(after1, [register[1]])
                 dag.substitute_node_with_dag(node, mini_dag)
         return dag
-
-
-def add_pauli_twirls(
-    circuits: Union[QuantumCircuit, List[QuantumCircuit]],
-    num_twirled_circuits: int = 1,
-    gates_to_twirl: Optional[Iterable[str]] = None,
-    seed: Any = None,
-) -> Union[List[QuantumCircuit], List[List[QuantumCircuit]]]:
-    """Add Pauli twirls to circuits.
-
-    Args:
-        circuits: Circuit or list of circuits to be twirled.
-        num_twirled_circuits: Number of twirled circuits to return for each input circuit.
-        gates_to_twirl: Names of gates to twirl. The default behavior is to twirl all
-            supported gates.
-        seed: Seed for the pseudorandom number generator.
-
-    Returns:
-        If the input is a single circuit, then a list of circuits is returned.
-        If the input is a list of circuit, then a list of lists of circuits is returned.
-    """
-    pass_manager = PassManager(PauliTwirl(gates_to_twirl=gates_to_twirl, seed=seed))
-    if isinstance(circuits, QuantumCircuit):
-        return [pass_manager.run(circuits) for _ in range(num_twirled_circuits)]
-    return [
-        [pass_manager.run(circuit) for _ in range(num_twirled_circuits)]
-        for circuit in circuits
-    ]

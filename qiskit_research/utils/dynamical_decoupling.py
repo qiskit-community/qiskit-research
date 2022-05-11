@@ -44,27 +44,6 @@ DD_SEQUENCE = {
 }
 
 
-def add_dynamical_decoupling(
-    circuits: Union[QuantumCircuit, List[QuantumCircuit]],
-    backend: Backend,
-    dd_str: str,
-    scheduler: BasePass = ALAPSchedule,
-    add_pulse_cals: bool = False,
-) -> Union[QuantumCircuit, List[QuantumCircuit]]:
-    """Add dynamical decoupling sequences and calibrations to circuits.
-
-    Adds dynamical decoupling sequences and the calibrations necessary
-    to run them on an IBM backend.
-    """
-    pass_manager = PassManager(
-        list(dynamical_decoupling_passes(backend, dd_str, scheduler))
-    )
-    circuits_dd = pass_manager.run(circuits)
-    if add_pulse_cals:
-        add_pulse_calibrations(circuits_dd, backend)
-    return circuits_dd
-
-
 def dynamical_decoupling_passes(
     backend, dd_str: str, scheduler: BasePass = ALAPSchedule
 ) -> Iterable[BasePass]:
@@ -75,6 +54,7 @@ def dynamical_decoupling_passes(
     yield DynamicalDecoupling(durations, list(sequence))
 
 
+# TODO this should take instruction schedule map instead of backend
 def get_instruction_durations(backend: Backend) -> InstructionDurations:
     """
     Retrieves gate timing information for the backend from the instruction

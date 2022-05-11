@@ -18,7 +18,7 @@ import numpy as np
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.circuit.library import CXGate
 from qiskit.quantum_info import Operator
-from qiskit_research.utils import add_pauli_twirls
+from qiskit_research.utils.convenience import add_pauli_twirls
 from qiskit_research.utils.pauli_twirling import TWIRL_GATES
 
 

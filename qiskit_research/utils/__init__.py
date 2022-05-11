@@ -10,5 +10,16 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from qiskit_research.utils.dynamical_decoupling import add_dynamical_decoupling
-from qiskit_research.utils.pauli_twirling import add_pauli_twirls
+from qiskit_research.utils.dynamical_decoupling import dynamical_decoupling_passes
+from qiskit_research.utils.gate_decompositions import (
+    RZXtoEchoedCR,
+    XXMinusYYtoRZX,
+    XXPlusYYtoRZX,
+)
+from qiskit_research.utils.pauli_twirling import PauliTwirl
+from qiskit_research.utils.pulse_scaling import (
+    BindParameters,
+    CombineRuns,
+    SECRCalibrationBuilder,
+    cr_scaling_passes,
+)

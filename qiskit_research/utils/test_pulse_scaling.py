@@ -18,7 +18,7 @@ import numpy as np
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.quantum_info import Operator
 from qiskit.test.mock import FakeMumbai
-from qiskit_research.utils.pulse_scaling import scale_cr_pulses
+from qiskit_research.utils.convenience import scale_cr_pulses
 
 
 class TestPulseScaling(unittest.TestCase):
@@ -42,9 +42,9 @@ class TestPulseScaling(unittest.TestCase):
         qc.cx(0, 1)
         qc.rz(-2 * JJ * dt, 1)
         qc.cx(0, 1)
-        qc.rx(2*hh*dt, [0, 1, 2])
+        qc.rx(2 * hh * dt, [0, 1, 2])
         qc.cx(1, 2)
-        qc.rz(-2*JJ*dt, 2)
+        qc.rz(-2 * JJ * dt, 2)
         qc.cx(1, 2)
 
         scaled_qc = scale_cr_pulses(qc, backend)
