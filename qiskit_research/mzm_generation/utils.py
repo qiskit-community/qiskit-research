@@ -763,7 +763,8 @@ def transpile_circuit(
         )
     )
     transpiled = pass_manager.run(circuit)
-    add_pulse_calibrations(transpiled, backend)
+    if dynamical_decoupling_sequence:
+        add_pulse_calibrations(transpiled, backend)
     return transpiled
 
 

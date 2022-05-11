@@ -136,6 +136,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 permutation,
                 measurement_label,
                 dynamical_decoupling_sequence,
+                pauli_twirl_index,
             ) = result["metadata"]["params"]
             params = CircuitParameters(
                 tunneling=_tunneling,
@@ -145,6 +146,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 permutation=tuple(permutation),
                 measurement_label=measurement_label,
                 dynamical_decoupling_sequence=dynamical_decoupling_sequence,
+                pauli_twirl_index=pauli_twirl_index,
             )
             data[params] = result
         quasis = {}
@@ -157,6 +159,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
                 permutation,
                 label,
                 dynamical_decoupling_sequence,
+                pauli_twirl_index=None,
             )
             counts = data[params]["counts"]
             quasis[permutation, label] = counts_to_quasis(counts)
