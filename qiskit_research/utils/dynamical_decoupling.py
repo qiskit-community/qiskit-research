@@ -10,19 +10,22 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-from typing import Iterable
+from __future__ import annotations
 
-from qiskit.circuit.library import XGate, YGate
+from typing import Iterable, Optional, Union
+
+import numpy
+from qiskit import QuantumCircuit, QuantumRegister, pulse
+from qiskit.circuit.gate import Gate
+from qiskit.circuit.library import RZXGate, U3Gate, XGate, YGate
+from qiskit.circuit.parameterexpression import ParameterValueType
 from qiskit.providers.backend import Backend
+from qiskit.pulse import DriveChannel
+from qiskit.qasm import pi
 from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes import ALAPSchedule, DynamicalDecoupling
-from qiskit_research.utils.gates import (
-    XmGate,
-    XpGate,
-    YmGate,
-    YpGate,
-)
+from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate
 
 X = XGate()
 Xp = XpGate()
@@ -88,3 +91,70 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
                 inst_durs.append((inst_str, [qc, qt], inst.duration))
 
     return InstructionDurations(inst_durs)
+
+
+def add_pulse_calibrations(
+    circuits: Union[QuantumCircuit, list[QuantumCircuit]],
+    backend: Backend,
+) -> None:
+    """Add pulse calibrations for custom gates to circuits in-place."""
+    inst_sched_map = backend.defaults().instruction_schedule_map
+    num_qubits = backend.configuration().num_qubits
+
+    if isinstance(circuits, QuantumCircuit):
+        circuits = [circuits]
+
+    for qubit in range(num_qubits):
+        with pulse.build(f"xp gate for qubit {qubit}") as sched:
+            # def of XpGate() in terms of XGate()
+            x_sched = inst_sched_map.get("x", qubits=[qubit])
+            pulse.call(x_sched)
+
+            # add calibrations to circuits
+            for circ in circuits:
+                circ.add_calibration("xp", [qubit], sched)
+
+        with pulse.build(f"xm gate for qubit {qubit}") as sched:
+            # def of XmGate() in terms of XGate() and amplitude inversion
+            x_sched = inst_sched_map.get("x", qubits=[qubit])
+            x_pulse = x_sched.instructions[0][1].pulse
+            # HACK is there a better way?
+            x_pulse._amp = -x_pulse.amp
+            pulse.play(x_pulse, DriveChannel(qubit))
+
+            # add calibrations to circuits
+            for circ in circuits:
+                circ.add_calibration("xm", [qubit], sched)
+
+        with pulse.build(f"y gate for qubit {qubit}") as sched:
+            # def of YGate() in terms of XGate() and phase_offset
+            with pulse.phase_offset(pi / 2, DriveChannel(qubit)):
+                x_sched = inst_sched_map.get("x", qubits=[qubit])
+                pulse.call(x_sched)
+
+            # add calibrations to circuits
+            for circ in circuits:
+                circ.add_calibration("y", [qubit], sched)
+
+        with pulse.build(f"yp gate for qubit {qubit}") as sched:
+            # def of YpGate() in terms of XGate() and phase_offset
+            with pulse.phase_offset(pi / 2, DriveChannel(qubit)):
+                x_sched = inst_sched_map.get("x", qubits=[qubit])
+                pulse.call(x_sched)
+
+            # add calibrations to circuits
+            for circ in circuits:
+                circ.add_calibration("yp", [qubit], sched)
+
+        with pulse.build(f"ym gate for qubit {qubit}") as sched:
+            # def of YGate() in terms of XGate() and phase_offset
+            with pulse.phase_offset(-pi / 2, DriveChannel(qubit)):
+                x_sched = inst_sched_map.get("x", qubits=[qubit])
+                x_pulse = x_sched.instructions[0][1].pulse
+                # HACK is there a better way?
+                x_pulse._amp = -x_pulse.amp
+                pulse.play(x_pulse, DriveChannel(qubit))
+
+            # add calibrations to circuits
+            for circ in circuits:
+                circ.add_calibration("ym", [qubit], sched)

@@ -63,8 +63,8 @@ from qiskit_research.utils import (
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
     dynamical_decoupling_passes,
+    add_pulse_calibrations,
 )
-from qiskit_research.utils.gates import add_pulse_calibrations
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]

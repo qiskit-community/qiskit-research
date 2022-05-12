@@ -24,8 +24,6 @@ from qiskit_research.utils import (
     PauliTwirl,
     dynamical_decoupling_passes,
     cr_scaling_passes,
-)
-from qiskit_research.utils.gates import (
     add_pulse_calibrations,
 )
 
