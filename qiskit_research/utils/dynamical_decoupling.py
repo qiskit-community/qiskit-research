@@ -93,6 +93,7 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
     return InstructionDurations(inst_durs)
 
 
+# TODO refactor this as a CalibrationBuilder transpilation pass
 def add_pulse_calibrations(
     circuits: Union[QuantumCircuit, list[QuantumCircuit]],
     backend: Backend,
