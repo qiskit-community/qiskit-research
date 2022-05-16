@@ -12,13 +12,10 @@
 
 from __future__ import annotations
 
-from typing import Iterable, Optional, Union
+from typing import Iterable, Union
 
-import numpy
-from qiskit import QuantumCircuit, QuantumRegister, pulse
-from qiskit.circuit.gate import Gate
-from qiskit.circuit.library import RZXGate, U3Gate, XGate, YGate
-from qiskit.circuit.parameterexpression import ParameterValueType
+from qiskit import QuantumCircuit, pulse
+from qiskit.circuit.library import XGate, YGate
 from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel
 from qiskit.qasm import pi

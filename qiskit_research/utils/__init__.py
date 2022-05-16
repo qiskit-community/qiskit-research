@@ -26,3 +26,16 @@ from qiskit_research.utils.pulse_scaling import (
     SECRCalibrationBuilder,
     cr_scaling_passes,
 )
+
+__all__ = [
+    "add_pulse_calibrations",
+    "dynamical_decoupling_passes",
+    "RZXtoEchoedCR",
+    "XXMinusYYtoRZX",
+    "XXPlusYYtoRZX",
+    "BindParameters",
+    "CombineRuns",
+    "SECRCalibrationBuilder",
+    "cr_scaling_passes",
+    "PauliTwirl",
+]
