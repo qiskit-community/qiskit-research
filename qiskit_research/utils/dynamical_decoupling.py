@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+"""Dynamical decoupling."""
+
 from __future__ import annotations
 
 from typing import Iterable, Union
@@ -117,7 +119,7 @@ def add_pulse_calibrations(
             x_sched = inst_sched_map.get("x", qubits=[qubit])
             x_pulse = x_sched.instructions[0][1].pulse
             # HACK is there a better way?
-            x_pulse._amp = -x_pulse.amp
+            x_pulse._amp = -x_pulse.amp  # pylint: disable=protected-access
             pulse.play(x_pulse, DriveChannel(qubit))
 
             # add calibrations to circuits
@@ -150,7 +152,7 @@ def add_pulse_calibrations(
                 x_sched = inst_sched_map.get("x", qubits=[qubit])
                 x_pulse = x_sched.instructions[0][1].pulse
                 # HACK is there a better way?
-                x_pulse._amp = -x_pulse.amp
+                x_pulse._amp = -x_pulse.amp  # pylint:disable=protected-access
                 pulse.play(x_pulse, DriveChannel(qubit))
 
             # add calibrations to circuits

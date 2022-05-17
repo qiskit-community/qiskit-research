@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+"""Utilities for running research experiments with Qiskit."""
+
 from qiskit_research.utils.dynamical_decoupling import (
     add_pulse_calibrations,
     dynamical_decoupling_passes,

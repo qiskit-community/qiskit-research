@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+"""Convenience functions."""
+
 from typing import Any, Iterable, List, Optional, Union
 
 from qiskit.circuit import QuantumCircuit

@@ -25,6 +25,7 @@ class TestPulseScaling(unittest.TestCase):
     """Test pulse scaling."""
 
     def test_rzx_to_secr_forward(self):
+        """Test pulse scaling RZX with forward SECR."""
         backend = FakeMumbai()
         rng = np.random.default_rng()
 
@@ -54,6 +55,7 @@ class TestPulseScaling(unittest.TestCase):
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
     def test_rzx_to_secr_reverse(self):
+        """Test pulse scaling RZX with reverse SECR."""
         backend = FakeMumbai()
         rng = np.random.default_rng()
 
@@ -82,6 +84,7 @@ class TestPulseScaling(unittest.TestCase):
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
     def test_rzx_to_secr(self):
+        """Test pulse scaling with RZX gates."""
         backend = FakeMumbai()
         rng = np.random.default_rng()
         theta = rng.uniform(-np.pi, np.pi)

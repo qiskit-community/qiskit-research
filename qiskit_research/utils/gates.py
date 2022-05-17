@@ -9,11 +9,14 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
+
+"""Gates."""
+
 from __future__ import annotations
 
 from typing import Optional
 
-import numpy
+import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import RZXGate, U3Gate, XGate
@@ -38,17 +41,17 @@ class XpGate(Gate):
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, 0, pi), [q[0]], [])]
         for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
+            qc.append(instr, qargs, cargs)
 
         self.definition = qc
 
     def inverse(self):
-        r"""Return inverted Xp gate (Xm)."""
-        return XmGate()  # self-inverse
+        r"""Gate inverse."""
+        return XmGate()
 
     def __array__(self, dtype=None):
-        """Return a numpy.array for the Xp gate."""
-        return numpy.array([[0, 1], [1, 0]], dtype=dtype)
+        """Gate matrix."""
+        return np.array([[0, 1], [1, 0]], dtype=dtype)
 
 
 class XmGate(Gate):
@@ -68,17 +71,17 @@ class XmGate(Gate):
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, 0, pi), [q[0]], [])]
         for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
+            qc.append(instr, qargs, cargs)
 
         self.definition = qc
 
     def inverse(self):
-        r"""Return inverted Xm gate (Xp)."""
-        return XpGate()  # self-inverse
+        r"""Gate inverse."""
+        return XpGate()
 
     def __array__(self, dtype=None):
-        """Return a numpy.array for the X gate."""
-        return numpy.array([[0, 1], [1, 0]], dtype=dtype)
+        """Gate matrix"""
+        return np.array([[0, 1], [1, 0]], dtype=dtype)
 
 
 class YpGate(Gate):
@@ -95,7 +98,7 @@ class YpGate(Gate):
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])]
         for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
+            qc.append(instr, qargs, cargs)
 
         self.definition = qc
 
@@ -104,8 +107,8 @@ class YpGate(Gate):
         return YmGate()  # self-inverse
 
     def __array__(self, dtype=None):
-        """Return a numpy.array for the Yp gate."""
-        return numpy.array([[0, -1j], [1j, 0]], dtype=dtype)
+        """Gate matrix."""
+        return np.array([[0, -1j], [1j, 0]], dtype=dtype)
 
 
 class YmGate(Gate):
@@ -122,7 +125,7 @@ class YmGate(Gate):
         qc = QuantumCircuit(q, name=self.name)
         rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])]
         for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
+            qc.append(instr, qargs, cargs)
 
         self.definition = qc
 
@@ -131,8 +134,8 @@ class YmGate(Gate):
         return YpGate()  # self-inverse
 
     def __array__(self, dtype=None):
-        """Return a numpy.array for the Ym gate."""
-        return numpy.array([[0, -1j], [1j, 0]], dtype=dtype)
+        """Gate matrix."""
+        return np.array([[0, -1j], [1j, 0]], dtype=dtype)
 
 
 class SECRGate(Gate):
@@ -157,22 +160,20 @@ class SECRGate(Gate):
         qc = QuantumCircuit(q, name=self.name)
         rules = [(RZXGate(theta), [q[0], q[1]], []), (XGate(), [q[0]], [])]
         for instr, qargs, cargs in rules:
-            qc._append(instr, qargs, cargs)
+            qc.append(instr, qargs, cargs)
 
         self.definition = qc
 
     def inverse(self):
-        r"""Return inverted SECR gate."""
-        return SECR(-self.params[0])
+        r"""Gate inverse."""
+        return SECRGate(-self.params[0])
 
     def __array__(self, dtype=None):
-        """Return a numpy.array for the RZX gate."""
-        import numpy
-
+        """Gate matrix."""
         half_theta = float(self.params[0]) / 2
-        cos = numpy.cos(half_theta)
-        isin = 1j * numpy.sin(half_theta)
-        return numpy.array(
+        cos = np.cos(half_theta)
+        isin = 1j * np.sin(half_theta)
+        return np.array(
             [
                 [0, cos, 0, isin],
                 [cos, 0, -isin, 0],

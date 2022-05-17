@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+"""Pauli twirling."""
+
 from typing import Any, Iterable, Optional, cast
 
 import numpy as np

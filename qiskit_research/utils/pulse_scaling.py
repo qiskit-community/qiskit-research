@@ -9,6 +9,9 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
+
+"""Pulse scaling."""
+
 import math
 from typing import Iterable, List, Optional, Union
 
@@ -28,10 +31,7 @@ from qiskit.pulse import (
     ScheduleBlock,
     ShiftPhase,
 )
-from qiskit.pulse.instruction_schedule_map import (
-    CalibrationPublisher,
-    InstructionScheduleMap,
-)
+from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.passes import (
@@ -54,18 +54,11 @@ class CombineRuns(TransformationPass):
     TODO: Check to see if this can be fixed in Optimize1qGatesDecomposition
     """
 
-    def __init__(
-        self,
-        gate_strs: List[str],
-    ):
+    def __init__(self, gate_strs: List[str]):
         super().__init__()
         self._gate_strs = gate_strs
 
-    def run(
-        self,
-        dag: DAGCircuit,
-    ) -> DAGCircuit:
-
+    def run(self, dag: DAGCircuit) -> DAGCircuit:
         for gate_str in self._gate_strs:
             for grun in dag.collect_runs([gate_str]):
                 partition = []
@@ -86,8 +79,8 @@ class CombineRuns(TransformationPass):
                 # simplify each chunk in the partition
                 for chunk in partition:
                     theta = 0
-                    for i in range(len(chunk)):
-                        theta += chunk[i].op.params[0]
+                    for node in chunk:
+                        theta += node.op.params[0]
 
                     # set the first chunk to sum of params
                     chunk[0].op.params[0] = theta
@@ -193,41 +186,39 @@ class SECRCalibrationBuilder(CalibrationBuilder):
             QiskitError: if the pulses are not GaussianSquare.
         """
         pulse_ = instruction.pulse
-        if isinstance(pulse_, GaussianSquare):
-            amp = pulse_.amp
-            width = pulse_.width
-            sigma = pulse_.sigma
-            n_sigmas = (pulse_.duration - width) / sigma
-
-            # The error function is used because the Gaussian may have chopped tails.
-            gaussian_area = abs(amp) * sigma * np.sqrt(2 * np.pi) * math.erf(n_sigmas)
-            area = gaussian_area + abs(amp) * width
-
-            target_area = abs(float(theta)) / (np.pi / 2.0) * area
-            sign = theta / abs(float(theta))
-
-            if target_area > gaussian_area:
-                width = (target_area - gaussian_area) / abs(amp)
-                duration = round((width + n_sigmas * sigma) / sample_mult) * sample_mult
-                return Play(
-                    GaussianSquare(
-                        amp=sign * amp, width=width, sigma=sigma, duration=duration
-                    ),
-                    channel=instruction.channel,
-                )
-            else:
-                amp_scale = sign * target_area / gaussian_area
-                duration = round(n_sigmas * sigma / sample_mult) * sample_mult
-                return Play(
-                    GaussianSquare(
-                        amp=amp * amp_scale, width=0, sigma=sigma, duration=duration
-                    ),
-                    channel=instruction.channel,
-                )
-        else:
+        if not isinstance(pulse_, GaussianSquare):
             raise ValueError(
                 "SECRCalibrationBuilder only stretches/compresses GaussianSquare."
             )
+        amp = pulse_.amp
+        width = pulse_.width
+        sigma = pulse_.sigma
+        n_sigmas = (pulse_.duration - width) / sigma
+
+        # The error function is used because the Gaussian may have chopped tails.
+        gaussian_area = abs(amp) * sigma * np.sqrt(2 * np.pi) * math.erf(n_sigmas)
+        area = gaussian_area + abs(amp) * width
+
+        target_area = abs(float(theta)) / (np.pi / 2.0) * area
+        sign = theta / abs(float(theta))
+
+        if target_area > gaussian_area:
+            width = (target_area - gaussian_area) / abs(amp)
+            duration = round((width + n_sigmas * sigma) / sample_mult) * sample_mult
+            return Play(
+                GaussianSquare(
+                    amp=sign * amp, width=width, sigma=sigma, duration=duration
+                ),
+                channel=instruction.channel,
+            )
+        amp_scale = sign * target_area / gaussian_area
+        duration = round(n_sigmas * sigma / sample_mult) * sample_mult
+        return Play(
+            GaussianSquare(
+                amp=amp * amp_scale, width=0, sigma=sigma, duration=duration
+            ),
+            channel=instruction.channel,
+        )
 
     def get_calibration(
         self, node_op: CircuitInst, qubits: List
@@ -309,8 +300,8 @@ class SECRCalibrationBuilder(CalibrationBuilder):
             comp2 = self.rescale_cr_inst(comp_tones[1][1], theta)
         else:
             raise QiskitError(
-                "CX must have either 0 or 2 rotary tones between qubits %i and %i "
-                "but %i were found." % (control, target, len(comp_tones))
+                f"CX must have either 0 or 2 rotary tones between qubits {control} and {target} "
+                f"but {len(comp_tones)} were found."
             )
 
         # Build the schedule for the SECRGate

@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+"""Gate decompositions."""
+
 from collections.abc import Iterator
 
 from qiskit import QuantumRegister
