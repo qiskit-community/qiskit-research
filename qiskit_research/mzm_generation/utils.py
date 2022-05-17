@@ -27,6 +27,7 @@ from typing import (
     Optional,
     Tuple,
     Union,
+    cast,
 )
 
 import mapomatic
@@ -85,7 +86,7 @@ def get_backend(name: str, provider: Optional[Provider]) -> Backend:
 
 def orbital_combinations(
     n_modes: int, threshold: Optional[int] = None
-) -> Iterable[tuple[int]]:
+) -> Iterable[tuple[int, ...]]:
     """Yields orbital combinations with 0 or 1 particles or holes."""
     if threshold is None:
         threshold = n_modes
@@ -215,8 +216,8 @@ def correlation_matrix_from_state_vector(state: np.ndarray) -> np.ndarray:
             op_jw = jordan_wigner(op).to_matrix()
             val = expectation(op_jw, state)
             corr[i, j] = val
-            corr[j, i] = val.conj()
-            corr[i + n, j + n] = float(i == j) - val.conj()
+            corr[j, i] = val.conjugate()
+            corr[i + n, j + n] = float(i == j) - val.conjugate()
             corr[j + n, i + n] = float(i == j) - val
 
             op = FermionicOp(f"-_{i} -_{j}", register_length=n)
@@ -224,8 +225,8 @@ def correlation_matrix_from_state_vector(state: np.ndarray) -> np.ndarray:
             val = expectation(op_jw, state)
             corr[i + n, j] = val
             corr[j + n, i] = -val
-            corr[i, j + n] = -val.conj()
-            corr[j, i + n] = val.conj()
+            corr[i, j + n] = -val.conjugate()
+            corr[j, i + n] = val.conjugate()
     return corr
 
 
@@ -233,7 +234,8 @@ def covariance_matrix(corr: np.ndarray) -> np.ndarray:
     """Convert correlation matrix to covariance matrix."""
     n, _ = corr.shape
     eye = np.eye(n // 2)
-    majorana_basis = np.block([[eye, eye], [1j * eye, -1j * eye]]) / np.sqrt(2)
+    # TODO figure out why mypy fails on this
+    majorana_basis = np.block([[eye, eye], [1j * eye, -1j * eye]]) / np.sqrt(2)  # type: ignore
     return np.real(
         -1j * majorana_basis @ (2 * corr - np.eye(n)) @ majorana_basis.T.conj()
     )
@@ -498,7 +500,7 @@ def compute_correlation_matrix(
         corr[i + n, i + n] = 1 - expval
 
     # covariance
-    cov = defaultdict(float)  # _CovarianceDict
+    cov: _CovarianceDict = defaultdict(float)
     # off-diagonal entries
     for i in range(n):
         for j in range(i + 1, n):
@@ -534,7 +536,7 @@ def compute_interaction_matrix(
     """
     n = len(next(iter(next(iter(quasis.values())))))
     mat = np.zeros((n, n))
-    cov = defaultdict(float)  # _CovarianceDict
+    cov: _CovarianceDict = defaultdict(float)
 
     permutation = tuple(range(n))
     if (permutation, f"{label}_even") not in quasis and (
@@ -684,7 +686,7 @@ def purify_idempotent_matrix(
     iterations = 0
     while error > tol and iterations < max_iter:
         mat = mat @ mat @ (three - 2 * mat)
-        error = np.linalg.norm(mat @ mat - mat)
+        error = cast(float, np.linalg.norm(mat @ mat - mat))
         iterations += 1
     if error > tol:
         raise RuntimeError("Purification failed to converge.")

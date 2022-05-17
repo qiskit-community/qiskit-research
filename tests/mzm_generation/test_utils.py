@@ -47,7 +47,7 @@ def _random_antisymmetric(dim: int):
 
 def _fidelity_witness_alt(
     corr: np.ndarray, corr_target: np.ndarray, cov: Optional[_CovarianceDict] = None
-) -> float:
+) -> tuple[float, float]:
     m, _ = corr.shape
     n = m // 2
     Tt = corr_target[:n, :n]

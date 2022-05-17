@@ -119,8 +119,18 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield from self._compute_simulation_results(tunneling, superconducting, params)
 
         # create data storage objects
-        corr_matrices = {}
-        quasi_dists = {}
+        corr_matrices: dict[
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
+            tuple[np.ndarray, _CovarianceDict],
+        ] = {}
+        quasi_dists: dict[
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
+            dict[tuple[tuple[int, ...], str], QuasiDistribution],
+        ] = {}
         ps_removed_masses = {}
 
         # calculate results
@@ -491,7 +501,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _compute_fidelity_witness(
         self,
-        labels: str,
+        labels: list[str],
         corr: dict[
             tuple[
                 float, Union[float, complex], float, tuple[int, ...], Optional[str], str
@@ -505,9 +515,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         occupied_orbitals_list: Sequence[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
-        # type of defaultdict:
-        # dict[tuple[int, ...], list[tuple[float, float]]]
-        data = {
+        data: dict[
+            str,
+            dict[str, dict[tuple[int, ...], list[tuple[float, float]]]],
+        ] = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
         }
@@ -556,7 +567,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         }
         yield AnalysisResultData("fidelity_witness", data_zipped)
 
-        data_avg = {dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences}
+        data_avg: dict[str, dict[str, tuple[np.ndarray, np.ndarray]]] = {
+            dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences
+        }
         for dd_sequence, label in itertools.product(
             dynamical_decoupling_sequences, labels
         ):
@@ -578,7 +591,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _compute_energy(
         self,
-        labels: str,
+        labels: list[str],
         corr: dict[
             tuple[
                 float, Union[float, complex], float, tuple[int, ...], Optional[str], str
@@ -593,9 +606,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         energy_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
-        # type of defaultdict:
-        # dict[tuple[int, ...], list[tuple[float, float]]]
-        data = {
+        data: dict[
+            str,
+            dict[str, dict[tuple[int, ...], list[tuple[float, float]]]],
+        ] = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
         }
@@ -649,7 +663,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         yield AnalysisResultData("energy", data_zipped)
 
         # error
-        data_error = {dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences}
+        data_error: dict[str, dict[str, tuple[np.ndarray, np.ndarray]]] = {
+            dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences
+        }
         for dd_sequence, label in itertools.product(
             dynamical_decoupling_sequences, labels
         ):
@@ -678,10 +694,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 break
             threshold += 1
         if threshold >= 0:
-            data_bdg = {
+            data_bdg: dict[str, dict[str, tuple[np.ndarray, np.ndarray]]] = {
                 dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences
             }
-            data_bdg_error = {
+            data_bdg_error: dict[str, dict[str, tuple[np.ndarray, np.ndarray]]] = {
                 dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences
             }
             for dd_sequence, label in itertools.product(
@@ -734,7 +750,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _compute_edge_correlation(
         self,
-        labels: str,
+        labels: list[str],
         corr: dict[
             tuple[
                 float, Union[float, complex], float, tuple[int, ...], Optional[str], str
@@ -749,9 +765,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         edge_correlation = edge_correlation_op(n_modes)
-        # type of defaultdict:
-        # dict[tuple[int, ...], list[tuple[float, float]]]
-        data = {
+        data: dict[
+            str,
+            dict[str, dict[tuple[int, ...], list[tuple[float, float]]]],
+        ] = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
         }
@@ -787,7 +804,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _compute_number(
         self,
-        labels: str,
+        labels: list[str],
         corr: dict[
             tuple[
                 float, Union[float, complex], float, tuple[int, ...], Optional[str], str
@@ -802,9 +819,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         number = number_op(n_modes)
-        # type of defaultdict:
-        # dict[tuple[int, ...], list[tuple[float, float]]]
-        data = {
+        data: dict[
+            str,
+            dict[str, dict[tuple[int, ...], list[tuple[float, float]]]],
+        ] = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
         }
@@ -838,7 +856,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _compute_parity(
         self,
-        labels: str,
+        labels: list[str],
         quasi_dists: dict[
             tuple[
                 float, Union[float, complex], float, tuple[int, ...], Optional[str], str
@@ -851,9 +869,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         occupied_orbitals_list: Iterable[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
-        # type of defaultdict:
-        # dict[tuple[int, ...], list[tuple[float, float]]]
-        data = {
+        data: dict[
+            str,
+            dict[str, dict[tuple[int, ...], list[tuple[float, float]]]],
+        ] = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
         }
@@ -883,7 +902,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
 
     def _compute_site_correlation(
         self,
-        labels: str,
+        labels: list[str],
         corr: dict[
             tuple[
                 float, Union[float, complex], float, tuple[int, ...], Optional[str], str
@@ -898,9 +917,10 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         site_correlation_ops = [site_correlation_op(i) for i in range(1, 2 * n_modes)]
-        # type of defaultdict:
-        # dict[tuple[float, tuple[int, ...]], list[tuple[float, float]]]
-        data = {
+        data: dict[
+            str,
+            dict[str, dict[tuple[float, tuple[int, ...]], list[tuple[float, float]]]],
+        ] = {
             dd_sequence: {label: defaultdict(list) for label in labels}
             for dd_sequence in dynamical_decoupling_sequences
         }
