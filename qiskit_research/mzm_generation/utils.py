@@ -9,6 +9,9 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
+
+"""Utilities for Majorana zero modes generation experiment."""
+
 from __future__ import annotations
 
 import functools
@@ -34,7 +37,6 @@ from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary
 from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.providers import Backend, Provider
 from qiskit.providers.aer import AerSimulator
-from qiskit.providers.backend import Backend
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler import CouplingMap, Layout, PassManager
 from qiskit.transpiler.basepasses import BasePass
@@ -74,12 +76,11 @@ def get_backend(name: str, provider: Optional[Provider]) -> Backend:
     """Retrieve a backend."""
     if provider is not None:
         return provider.get_backend(name)
-    elif name == "aer_simulator":
+    if name == "aer_simulator":
         return AerSimulator()
-    elif name == "statevector_simulator":
+    if name == "statevector_simulator":
         return BasicAer.get_backend("statevector_simulator")
-    else:
-        raise ValueError("The given name does not match any supported backends.")
+    raise ValueError("The given name does not match any supported backends.")
 
 
 def orbital_combinations(
@@ -100,20 +101,24 @@ def orbital_combinations(
 
 
 def majorana_op(index: int, action: int) -> FermionicOp:
+    """Majorana fermion operator."""
     if action == 0:
         return FermionicOp(f"-_{index}") + FermionicOp(f"+_{index}")
     return -1j * (FermionicOp(f"-_{index}") - FermionicOp(f"+_{index}"))
 
 
 def site_correlation_op(site: int) -> FermionicOp:
+    """Majorana site correlation operator."""
     return 1j * majorana_op(0, 0) @ majorana_op(site // 2, site % 2)
 
 
 def edge_correlation_op(n_modes: int) -> FermionicOp:
+    """Majorana edge correlation operator."""
     return site_correlation_op(2 * n_modes - 1)
 
 
 def number_op(n_modes: int) -> FermionicOp:
+    """Number operator."""
     return sum(FermionicOp(f"N_{i}") for i in range(n_modes))
 
 
@@ -128,6 +133,7 @@ def variance(operator: np.ndarray, state: np.ndarray) -> complex:
 
 
 def jordan_wigner(op: FermionicOp) -> SparsePauliOp:
+    """Jordan-Wigner transform."""
     return JordanWignerMapper().map(op).primitive
 
 
@@ -169,6 +175,7 @@ def diagonalizing_bogoliubov_transform(
 
 
 def bdg_hamiltonian(hamiltonian: QuadraticHamiltonian) -> np.ndarray:
+    """Bogoliubov-de Gennes Hamiltonian."""
     return np.block(
         [
             [
@@ -358,7 +365,7 @@ def expectation_from_correlation_matrix(
         exp_val = 0.0
         # HACK FermionicOp should support iteration with public API
         # See https://github.com/Qiskit/qiskit-nature/issues/541
-        for term, coeff in operator._data:
+        for term, coeff in operator.terms():
             if not term:
                 exp_val += coeff
             elif len(term) == 2:
@@ -375,7 +382,7 @@ def expectation_from_correlation_matrix(
         if cov is not None:
             # HACK FermionicOp should support iteration with public API
             # See https://github.com/Qiskit/qiskit-nature/issues/541
-            for term_ij, coeff_ij in operator._data:
+            for term_ij, coeff_ij in operator.terms():
                 if not term_ij:
                     continue
                 (action_i, i), (action_j, j) = term_ij
@@ -386,7 +393,7 @@ def expectation_from_correlation_matrix(
                     sign_ij *= -1
                 if action_i == "-":
                     sign_ij *= -1
-                for term_kl, coeff_kl in operator._data:
+                for term_kl, coeff_kl in operator.terms():
                     if not term_kl:
                         continue
                     (action_k, k), (action_l, ell) = term_kl
@@ -614,7 +621,7 @@ def evaluate_diagonal_op(operator: str, bitstring: str) -> int:
     """Evaluate a diagional operator on a bitstring."""
     prod = 1
     for op, bit in zip(operator, bitstring):
-        if op == "0" or op == "1":
+        if op in ("0", "1"):
             prod *= bit == op
         elif op == "Z":
             prod *= (-1) ** (bit == "1")
@@ -745,6 +752,7 @@ def transpile_circuit(
     pauli_twirling: bool = False,
     seed: Any = None,
 ) -> QuantumCircuit:
+    """Transpile an experiment circuit."""
     pass_manager = PassManager(
         list(
             transpilation_passes(
@@ -773,6 +781,7 @@ def transpilation_passes(
     pauli_twirling: bool = False,
     seed: Any = None,
 ) -> Iterator[BasePass]:
+    """Transpilation passes for experiment circuits."""
     backend_config = backend.configuration()
     # qubit layout
     if initial_layout is None:

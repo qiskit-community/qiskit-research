@@ -64,6 +64,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
     """Test MZM utils."""
 
     def test_covariance_matrix(self):
+        """Test computing covariance matrix."""
         dim = 5
 
         hermitian_part = np.array(random_hermitian(5))
@@ -82,6 +83,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
         np.testing.assert_allclose(cov @ cov, -np.eye(2 * dim), atol=1e-8)
 
     def test_expectation_from_correlation_matrix_exact(self):
+        """Test computing expectation value from exact correlation matrix."""
         dim = 5
 
         hermitian_part = np.array(random_hermitian(5))
@@ -102,6 +104,7 @@ class TestMZMGenerationUtils(unittest.TestCase):
         np.testing.assert_allclose(var1, var2, atol=1e-8)
 
     def test_expectation_from_correlation_matrix_sample(self):
+        """Test computing expectation value from experimental correlation matrix."""
         n_modes = 5
         tunneling = -1.0
         superconducting = 1 + 2j

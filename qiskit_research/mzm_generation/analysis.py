@@ -203,7 +203,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                                 quasis_mem[permutation, label],
                                 lambda bitstring: (-1)
                                 ** sum(1 for b in bitstring if b == "1")
-                                == exact_parity,
+                                == exact_parity,  # pylint: disable=cell-var-from-loop
                             )
                             quasis_ps[permutation, label] = new_quasis
                             ps_removed_mass[permutation, label] = removed_mass
@@ -436,7 +436,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 bdg_energy[i] = particle - low
                 bdg_energy[threshold + i] = hole - high
             yield AnalysisResultData(
-                f"bdg_energy_exact", (bdg_energy, chemical_potential_values)
+                "bdg_energy_exact", (bdg_energy, chemical_potential_values)
             )
 
         # site correlation
@@ -552,7 +552,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         data_zipped = {
             k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
         }
-        yield AnalysisResultData(f"fidelity_witness", data_zipped)
+        yield AnalysisResultData("fidelity_witness", data_zipped)
 
         data_avg = {dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences}
         for dd_sequence, label in itertools.product(
@@ -572,7 +572,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 fidelity_witness_avg,
                 fidelity_witness_stddev,
             )
-        yield AnalysisResultData(f"fidelity_witness_avg", data_avg)
+        yield AnalysisResultData("fidelity_witness_avg", data_avg)
 
     def _compute_energy(
         self,
@@ -642,7 +642,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         data_zipped = {
             k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
         }
-        yield AnalysisResultData(f"energy", data_zipped)
+        yield AnalysisResultData("energy", data_zipped)
 
         # error
         data_error = {dd_sequence: {} for dd_sequence in dynamical_decoupling_sequences}
@@ -660,7 +660,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             error /= len(occupied_orbitals_list)
             error_stddev = np.sqrt(error_stddev) / len(occupied_orbitals_list)
             data_error[dd_sequence][label] = error, error_stddev
-        yield AnalysisResultData(f"energy_error", data_error)
+        yield AnalysisResultData("energy_error", data_error)
 
         # BdG
         occupied_orbitals_set = set(occupied_orbitals_list)
@@ -725,8 +725,8 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 error_stddev = np.sqrt(error_stddev) / (2 * threshold)
                 data_bdg[dd_sequence][label] = bdg_energy, bdg_stddev
                 data_bdg_error[dd_sequence][label] = error, error_stddev
-            yield AnalysisResultData(f"bdg_energy", data_bdg)
-            yield AnalysisResultData(f"bdg_energy_error", data_bdg_error)
+            yield AnalysisResultData("bdg_energy", data_bdg)
+            yield AnalysisResultData("bdg_energy_error", data_bdg_error)
 
     def _compute_edge_correlation(
         self,
@@ -777,7 +777,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         data_zipped = {
             k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
         }
-        yield AnalysisResultData(f"edge_correlation", data_zipped)
+        yield AnalysisResultData("edge_correlation", data_zipped)
 
     def _compute_number(
         self,
@@ -826,7 +826,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         data_zipped = {
             k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
         }
-        yield AnalysisResultData(f"number", data_zipped)
+        yield AnalysisResultData("number", data_zipped)
 
     def _compute_parity(
         self,
@@ -869,7 +869,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         data_zipped = {
             k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
         }
-        yield AnalysisResultData(f"parity", data_zipped)
+        yield AnalysisResultData("parity", data_zipped)
 
     def _compute_site_correlation(
         self,
@@ -921,4 +921,4 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         data_zipped = {
             k1: {k2: zip_dict(v2) for k2, v2 in v1.items()} for k1, v1 in data.items()
         }
-        yield AnalysisResultData(f"site_correlation", data_zipped)
+        yield AnalysisResultData("site_correlation", data_zipped)

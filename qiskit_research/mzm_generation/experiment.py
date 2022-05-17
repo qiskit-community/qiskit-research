@@ -9,6 +9,9 @@
 # Any modifications or derivative works of this code must retain this
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
+
+"""Majorana zero modes generation experiment."""
+
 from __future__ import annotations
 
 import dataclasses
@@ -148,7 +151,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
                         circuit.metadata = {"params": params}
                         yield circuit
 
-    @functools.lru_cache
+    @functools.lru_cache(maxsize=1024)
     def _base_circuit(
         self,
         tunneling: float,
