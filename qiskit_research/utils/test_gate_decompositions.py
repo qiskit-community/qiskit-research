@@ -26,6 +26,7 @@ class TestPasses(unittest.TestCase):
     """Test passes."""
 
     def test_xxplusyy_to_rzx(self):
+        """Test XXPlusYYGate to RZXGate decomposition."""
         theta = np.random.uniform(-10, 10)
         beta = np.random.uniform(-10, 10)
         gate = XXPlusYYGate(theta, beta)
@@ -38,6 +39,7 @@ class TestPasses(unittest.TestCase):
         self.assertTrue(Operator(circuit).equiv(Operator(decomposed)))
 
     def test_xxminusyy_to_rzx(self):
+        """Test XXMinusYYGate to RZXGate decomposition."""
         theta = np.random.uniform(-10, 10)
         beta = np.random.uniform(-10, 10)
         gate = XXMinusYYGate(theta, beta)

@@ -70,11 +70,11 @@ class CombineRuns(TransformationPass):
             for grun in dag.collect_runs([gate_str]):
                 partition = []
                 chunk = []
-                for ii in range(len(grun) - 1):
-                    chunk.append(grun[ii])
+                for i in range(len(grun) - 1):
+                    chunk.append(grun[i])
 
-                    qargs0 = grun[ii].qargs
-                    qargs1 = grun[ii + 1].qargs
+                    qargs0 = grun[i].qargs
+                    qargs1 = grun[i + 1].qargs
 
                     if qargs0 != qargs1:
                         partition.append(chunk)
@@ -86,16 +86,16 @@ class CombineRuns(TransformationPass):
                 # simplify each chunk in the partition
                 for chunk in partition:
                     theta = 0
-                    for ii in range(len(chunk)):
-                        theta += chunk[ii].op.params[0]
+                    for i in range(len(chunk)):
+                        theta += chunk[i].op.params[0]
 
                     # set the first chunk to sum of params
                     chunk[0].op.params[0] = theta
 
                     # remove remaining chunks if any
                     if len(chunk) > 1:
-                        for nn in chunk[1:]:
-                            dag.remove_op_node(nn)
+                        for node in chunk[1:]:
+                            dag.remove_op_node(node)
             return dag
 
 
@@ -260,11 +260,11 @@ class SECRCalibrationBuilder(CalibrationBuilder):
         if not self._inst_map.has("cx", qubits):
             raise QiskitError(
                 "This transpilation pass requires the backend to support cx "
-                "between qubits %i and %i." % (q1, q2)
+                f"between qubits {q1} and {q2}."
             )
 
         cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
-        secr_theta = Schedule(name="secr(%.3f)" % theta)
+        secr_theta = Schedule(name=f"secr({theta:.3f})")
         secr_theta.metadata["publisher"] = CalibrationPublisher.QISKIT
 
         if theta == 0.0:

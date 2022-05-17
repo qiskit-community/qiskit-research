@@ -26,6 +26,7 @@ class TestPauliTwirling(unittest.TestCase):
     """Test Pauli twirling."""
 
     def test_twirl_gates_cnot(self):
+        """Test twirling CNOT."""
         twirl_gates = TWIRL_GATES["cx"]
         operator = Operator(CXGate())
         for (a, b), (c, d) in twirl_gates:
@@ -38,6 +39,7 @@ class TestPauliTwirling(unittest.TestCase):
             self.assertTrue(Operator(circuit).equiv(operator))
 
     def test_add_pauli_twirls(self):
+        """Test adding Pauli twirls."""
         rng = np.random.default_rng()
 
         theta = Parameter("$\\theta$")
