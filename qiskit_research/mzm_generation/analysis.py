@@ -17,7 +17,7 @@ from __future__ import annotations
 import itertools
 import os
 from collections import defaultdict
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Sequence, Union
 
 import mthree
 import numpy as np
@@ -493,14 +493,16 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: dict[
-            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
             tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
         superconducting: Union[float, complex],
-        chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[tuple[int, ...]],
+        chemical_potential_values: Sequence[float],
+        occupied_orbitals_list: Sequence[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         # type of defaultdict:
@@ -578,14 +580,16 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: dict[
-            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
             tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
         tunneling: float,
         superconducting: Union[float, complex],
-        chemical_potential_values: Iterable[float],
-        occupied_orbitals_list: Iterable[tuple[int, ...]],
+        chemical_potential_values: Sequence[float],
+        occupied_orbitals_list: Sequence[tuple[int, ...]],
         dynamical_decoupling_sequences: list[Optional[str]],
     ) -> Iterable[AnalysisResultData]:
         energy_exact = defaultdict(list)  # dict[tuple[int, ...], list[float]]
@@ -732,7 +736,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: dict[
-            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
             tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
@@ -783,7 +789,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: dict[
-            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
             tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,
@@ -832,7 +840,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         quasi_dists: dict[
-            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
             dict[tuple[tuple[int, ...], str], QuasiDistribution],
         ],
         tunneling: float,
@@ -875,7 +885,9 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         self,
         labels: str,
         corr: dict[
-            tuple[int, float, Union[float, complex], tuple[int, ...], Optional[str]],
+            tuple[
+                float, Union[float, complex], float, tuple[int, ...], Optional[str], str
+            ],
             tuple[np.ndarray, _CovarianceDict],
         ],
         n_modes: int,

@@ -23,6 +23,7 @@ from qiskit.pulse import DriveChannel
 from qiskit.qasm import pi
 from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
+from qiskit.transpiler.instruction_durations import InstructionDurationsType
 from qiskit.transpiler.passes import ALAPSchedule, DynamicalDecoupling
 from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate
 
@@ -67,7 +68,7 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
       - the 'x' gate, used for echoed cross resonance, is also the basis for
         all othe dynamical decoupling gates (currently)
     """
-    inst_durs = []
+    inst_durs: InstructionDurationsType = []
     inst_sched_map = backend.defaults().instruction_schedule_map
     num_qubits = backend.configuration().num_qubits
 

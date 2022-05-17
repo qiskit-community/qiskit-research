@@ -18,7 +18,7 @@ import dataclasses
 import functools
 import itertools
 from collections import namedtuple
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Union
 
 import numpy as np
 from qiskit import QuantumCircuit
@@ -60,7 +60,7 @@ class KitaevHamiltonianExperimentParameters:
     qubits: list[int]
     n_modes: int
     tunneling_values: list[float]
-    superconducting_values: list[float]
+    superconducting_values: list[Union[float, complex]]
     chemical_potential_values: list[float]
     occupied_orbitals_list: list[tuple[int, ...]]
     dynamical_decoupling_sequences: Optional[list[str]] = None

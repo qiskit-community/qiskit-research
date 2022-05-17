@@ -12,7 +12,7 @@
 
 """Pauli twirling."""
 
-from typing import Any, Iterable, Optional, cast
+from typing import Any, Iterable, Optional
 
 import numpy as np
 from qiskit.circuit import QuantumRegister
@@ -68,7 +68,7 @@ TWIRL_GATES = {
 def parse_random_seed(seed: Any) -> np.random.Generator:
     """Parse a random number generator seed and return a Generator."""
     if isinstance(seed, np.random.Generator):
-        return cast(np.random.Generator, seed)
+        return seed
     return np.random.default_rng(seed)
 
 
