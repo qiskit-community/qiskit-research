@@ -12,11 +12,12 @@
 
 """Gate decompositions."""
 
+from __future__ import annotations
+
 from collections.abc import Iterator
 
 from qiskit import QuantumRegister
-from qiskit.circuit import Gate
-from qiskit.circuit import Qubit
+from qiskit.circuit import Gate, Qubit
 from qiskit.circuit.library import (
     HGate,
     RXGate,
@@ -27,9 +28,7 @@ from qiskit.circuit.library import (
     XXPlusYYGate,
 )
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.pulse.instruction_schedule_map import (
-    InstructionScheduleMap,
-)
+from qiskit.pulse.instruction_schedule_map import InstructionScheduleMap
 from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import TransformationPass
 
