@@ -1,0 +1,6 @@
+black[jupyter]
+coverage
+mypy
+pylint
+pytest
+treon
