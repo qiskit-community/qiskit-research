@@ -12,20 +12,21 @@
 
 """Test mzm_generation utils."""
 
-from typing import Optional
+from __future__ import annotations
+
 import unittest
+from typing import Optional
 
 import numpy as np
 from qiskit.quantum_info import random_hermitian, random_statevector
-from qiskit_nature.operators.second_quantization import (
-    QuadraticHamiltonian,
-)
+from qiskit_nature.operators.second_quantization import QuadraticHamiltonian
 from qiskit_research.mzm_generation.experiment import (
     CircuitParameters,
     KitaevHamiltonianExperiment,
     KitaevHamiltonianExperimentParameters,
 )
 from qiskit_research.mzm_generation.utils import (
+    _CovarianceDict,
     compute_correlation_matrix,
     correlation_matrix_from_state_vector,
     counts_to_quasis,
@@ -36,7 +37,6 @@ from qiskit_research.mzm_generation.utils import (
     jordan_wigner,
     kitaev_hamiltonian,
     measurement_labels,
-    _CovarianceDict,
 )
 
 
