@@ -73,7 +73,9 @@ from qiskit_research.utils.pulse_scaling import BASIS_GATES
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
 
-def get_backend(name: str, provider: Optional[Provider], seed_simulator: Optional[int] = None) -> Backend:
+def get_backend(
+    name: str, provider: Optional[Provider], seed_simulator: Optional[int] = None
+) -> Backend:
     """Retrieve a backend."""
     if provider is not None:
         return provider.get_backend(name)
