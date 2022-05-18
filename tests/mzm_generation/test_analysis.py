@@ -13,34 +13,16 @@
 """Test mzm_generation analysis."""
 
 from __future__ import annotations
+
 import os
 
-import unittest
-from typing import Optional
 import mthree
-
 import numpy as np
-from qiskit.quantum_info import random_hermitian, random_statevector
-from qiskit_nature.operators.second_quantization import QuadraticHamiltonian
+from qiskit_research.mzm_generation import KitaevHamiltonianAnalysis
 from qiskit_research.mzm_generation.experiment import (
-    CircuitParameters,
     KitaevHamiltonianExperiment,
     KitaevHamiltonianExperimentParameters,
 )
-from qiskit_research.mzm_generation.utils import (
-    _CovarianceDict,
-    compute_correlation_matrix,
-    correlation_matrix_from_state_vector,
-    counts_to_quasis,
-    covariance_matrix,
-    expectation,
-    expectation_from_correlation_matrix,
-    fidelity_witness,
-    jordan_wigner,
-    kitaev_hamiltonian,
-    measurement_labels,
-)
-from qiskit_research.mzm_generation import KitaevHamiltonianAnalysis
 
 
 def test_kitaev_hamiltonian_analysis(tmp_path):
