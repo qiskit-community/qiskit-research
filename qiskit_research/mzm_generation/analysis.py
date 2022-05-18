@@ -79,7 +79,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
             circuit_params = CircuitParameters(
                 tunneling=tunneling,
                 superconducting=superconducting
-                if isinstance(superconducting, float)
+                if isinstance(superconducting, (float, complex))
                 else complex(*superconducting),
                 chemical_potential=chemical_potential,
                 occupied_orbitals=tuple(occupied_orbitals),
@@ -94,6 +94,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         mit = mthree.M3Mitigation()
         mit.cals_from_file(
             os.path.join(
+                experiment_params.basedir or "",
                 "data",
                 "readout_calibration",
                 experiment_params.backend_name,

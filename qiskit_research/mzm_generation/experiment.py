@@ -67,6 +67,7 @@ class KitaevHamiltonianExperimentParameters:
     pulse_scaling: bool = False
     num_twirled_circuits: int = 0
     seed: Optional[int] = None
+    basedir: Optional[str] = None
 
     @property
     def filename(self) -> str:
