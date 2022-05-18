@@ -73,12 +73,12 @@ from qiskit_research.utils.pulse_scaling import BASIS_GATES
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
 
 
-def get_backend(name: str, provider: Optional[Provider]) -> Backend:
+def get_backend(name: str, provider: Optional[Provider], seed_simulator: Optional[int] = None) -> Backend:
     """Retrieve a backend."""
     if provider is not None:
         return provider.get_backend(name)
     if name == "aer_simulator":
-        return AerSimulator()
+        return AerSimulator(seed_simulator=seed_simulator)
     if name == "statevector_simulator":
         return BasicAer.get_backend("statevector_simulator")
     raise ValueError("The given name does not match any supported backends.")

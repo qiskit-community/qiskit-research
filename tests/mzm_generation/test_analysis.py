@@ -27,7 +27,6 @@ from qiskit_research.mzm_generation.experiment import (
 
 def test_kitaev_hamiltonian_analysis(tmp_path):
     """Test KitaevHamiltonianAnalysis."""
-    # TODO use rng seed in this test
     n_modes = 5
     tunneling = -1.0
     superconducting = 1.0
@@ -46,6 +45,7 @@ def test_kitaev_hamiltonian_analysis(tmp_path):
         occupied_orbitals_list=[occupied_orbitals],
         dynamical_decoupling_sequences=None,
         basedir=tmp_path.as_posix(),
+        seed=1234,
     )
     experiment = KitaevHamiltonianExperiment(params)
 
