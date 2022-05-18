@@ -1,6 +1,10 @@
 black[jupyter]
 coverage
 mypy
+jupyter-sphinx
+nbsphinx
 pylint
 pytest
+reno
+sphinx-autodoc-typehints
 treon

@@ -10,7 +10,13 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
-"""Majorana zero modes generation experiment."""
+"""
+======================================================================
+Majorana zero modes experiment (:mod:`qiskit_research.mzm_generation`)
+======================================================================
+
+.. currentmodule:: qiskit_research.mzm_generation
+"""
 
 from qiskit_research.mzm_generation.analysis import KitaevHamiltonianAnalysis
 from qiskit_research.mzm_generation.experiment import (
