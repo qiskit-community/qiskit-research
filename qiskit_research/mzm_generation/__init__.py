@@ -24,12 +24,16 @@ from qiskit_research.mzm_generation.experiment import (
 from qiskit_research.mzm_generation.utils import (
     kitaev_hamiltonian,
     measure_interaction_op,
+    transpile_circuit,
+    transpilation_passes,
 )
 
 __all__ = [
     "KitaevHamiltonianExperiment",
     "KitaevHamiltonianExperimentParameters",
+    "KitaevHamiltonianAnalysis",
     "kitaev_hamiltonian",
     "measure_interaction_op",
-    "KitaevHamiltonianAnalysis",
+    "transpile_circuit",
+    "transpilation_passes",
 ]
