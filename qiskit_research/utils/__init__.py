@@ -11,11 +11,9 @@
 # that they have been altered from the originals.
 
 """
-=====================================================================================
-Utilities for running research experiments with Qiskit (:mod:`qiskit_research.utils`)
-=====================================================================================
-
-.. currentmodule:: qiskit_research.utils
+======================================================
+Utilities for running research experiments with Qiskit
+======================================================
 """
 
 from qiskit_research.utils.dynamical_decoupling import (

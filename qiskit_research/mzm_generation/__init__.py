@@ -11,11 +11,9 @@
 # that they have been altered from the originals.
 
 """
-======================================================================
-Majorana zero modes experiment (:mod:`qiskit_research.mzm_generation`)
-======================================================================
-
-.. currentmodule:: qiskit_research.mzm_generation
+==============================
+Majorana zero modes experiment
+==============================
 """
 
 from qiskit_research.mzm_generation.analysis import KitaevHamiltonianAnalysis
