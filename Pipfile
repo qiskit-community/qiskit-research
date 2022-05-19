@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+mapomatic = "*"
+mthree = "*"
+pylatexenc = "*"
+qiskit-aer = "*"
+qiskit-experiments = "*"
+qiskit-ibmq-provider = "*"
+qiskit-nature = {ref = "slater-determinants", git = "https://github.com/kevinsung/qiskit-nature.git"}
+qiskit-terra = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
