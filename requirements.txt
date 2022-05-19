@@ -1,3 +1,4 @@
+importlib_metadata
 mapomatic
 mthree
 pylatexenc
