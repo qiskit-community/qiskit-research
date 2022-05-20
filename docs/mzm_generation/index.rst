@@ -16,7 +16,7 @@ The documentation for this module consists of three notebooks:
 
 .. toctree::
   :maxdepth: 1
-  
+
   tutorial
   data-collection
   analysis
