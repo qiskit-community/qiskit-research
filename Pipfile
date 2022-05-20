@@ -4,13 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+importlib-metadata = "*"
 mapomatic = "*"
 mthree = "*"
 pylatexenc = "*"
 qiskit-aer = "*"
 qiskit-experiments = "*"
 qiskit-ibmq-provider = "*"
-qiskit-nature = {ref = "slater-determinants", git = "https://github.com/kevinsung/qiskit-nature.git"}
+qiskit-nature = {git = "https://github.com/Qiskit/qiskit-nature.git"}
 qiskit-terra = "*"
 
 [dev-packages]

@@ -5,5 +5,5 @@ pylatexenc
 qiskit-aer
 qiskit-experiments
 qiskit-ibmq-provider
-qiskit-nature @ git+https://github.com/kevinsung/qiskit-nature.git@slater-determinants#egg=qiskit-nature
+qiskit-nature @ git+https://github.com/Qiskit/qiskit-nature.git#egg=qiskit-nature
 qiskit-terra
