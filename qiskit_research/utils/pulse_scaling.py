@@ -47,11 +47,10 @@ BASIS_GATES = ["sx", "rz", "rzx", "cx"]
 
 
 class CombineRuns(TransformationPass):
-    """
-    Class to combine consecutive gates of same type. This works with
-    Parameters whereas other transpiling passes do  not.
+    # TODO: Check to see if this can be fixed in Optimize1qGatesDecomposition
+    """Combine consecutive gates of same type.
 
-    TODO: Check to see if this can be fixed in Optimize1qGatesDecomposition
+    This works with Parameters whereas other transpiling passes do not.
     """
 
     def __init__(self, gate_strs: List[str]):
@@ -93,11 +92,7 @@ class CombineRuns(TransformationPass):
 
 
 class BindParameters(TransformationPass):
-    """
-    Bind Parameters to circuit.
-
-    TODO: Must this convert the DAG back to a QuantumCircuit?
-    """
+    """Bind Parameters to circuit."""
 
     def __init__(
         self,
@@ -110,7 +105,7 @@ class BindParameters(TransformationPass):
         self,
         dag: DAGCircuit,
     ) -> DAGCircuit:
-        # TODO: there should be a better way to do this
+        # TODO: Must this convert the DAG back to a QuantumCircuit?
         circuit = dag_to_circuit(dag)
         circuit.assign_parameters(self._param_bind, inplace=True)
         return circuit_to_dag(circuit)
