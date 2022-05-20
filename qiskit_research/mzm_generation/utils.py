@@ -122,7 +122,9 @@ def edge_correlation_op(n_modes: int) -> FermionicOp:
 
 def number_op(n_modes: int) -> FermionicOp:
     """Number operator."""
-    return sum(FermionicOp(f"N_{i}") for i in range(n_modes))
+    if not n_modes:
+        return FermionicOp.zero(register_length=0)
+    return cast(FermionicOp, sum(FermionicOp(f"N_{i}") for i in range(n_modes)))
 
 
 def expectation(operator: np.ndarray, state: np.ndarray) -> complex:
@@ -329,7 +331,7 @@ def expectation_from_correlation_matrix(
             + operator.constant
         )
         # variance
-        var = 0.0
+        var = 0 + 0j
         if cov is not None:
             # off-diagonal entries
             for i in range(n):
@@ -382,7 +384,7 @@ def expectation_from_correlation_matrix(
                     "Operator must be quadratic in the fermionic ladder operators."
                 )
         # variance
-        var = 0.0
+        var = 0 + 0j
         if cov is not None:
             # HACK FermionicOp should support iteration with public API
             # See https://github.com/Qiskit/qiskit-nature/issues/541
