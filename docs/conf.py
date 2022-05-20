@@ -50,11 +50,7 @@ numfig_format = {"table": "Table %s"}
 language = None
 pygments_style = "colorful"
 add_module_names = False
-modindex_common_prefix = ["template_project."]
-
-# html theme options
-html_static_path = ["_static"]
-html_logo = "_static/images/logo.png"
+modindex_common_prefix = ["qiskit_research."]
 
 # autodoc/autosummary options
 autosummary_generate = True
