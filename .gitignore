@@ -160,7 +160,7 @@ cython_debug/
 #.idea/
 
 # data directories
-data/
+docs/mzm_generation/data/
 
 # plot directories
-plots/
+docs/mzm_generation/plots/
