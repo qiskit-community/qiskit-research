@@ -14,12 +14,12 @@ The documentation for this module consists of three notebooks:
 .. _analysis notebook: analysis.ipynb
 
 
-.. nbgallery::
-    :glob:
-
-    tutorial
-    data-collection
-    analysis
+.. toctree::
+  :maxdepth: 1
+  
+  tutorial
+  data-collection
+  analysis
 
 .. Hiding - Indices and tables
    :ref:`genindex`
