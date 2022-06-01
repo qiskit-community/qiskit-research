@@ -9,7 +9,8 @@ for running such experiments.
 ## Installation
 Clone this repository and install from source. For example,
 
-    cd qiskit_research
+    git clone https://github.com/qiskit-research/qiskit-research.git
+    cd qiskit-research
     pip install .
 
 ## Documentation
