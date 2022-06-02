@@ -14,3 +14,12 @@
 Qiskit Research
 ===============
 """
+
+from importlib_metadata import version as metadata_version, PackageNotFoundError
+
+
+try:
+    __version__ = metadata_version("qiskit_research")
+except PackageNotFoundError:  # pragma: no cover
+    # package is not installed
+    pass
