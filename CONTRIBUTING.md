@@ -14,3 +14,24 @@ All submissions require review. To make a submission, open a GitHub pull request
 To submit a new research experiment:
 1. Create a new module for your experiment under the [`qiskit_research`](qiskit_research/) base module.
 2. Create a new directory under [docs/](docs/) and add Jupyter notebooks to document your experiment.
+
+## Running tests locally
+The tests can be run locally using [tox](https://tox.wiki/en/latest/).
+To run the full test suite, execute `tox -e ALL`.
+Individual checks can also be run separately. For example:
+
+Run unit tests for Python 3.9
+
+    tox -epy39
+
+Run lint check
+
+    tox -elint
+
+Run type check
+
+    tox -emypy
+
+Run format check
+
+    tox -eblack
