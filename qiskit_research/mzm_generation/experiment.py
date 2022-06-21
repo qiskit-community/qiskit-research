@@ -22,7 +22,7 @@ from typing import Iterable, Optional, Union
 
 import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.circuit.library import RZGate
+from qiskit.circuit.library import XXPlusYYGate
 from qiskit.providers import Provider
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
@@ -195,10 +195,10 @@ class KitaevHamiltonianExperiment(BaseExperiment):
 def _all_real_rz_gates(circuit: QuantumCircuit, rtol=1e-5, atol=1e-8) -> bool:
     """Check if all RZ gates in the circuit are real-valued up to global phase."""
     for gate, _, _ in circuit:
-        if isinstance(gate, RZGate):
-            (theta,) = gate.params
+        if isinstance(gate, XXPlusYYGate):
+            _, beta = gate.params
             if not np.isclose(
-                theta % np.pi, 0.0, rtol=rtol, atol=atol
-            ) and not np.isclose(theta % np.pi, np.pi, atol=1e-8):
+                (beta + np.pi / 2) % np.pi, 0.0, rtol=rtol, atol=atol
+            ) and not np.isclose((beta + np.pi / 2) % np.pi, np.pi, atol=1e-8):
                 return False
     return True

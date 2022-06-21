@@ -192,3 +192,25 @@ class TestMZMGenerationUtils(unittest.TestCase):
         val2, std2 = _fidelity_witness_alt(corr, corr_exact, cov)
         np.testing.assert_allclose(val1, val2, atol=1e-8)
         np.testing.assert_allclose(std1, std2, atol=1e-8)
+
+    def test_real_valued_optimization(self):
+        """Test that measurements are optimized when circuits are real."""
+        n_modes = 3
+        tunneling = -1.0
+        superconducting = 1.0
+        chemical_potential = 1.0
+        occupied_orbitals = ()
+        backend_name = "aer_simulator"
+        params = KitaevHamiltonianExperimentParameters(
+            timestamp="test",
+            backend_name=backend_name,
+            qubits=range(n_modes),
+            n_modes=n_modes,
+            tunneling_values=[tunneling],
+            superconducting_values=[superconducting],
+            chemical_potential_values=[chemical_potential],
+            occupied_orbitals_list=[occupied_orbitals],
+            dynamical_decoupling_sequences=None,
+        )
+        experiment = KitaevHamiltonianExperiment(params)
+        self.assertEqual(len(experiment.circuits()), 9)
