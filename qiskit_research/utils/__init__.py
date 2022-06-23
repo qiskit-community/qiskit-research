@@ -31,6 +31,7 @@ from qiskit_research.utils.pulse_scaling import (
     CombineRuns,
     SECRCalibrationBuilder,
     cr_scaling_passes,
+    pulse_attaching_passes,
 )
 
 __all__ = [

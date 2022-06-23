@@ -26,6 +26,7 @@ from qiskit_research.utils import (
     PauliTwirl,
     dynamical_decoupling_passes,
     cr_scaling_passes,
+    pulse_attaching_passes,
     add_pulse_calibrations,
 )
 
@@ -96,6 +97,27 @@ def scale_cr_pulses(
         list(
             cr_scaling_passes(
                 inst_sched_map, channel_map, templates, param_bind=param_bind
+            )
+        )
+    )
+    return pass_manager.run(circuits)
+
+def attach_cr_pulses(
+    circuits: Union[QuantumCircuit, List[QuantumCircuit]],
+    backend: Backend,
+    param_bind: dict,
+) -> Union[QuantumCircuit, List[QuantumCircuit]]:
+    """
+    Scale circuits using Pulse scaling technique from
+    http://arxiv.org/abs/2012.11660
+    """
+    inst_sched_map = backend.defaults().instruction_schedule_map
+    channel_map = backend.configuration().qubit_channel_mapping
+
+    pass_manager = PassManager(
+        list(
+            pulse_attaching_passes(
+                inst_sched_map, channel_map, param_bind
             )
         )
     )

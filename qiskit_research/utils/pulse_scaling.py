@@ -335,3 +335,14 @@ def cr_scaling_passes(
         yield Optimize1qGatesDecomposition(BASIS_GATES)
         yield CXCancellation()
         yield SECRCalibrationBuilder(inst_sched_map, channel_map)
+
+def pulse_attaching_passes(
+    inst_sched_map: InstructionScheduleMap,
+    channel_map: List[List[str]],
+    param_bind: dict,
+) -> Iterable[BasePass]:
+    """Yields transpilation passes for attaching pulse schedules."""
+    yield BindParameters(param_bind)
+    yield Optimize1qGatesDecomposition(BASIS_GATES)
+    yield CXCancellation()
+    yield SECRCalibrationBuilder(inst_sched_map, channel_map)
