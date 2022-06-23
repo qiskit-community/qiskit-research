@@ -331,6 +331,8 @@ def cr_scaling_passes(
     yield CXCancellation()
     yield CombineRuns(["rz"])
     if param_bind is not None:
+        # can probably replace the lines below with
+        # pulse_attaching_passes(inst_sched_map, channel_map, param_bind)
         yield BindParameters(param_bind)
         yield Optimize1qGatesDecomposition(BASIS_GATES)
         yield CXCancellation()
