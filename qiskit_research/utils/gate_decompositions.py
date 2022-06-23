@@ -101,7 +101,7 @@ class XXPlusYYtoRZX(TransformationPass):
         a, b = register
         theta, beta = gate.params
 
-        yield RZGate(beta), (b,)
+        yield RZGate(-beta), (b,)
 
         yield HGate(), (a,)
         yield HGate(), (b,)
@@ -109,7 +109,7 @@ class XXPlusYYtoRZX(TransformationPass):
         yield RZGate(-0.5 * pi), (b,)
         yield RXGate(-0.5 * pi), (b,)
         yield RZGate(-0.5 * pi), (b,)
-        yield RZXGate(-0.5 * theta), (a, b)
+        yield RZXGate(0.5 * theta), (a, b)
         yield RXGate(0.5 * theta), (b,)
         yield RZGate(-0.5 * pi), (b,)
         yield RXGate(-0.5 * pi), (b,)
@@ -124,7 +124,7 @@ class XXPlusYYtoRZX(TransformationPass):
         yield RZGate(-0.5 * pi), (b,)
         yield RXGate(-0.5 * pi), (b,)
         yield RZGate(-0.5 * pi), (b,)
-        yield RZXGate(-0.5 * theta), (a, b)
+        yield RZXGate(0.5 * theta), (a, b)
         yield RXGate(0.5 * theta), (b,)
         yield RZGate(-0.5 * pi), (b,)
         yield RXGate(-0.5 * pi), (b,)
@@ -138,7 +138,7 @@ class XXPlusYYtoRZX(TransformationPass):
         yield RZGate(-0.5 * pi), (b,)
         yield HGate(), (b,)
 
-        yield RZGate(-beta), (b,)
+        yield RZGate(beta), (b,)
 
     def run(
         self,
