@@ -6,4 +6,4 @@ qiskit-aer
 qiskit-experiments
 qiskit-ibmq-provider
 qiskit-nature @ git+https://github.com/Qiskit/qiskit-nature.git#egg=qiskit-nature
-qiskit-terra
+qiskit-terra @ git+https://github.com/Qiskit/qiskit-terra.git#egg=qiskit-terra
