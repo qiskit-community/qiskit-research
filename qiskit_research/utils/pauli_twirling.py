@@ -18,7 +18,12 @@ import numpy as np
 from qiskit.circuit import QuantumRegister
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.transpiler.basepasses import TransformationPass
+from qiskit.transpiler.basepasses import BasePass, TransformationPass
+from qiskit.transpiler.passes import (
+    CXCancellation,
+    Optimize1qGatesDecomposition,
+)
+from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 I = IGate()
 X = XGate()
@@ -37,6 +42,12 @@ TWIRL_GATES = {
         ((X, Z), (X, Z)),
         ((Y, Y), (Y, Y)),
         ((Z, X), (Z, X)),
+    ),
+    "secr": (
+        ((I, I), (I, I)),
+        ((X, Z), (X, Z)),
+        ((X, Y), (X, Y)),
+        ((Z, Z), (Z, Z)),
     ),
     "rzz": (
         ((I, I), (I, I)),
@@ -112,3 +123,8 @@ class PauliTwirl(TransformationPass):
                 mini_dag.apply_operation_back(after1, [register[1]])
                 dag.substitute_node_with_dag(node, mini_dag)
         return dag
+
+def pauli_transpilation_passes() -> Iterable[BasePass]:
+
+    yield Optimize1qGatesDecomposition(BASIS_GATES)
+    yield CXCancellation()
