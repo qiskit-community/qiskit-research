@@ -121,6 +121,7 @@ def scale_cr_pulses(
     )
     return pass_manager.run(circuits)
 
+
 def attach_cr_pulses(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Backend,
@@ -135,13 +136,10 @@ def attach_cr_pulses(
     channel_map = backend.configuration().qubit_channel_mapping
 
     pass_manager = PassManager(
-        list(
-            pulse_attaching_passes(
-                inst_sched_map, channel_map, param_bind
-            )
-        )
+        list(pulse_attaching_passes(inst_sched_map, channel_map, param_bind))
     )
     return pass_manager.run(circuits)
+
 
 def transpile_added_paulis(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],

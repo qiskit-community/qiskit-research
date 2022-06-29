@@ -336,6 +336,7 @@ def cr_scaling_passes(
         yield CXCancellation()
         yield SECRCalibrationBuilder(inst_sched_map, channel_map)
 
+
 def pulse_attaching_passes(
     inst_sched_map: InstructionScheduleMap,
     channel_map: List[List[str]],

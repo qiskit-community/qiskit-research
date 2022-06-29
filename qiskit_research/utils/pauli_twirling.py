@@ -124,6 +124,7 @@ class PauliTwirl(TransformationPass):
                 dag.substitute_node_with_dag(node, mini_dag)
         return dag
 
+
 def pauli_transpilation_passes() -> Iterable[BasePass]:
 
     yield Optimize1qGatesDecomposition(BASIS_GATES)
