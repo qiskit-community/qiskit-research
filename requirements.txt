@@ -4,6 +4,7 @@ mthree
 pylatexenc
 qiskit-aer
 qiskit-experiments
+qiskit-ibm-runtime
 qiskit-ibmq-provider
 qiskit-nature @ git+https://github.com/Qiskit/qiskit-nature.git#egg=qiskit-nature
 qiskit-terra @ git+https://github.com/Qiskit/qiskit-terra.git#egg=qiskit-terra

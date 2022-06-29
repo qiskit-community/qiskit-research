@@ -325,12 +325,13 @@ def cr_scaling_passes(
 
     yield TemplateOptimization(**templates)
     yield CombineRuns(["rzx"])
-    # pauli twirl here
     yield RZXtoEchoedCR(inst_sched_map)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()
     yield CombineRuns(["rz"])
     if param_bind is not None:
+        # instead try:
+        # yield pulse_attaching_passes(inst_sched_map, channel_map, param_bind)
         yield BindParameters(param_bind)
         yield Optimize1qGatesDecomposition(BASIS_GATES)
         yield CXCancellation()

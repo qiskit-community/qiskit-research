@@ -35,7 +35,7 @@ Z = ZGate()
 # each value is a tuple that represents the twirl set for the gate
 # the twirl set is a list of (before, after) pairs describing twirl gates
 # "before" and "after" are tuples of single-qubit gates to be applied
-#   before and after the gate to be twirled
+# before and after the gate to be twirled
 TWIRL_GATES = {
     "rzx": (
         ((I, I), (I, I)),
@@ -126,6 +126,6 @@ class PauliTwirl(TransformationPass):
 
 
 def pauli_transpilation_passes() -> Iterable[BasePass]:
-
+    "Yield simple transpilation steps after addition of Pauli gates."
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()

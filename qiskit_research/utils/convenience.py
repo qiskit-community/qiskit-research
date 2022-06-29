@@ -144,7 +144,9 @@ def attach_cr_pulses(
 def transpile_added_paulis(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
 ) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
-
+    """
+    Convert Pauli gates to native basis gates and do simple optimization.
+    """
     pass_manager = PassManager(list(pauli_transpilation_passes()))
     if isinstance(circuits, QuantumCircuit):
         return pass_manager.run(circuits)
