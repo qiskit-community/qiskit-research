@@ -62,7 +62,7 @@ def add_pauli_twirls(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     num_twirled_circuits: int = 1,
     gates_to_twirl: Optional[Iterable[str]] = None,
-    transpile_added_paulis: Optional = False,
+    transpile_added_paulis: bool = False,
     seed: Any = None,
 ) -> Union[List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """Add Pauli twirls to circuits.
@@ -81,13 +81,9 @@ def add_pauli_twirls(
         If the input is a list of circuit, then a list of lists of circuits is returned.
     """
     pauli_twirl_pass = [PauliTwirl(gates_to_twirl=gates_to_twirl, seed=seed)]
-    pauli_transpilation_pass = []
+    pauli_transpilation_pass: List[BasePass] = []
     if transpile_added_paulis:
-        pauli_transpilation_pass = pauli_transpilation_passes()
-        # pauli_transpilation_pass = [
-        #     Optimize1qGatesDecomposition(BASIS_GATES),
-        #     CXCancellation()
-        # ]
+        pauli_transpilation_pass = list(pauli_transpilation_passes())
     pass_manager = PassManager(pauli_twirl_pass + pauli_transpilation_pass)
     if isinstance(circuits, QuantumCircuit):
         return [pass_manager.run(circuits) for _ in range(num_twirled_circuits)]
@@ -141,7 +137,7 @@ def attach_cr_pulses(
     return pass_manager.run(circuits)
 
 
-def transpile_added_paulis(
+def transpile_paulis(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
 ) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """
