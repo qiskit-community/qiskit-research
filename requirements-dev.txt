@@ -1,10 +1,10 @@
 black[jupyter]
 coverage
-mypy
+mypy==0.961
 jupyter-sphinx
 nbsphinx
-pylint
-pytest
+pylint==2.14
+pytest==7.1
 reno
 sphinx-autodoc-typehints
-treon
+treon==0.1.3
