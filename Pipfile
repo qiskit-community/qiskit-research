@@ -5,11 +5,11 @@ name = "pypi"
 
 [packages]
 importlib-metadata = "*"
-mapomatic = "*"
-mthree = "*"
+mapomatic = "==0.6"
+mthree = "==0.24"
 pylatexenc = "*"
 qiskit-aer = "*"
-qiskit-experiments = "*"
+qiskit-experiments = "==0.3.1"
 qiskit-ibmq-provider = "*"
 qiskit-nature = {git = "https://github.com/Qiskit/qiskit-nature.git"}
 qiskit-terra = {git = "https://github.com/Qiskit/qiskit-terra.git"}
