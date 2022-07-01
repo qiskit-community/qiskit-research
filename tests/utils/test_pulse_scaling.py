@@ -16,8 +16,8 @@ import unittest
 
 import numpy as np
 from qiskit.circuit import Parameter, QuantumCircuit
+from qiskit.providers.fake_provider import FakeMumbai
 from qiskit.quantum_info import Operator
-from qiskit.test.mock import FakeMumbai
 from qiskit_research.utils.convenience import scale_cr_pulses
 
 
