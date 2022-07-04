@@ -1,9 +1,10 @@
 importlib_metadata
-mapomatic
-mthree
+mapomatic==0.6
+mthree==0.24
 pylatexenc
 qiskit-aer
-qiskit-experiments
+qiskit-experiments==0.3.1
+qiskit-ibm-runtime
 qiskit-ibmq-provider
-qiskit-nature @ git+https://github.com/Qiskit/qiskit-nature.git#egg=qiskit-nature
-qiskit-terra @ git+https://github.com/Qiskit/qiskit-terra.git#egg=qiskit-terra
+qiskit-nature==0.4.2
+qiskit-terra==0.21

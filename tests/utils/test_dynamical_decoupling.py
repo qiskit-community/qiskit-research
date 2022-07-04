@@ -14,7 +14,7 @@
 
 from qiskit import transpile
 from qiskit.circuit import QuantumCircuit
-from qiskit.test.mock import FakeMumbai
+from qiskit.providers.fake_provider import FakeMumbai
 from qiskit_research.utils.convenience import add_dynamical_decoupling
 
 

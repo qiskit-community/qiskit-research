@@ -239,7 +239,7 @@ def covariance_matrix(corr: np.ndarray) -> np.ndarray:
     n, _ = corr.shape
     eye = np.eye(n // 2)
     # TODO figure out why mypy fails on this
-    majorana_basis = np.block([[eye, eye], [1j * eye, -1j * eye]]) / np.sqrt(2)  # type: ignore
+    majorana_basis = np.block([[eye, eye], [1j * eye, -1j * eye]]) / np.sqrt(2)
     return np.real(
         1j * majorana_basis @ (2 * corr - np.eye(n)) @ majorana_basis.T.conj()
     )
