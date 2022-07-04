@@ -47,14 +47,15 @@ def add_dynamical_decoupling(
     pass_manager = PassManager(
         list(dynamical_decoupling_passes(backend, dd_str, scheduler))
     )
-    if isinstance(circuits, QuantumCircuit):
+    if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
         circuits_dd = pass_manager.run(circuits)
-    elif isinstance(circuits[0], QuantumCircuit):
-        circuits_dd = pass_manager.run(circuits)
+        if add_pulse_cals:
+            add_pulse_calibrations(circuits_dd, backend)
     else:
         circuits_dd = [pass_manager.run(circs) for circs in circuits]
-    if add_pulse_cals:
-        add_pulse_calibrations(circuits_dd, backend)
+        if add_pulse_cals:
+            [add_pulse_calibrations(circs_dd, backend) for circs_dd in  circuits_dd]
+
     return circuits_dd
 
 

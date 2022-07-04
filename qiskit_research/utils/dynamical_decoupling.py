@@ -95,7 +95,7 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
 
 # TODO refactor this as a CalibrationBuilder transpilation pass
 def add_pulse_calibrations(
-    circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
+    circuits: Union[QuantumCircuit, List[QuantumCircuit],
     backend: Backend,
 ) -> None:
     """Add pulse calibrations for custom gates to circuits in-place."""
@@ -112,12 +112,8 @@ def add_pulse_calibrations(
             pulse.call(x_sched)
 
             # add calibrations to circuits
-            for circs in circuits:
-                if isinstance(circs, QuantumCircuit):
-                    circs.add_calibration("xp", [qubit], sched)
-                else:
-                    for circ in circs:
-                        circ.add_calibration("xp", [qubit], sched)
+            for circ in circuits:
+                circ.add_calibration("xp", [qubit], sched)
 
         with pulse.build(f"xm gate for qubit {qubit}") as sched:
             # def of XmGate() in terms of XGate() and amplitude inversion
@@ -128,12 +124,8 @@ def add_pulse_calibrations(
             pulse.play(x_pulse, DriveChannel(qubit))
 
             # add calibrations to circuits
-            for circs in circuits:
-                if isinstance(circs, QuantumCircuit):
-                    circs.add_calibration("xm", [qubit], sched)
-                else:
-                    for circ in circs:
-                        circ.add_calibration("xm", [qubit], sched)
+            for circ in circuits:
+                circ.add_calibration("xm", [qubit], sched)
 
         with pulse.build(f"y gate for qubit {qubit}") as sched:
             # def of YGate() in terms of XGate() and phase_offset
@@ -142,12 +134,8 @@ def add_pulse_calibrations(
                 pulse.call(x_sched)
 
             # add calibrations to circuits
-            for circs in circuits:
-                if isinstance(circs, QuantumCircuit):
-                    circs.add_calibration("y", [qubit], sched)
-                else:
-                    for circ in circs:
-                        circ.add_calibration("y", [qubit], sched)
+            for circ in circuits:
+                circ.add_calibration("y", [qubit], sched)
 
         with pulse.build(f"yp gate for qubit {qubit}") as sched:
             # def of YpGate() in terms of XGate() and phase_offset
@@ -156,12 +144,8 @@ def add_pulse_calibrations(
                 pulse.call(x_sched)
 
             # add calibrations to circuits
-            for circs in circuits:
-                if isinstance(circs, QuantumCircuit):
-                    circs.add_calibration("yp", [qubit], sched)
-                else:
-                    for circ in circs:
-                        circ.add_calibration("yp", [qubit], sched)
+            for circ in circuits:
+                circ.add_calibration("yp", [qubit], sched)
 
         with pulse.build(f"ym gate for qubit {qubit}") as sched:
             # def of YGate() in terms of XGate() and phase_offset
@@ -173,9 +157,5 @@ def add_pulse_calibrations(
                 pulse.play(x_pulse, DriveChannel(qubit))
 
             # add calibrations to circuits
-            for circs in circuits:
-                if isinstance(circs, QuantumCircuit):
-                    circs.add_calibration("ym", [qubit], sched)
-                else:
-                    for circ in circs:
-                        circ.add_calibration("ym", [qubit], sched)
+            for circ in circuits:
+                circ.add_calibration("ym", [qubit], sched)
