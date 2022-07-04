@@ -18,7 +18,12 @@ import numpy as np
 from qiskit.circuit import QuantumRegister
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.transpiler.basepasses import TransformationPass
+from qiskit.transpiler.basepasses import BasePass, TransformationPass
+from qiskit.transpiler.passes import (
+    CXCancellation,
+    Optimize1qGatesDecomposition,
+)
+from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 I = IGate()
 X = XGate()
@@ -30,13 +35,19 @@ Z = ZGate()
 # each value is a tuple that represents the twirl set for the gate
 # the twirl set is a list of (before, after) pairs describing twirl gates
 # "before" and "after" are tuples of single-qubit gates to be applied
-#   before and after the gate to be twirled
+# before and after the gate to be twirled
 TWIRL_GATES = {
     "rzx": (
         ((I, I), (I, I)),
         ((X, Z), (X, Z)),
         ((Y, Y), (Y, Y)),
         ((Z, X), (Z, X)),
+    ),
+    "secr": (
+        ((I, I), (I, I)),
+        ((X, Z), (X, Z)),
+        ((X, Y), (X, Y)),
+        ((Z, Z), (Z, Z)),
     ),
     "rzz": (
         ((I, I), (I, I)),
@@ -112,3 +123,9 @@ class PauliTwirl(TransformationPass):
                 mini_dag.apply_operation_back(after1, [register[1]])
                 dag.substitute_node_with_dag(node, mini_dag)
         return dag
+
+
+def pauli_transpilation_passes() -> Iterable[BasePass]:
+    "Yield simple transpilation steps after addition of Pauli gates."
+    yield Optimize1qGatesDecomposition(BASIS_GATES)
+    yield CXCancellation()

@@ -26,17 +26,19 @@ from qiskit_research.utils import (
     PauliTwirl,
     dynamical_decoupling_passes,
     cr_scaling_passes,
+    pauli_transpilation_passes,
+    pulse_attaching_passes,
     add_pulse_calibrations,
 )
 
 
 def add_dynamical_decoupling(
-    circuits: Union[QuantumCircuit, List[QuantumCircuit]],
+    circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
     backend: Backend,
     dd_str: str,
     scheduler: BasePass = ALAPSchedule,
     add_pulse_cals: bool = False,
-) -> Union[QuantumCircuit, List[QuantumCircuit]]:
+) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """Add dynamical decoupling sequences and calibrations to circuits.
 
     Adds dynamical decoupling sequences and the calibrations necessary
@@ -45,9 +47,16 @@ def add_dynamical_decoupling(
     pass_manager = PassManager(
         list(dynamical_decoupling_passes(backend, dd_str, scheduler))
     )
-    circuits_dd = pass_manager.run(circuits)
-    if add_pulse_cals:
-        add_pulse_calibrations(circuits_dd, backend)
+    if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
+        circuits_dd = pass_manager.run(circuits)
+        if add_pulse_cals:
+            add_pulse_calibrations(circuits_dd, backend)
+    else:
+        circuits_dd = [pass_manager.run(circs) for circs in circuits]
+        if add_pulse_cals:
+            for circs_dd in circuits_dd:
+                add_pulse_calibrations(circs_dd, backend)
+
     return circuits_dd
 
 
@@ -55,6 +64,7 @@ def add_pauli_twirls(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     num_twirled_circuits: int = 1,
     gates_to_twirl: Optional[Iterable[str]] = None,
+    transpile_added_paulis: bool = False,
     seed: Any = None,
 ) -> Union[List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """Add Pauli twirls to circuits.
@@ -64,13 +74,19 @@ def add_pauli_twirls(
         num_twirled_circuits: Number of twirled circuits to return for each input circuit.
         gates_to_twirl: Names of gates to twirl. The default behavior is to twirl all
             supported gates.
+        transpile_add_paulis: Transpile added Paulis to native basis gate set and combine
+            single qubit gates and consecutive CXs.
         seed: Seed for the pseudorandom number generator.
 
     Returns:
         If the input is a single circuit, then a list of circuits is returned.
         If the input is a list of circuit, then a list of lists of circuits is returned.
     """
-    pass_manager = PassManager(PauliTwirl(gates_to_twirl=gates_to_twirl, seed=seed))
+    passes = [PauliTwirl(gates_to_twirl=gates_to_twirl, seed=seed)]
+    if transpile_added_paulis:
+        for pass_ in list(pauli_transpilation_passes()):
+            passes.append(pass_)
+    pass_manager = PassManager(passes)
     if isinstance(circuits, QuantumCircuit):
         return [pass_manager.run(circuits) for _ in range(num_twirled_circuits)]
     return [
@@ -86,7 +102,9 @@ def scale_cr_pulses(
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
     Scale circuits using Pulse scaling technique from
-    http://arxiv.org/abs/2012.11660
+    http://arxiv.org/abs/2012.11660. If parameters are
+    provided, they are also bound their corresponding
+    pulse gates are attached.
     """
     templates = rzx_templates()
     inst_sched_map = backend.defaults().instruction_schedule_map
@@ -100,3 +118,34 @@ def scale_cr_pulses(
         )
     )
     return pass_manager.run(circuits)
+
+
+def attach_cr_pulses(
+    circuits: Union[QuantumCircuit, List[QuantumCircuit]],
+    backend: Backend,
+    param_bind: dict,
+) -> Union[QuantumCircuit, List[QuantumCircuit]]:
+    """
+    Scale circuits using Pulse scaling technique from
+    http://arxiv.org/abs/2012.11660. Binds parameters
+    in param_bind and attaches pulse gates.
+    """
+    inst_sched_map = backend.defaults().instruction_schedule_map
+    channel_map = backend.configuration().qubit_channel_mapping
+
+    pass_manager = PassManager(
+        list(pulse_attaching_passes(inst_sched_map, channel_map, param_bind))
+    )
+    return pass_manager.run(circuits)
+
+
+def transpile_paulis(
+    circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
+) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
+    """
+    Convert Pauli gates to native basis gates and do simple optimization.
+    """
+    pass_manager = PassManager(list(pauli_transpilation_passes()))
+    if isinstance(circuits, QuantumCircuit):
+        return pass_manager.run(circuits)
+    return [pass_manager.run(circs) for circs in circuits]

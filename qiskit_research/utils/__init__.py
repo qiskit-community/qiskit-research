@@ -25,12 +25,16 @@ from qiskit_research.utils.gate_decompositions import (
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
 )
-from qiskit_research.utils.pauli_twirling import PauliTwirl
+from qiskit_research.utils.pauli_twirling import (
+    PauliTwirl,
+    pauli_transpilation_passes,
+)
 from qiskit_research.utils.pulse_scaling import (
     BindParameters,
     CombineRuns,
     SECRCalibrationBuilder,
     cr_scaling_passes,
+    pulse_attaching_passes,
 )
 
 __all__ = [
