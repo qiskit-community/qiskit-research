@@ -80,11 +80,11 @@ def add_pauli_twirls(
         If the input is a single circuit, then a list of circuits is returned.
         If the input is a list of circuit, then a list of lists of circuits is returned.
     """
-    pauli_twirl_pass = [PauliTwirl(gates_to_twirl=gates_to_twirl, seed=seed)]
-    pauli_transpilation_pass: List[BasePass] = []
+    passes = [PauliTwirl(gates_to_twirl=gates_to_twirl, seed=seed)]
     if transpile_added_paulis:
-        pauli_transpilation_pass = list(pauli_transpilation_passes())
-    pass_manager = PassManager(pauli_twirl_pass + pauli_transpilation_pass)
+        for pass in pauli_transpilation_passes():
+            passes.append(pass)
+    pass_manager = PassManager(passes)
     if isinstance(circuits, QuantumCircuit):
         return [pass_manager.run(circuits) for _ in range(num_twirled_circuits)]
     return [
