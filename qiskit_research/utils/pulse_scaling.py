@@ -333,7 +333,6 @@ def cr_scaling_passes(
         yield from pulse_attaching_passes(inst_sched_map, channel_map, param_bind)
 
 
-
 def pulse_attaching_passes(
     inst_sched_map: InstructionScheduleMap,
     channel_map: List[List[str]],

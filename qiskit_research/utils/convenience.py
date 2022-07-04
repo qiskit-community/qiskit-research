@@ -54,7 +54,8 @@ def add_dynamical_decoupling(
     else:
         circuits_dd = [pass_manager.run(circs) for circs in circuits]
         if add_pulse_cals:
-            [add_pulse_calibrations(circs_dd, backend) for circs_dd in  circuits_dd]
+            for circs_dd in circuits_dd:
+                add_pulse_calibrations(circs_dd, backend)
 
     return circuits_dd
 
@@ -83,8 +84,8 @@ def add_pauli_twirls(
     """
     passes = [PauliTwirl(gates_to_twirl=gates_to_twirl, seed=seed)]
     if transpile_added_paulis:
-        for pass in pauli_transpilation_passes():
-            passes.append(pass)
+        for pass_ in list(pauli_transpilation_passes()):
+            passes.append(pass_)
     pass_manager = PassManager(passes)
     if isinstance(circuits, QuantumCircuit):
         return [pass_manager.run(circuits) for _ in range(num_twirled_circuits)]

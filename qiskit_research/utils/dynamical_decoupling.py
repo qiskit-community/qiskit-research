@@ -95,7 +95,7 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
 
 # TODO refactor this as a CalibrationBuilder transpilation pass
 def add_pulse_calibrations(
-    circuits: Union[QuantumCircuit, List[QuantumCircuit],
+    circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Backend,
 ) -> None:
     """Add pulse calibrations for custom gates to circuits in-place."""
