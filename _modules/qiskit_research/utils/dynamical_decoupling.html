@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>qiskit_research.utils.dynamical_decoupling &#8212; Qiskit Research 0.1.dev1+ge4350a0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for qiskit_research.utils.dynamical_decoupling</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This code is part of Qiskit.</span>
+<span class="c1">#</span>
+<span class="c1"># (C) Copyright IBM 2022.</span>
+<span class="c1">#</span>
+<span class="c1"># This code is licensed under the Apache License, Version 2.0. You may</span>
+<span class="c1"># obtain a copy of this license in the LICENSE.txt file in the root directory</span>
+<span class="c1"># of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.</span>
+<span class="c1">#</span>
+<span class="c1"># Any modifications or derivative works of this code must retain this</span>
+<span class="c1"># copyright notice, and modified files need to carry a notice indicating</span>
+<span class="c1"># that they have been altered from the originals.</span>
+
+<span class="sd">&quot;&quot;&quot;Dynamical decoupling.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">pulse</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">XGate</span><span class="p">,</span> <span class="n">YGate</span>
+<span class="kn">from</span> <span class="nn">qiskit.providers.backend</span> <span class="kn">import</span> <span class="n">Backend</span>
+<span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="n">DriveChannel</span>
+<span class="kn">from</span> <span class="nn">qiskit.qasm</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler</span> <span class="kn">import</span> <span class="n">InstructionDurations</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.instruction_durations</span> <span class="kn">import</span> <span class="n">InstructionDurationsType</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="n">ALAPSchedule</span><span class="p">,</span> <span class="n">DynamicalDecoupling</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.utils.gates</span> <span class="kn">import</span> <span class="n">XmGate</span><span class="p">,</span> <span class="n">XpGate</span><span class="p">,</span> <span class="n">YmGate</span><span class="p">,</span> <span class="n">YpGate</span>
+
+<span class="n">X</span> <span class="o">=</span> <span class="n">XGate</span><span class="p">()</span>
+<span class="n">Xp</span> <span class="o">=</span> <span class="n">XpGate</span><span class="p">()</span>
+<span class="n">Xm</span> <span class="o">=</span> <span class="n">XmGate</span><span class="p">()</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">YGate</span><span class="p">()</span>
+<span class="n">Yp</span> <span class="o">=</span> <span class="n">YpGate</span><span class="p">()</span>
+<span class="n">Ym</span> <span class="o">=</span> <span class="n">YmGate</span><span class="p">()</span>
+
+
+<span class="n">DD_SEQUENCE</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;X2&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span>
+    <span class="s2">&quot;X2pm&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">Xp</span><span class="p">,</span> <span class="n">Xm</span><span class="p">),</span>
+    <span class="s2">&quot;XY4&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span>
+    <span class="s2">&quot;XY4pm&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">Xp</span><span class="p">,</span> <span class="n">Yp</span><span class="p">,</span> <span class="n">Xm</span><span class="p">,</span> <span class="n">Ym</span><span class="p">),</span>
+    <span class="s2">&quot;XY8&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span>
+    <span class="s2">&quot;XY8pm&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">Xp</span><span class="p">,</span> <span class="n">Yp</span><span class="p">,</span> <span class="n">Xm</span><span class="p">,</span> <span class="n">Ym</span><span class="p">,</span> <span class="n">Ym</span><span class="p">,</span> <span class="n">Xm</span><span class="p">,</span> <span class="n">Yp</span><span class="p">,</span> <span class="n">Xp</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="dynamical_decoupling_passes"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.dynamical_decoupling_passes">[docs]</a><span class="k">def</span> <span class="nf">dynamical_decoupling_passes</span><span class="p">(</span>
+    <span class="n">backend</span><span class="p">,</span> <span class="n">dd_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">:</span> <span class="n">BasePass</span> <span class="o">=</span> <span class="n">ALAPSchedule</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Yields transpilation passes for dynamical decoupling.&quot;&quot;&quot;</span>
+    <span class="n">durations</span> <span class="o">=</span> <span class="n">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
+    <span class="n">sequence</span> <span class="o">=</span> <span class="n">DD_SEQUENCE</span><span class="p">[</span><span class="n">dd_str</span><span class="p">]</span>
+    <span class="k">yield</span> <span class="n">scheduler</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">DynamicalDecoupling</span><span class="p">(</span><span class="n">durations</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span></div>
+
+
+<span class="c1"># TODO this should take instruction schedule map instead of backend</span>
+<span class="k">def</span> <span class="nf">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InstructionDurations</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieves gate timing information for the backend from the instruction</span>
+<span class="sd">    schedule map, and returns the type InstructionDurations for use by</span>
+<span class="sd">    Qiskit&#39;s scheduler (i.e., ALAP) and DynamicalDecoupling passes.</span>
+
+<span class="sd">    This method relies on IBM backend knowledge such as</span>
+
+<span class="sd">      - all single qubit gates durations are the same</span>
+<span class="sd">      - the &#39;x&#39; gate, used for echoed cross resonance, is also the basis for</span>
+<span class="sd">        all othe dynamical decoupling gates (currently)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inst_durs</span><span class="p">:</span> <span class="n">InstructionDurationsType</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
+    <span class="n">num_qubits</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">num_qubits</span>
+
+    <span class="c1"># single qubit gates</span>
+    <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">inst_str</span> <span class="ow">in</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">qubit_instructions</span><span class="p">(</span><span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">]):</span>
+            <span class="n">inst</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">inst_str</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+            <span class="n">inst_durs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">inst_str</span><span class="p">,</span> <span class="n">qubit</span><span class="p">,</span> <span class="n">inst</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
+
+            <span class="c1"># create DD pulses from CR echo &#39;x&#39; pulse</span>
+            <span class="k">if</span> <span class="n">inst_str</span> <span class="o">==</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">new_gate</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xp&quot;</span><span class="p">,</span> <span class="s2">&quot;xm&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yp&quot;</span><span class="p">,</span> <span class="s2">&quot;ym&quot;</span><span class="p">]:</span>
+                    <span class="n">inst_durs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_gate</span><span class="p">,</span> <span class="n">qubit</span><span class="p">,</span> <span class="n">inst</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
+
+    <span class="c1"># two qubit gates</span>
+    <span class="k">for</span> <span class="n">qc</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">qt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">inst_str</span> <span class="ow">in</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">qubit_instructions</span><span class="p">(</span><span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qc</span><span class="p">,</span> <span class="n">qt</span><span class="p">]):</span>
+                <span class="n">inst</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">inst_str</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qc</span><span class="p">,</span> <span class="n">qt</span><span class="p">])</span>
+                <span class="n">inst_durs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">inst_str</span><span class="p">,</span> <span class="p">[</span><span class="n">qc</span><span class="p">,</span> <span class="n">qt</span><span class="p">],</span> <span class="n">inst</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">InstructionDurations</span><span class="p">(</span><span class="n">inst_durs</span><span class="p">)</span>
+
+
+<span class="c1"># TODO refactor this as a CalibrationBuilder transpilation pass</span>
+<div class="viewcode-block" id="add_pulse_calibrations"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.add_pulse_calibrations">[docs]</a><span class="k">def</span> <span class="nf">add_pulse_calibrations</span><span class="p">(</span>
+    <span class="n">circuits</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]],</span>
+    <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Add pulse calibrations for custom gates to circuits in-place.&quot;&quot;&quot;</span>
+    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
+    <span class="n">num_qubits</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">num_qubits</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">):</span>
+        <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuits</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;xp gate for qubit </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sched</span><span class="p">:</span>
+            <span class="c1"># def of XpGate() in terms of XGate()</span>
+            <span class="n">x_sched</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+            <span class="n">pulse</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">x_sched</span><span class="p">)</span>
+
+            <span class="c1"># add calibrations to circuits</span>
+            <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+                <span class="n">circ</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;xp&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;xm gate for qubit </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sched</span><span class="p">:</span>
+            <span class="c1"># def of XmGate() in terms of XGate() and amplitude inversion</span>
+            <span class="n">x_sched</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+            <span class="n">x_pulse</span> <span class="o">=</span> <span class="n">x_sched</span><span class="o">.</span><span class="n">instructions</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pulse</span>
+            <span class="c1"># HACK is there a better way?</span>
+            <span class="n">x_pulse</span><span class="o">.</span><span class="n">_amp</span> <span class="o">=</span> <span class="o">-</span><span class="n">x_pulse</span><span class="o">.</span><span class="n">amp</span>  <span class="c1"># pylint: disable=protected-access</span>
+            <span class="n">pulse</span><span class="o">.</span><span class="n">play</span><span class="p">(</span><span class="n">x_pulse</span><span class="p">,</span> <span class="n">DriveChannel</span><span class="p">(</span><span class="n">qubit</span><span class="p">))</span>
+
+            <span class="c1"># add calibrations to circuits</span>
+            <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+                <span class="n">circ</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;xm&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;y gate for qubit </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sched</span><span class="p">:</span>
+            <span class="c1"># def of YGate() in terms of XGate() and phase_offset</span>
+            <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">phase_offset</span><span class="p">(</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">DriveChannel</span><span class="p">(</span><span class="n">qubit</span><span class="p">)):</span>
+                <span class="n">x_sched</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+                <span class="n">pulse</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">x_sched</span><span class="p">)</span>
+
+            <span class="c1"># add calibrations to circuits</span>
+            <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+                <span class="n">circ</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;yp gate for qubit </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sched</span><span class="p">:</span>
+            <span class="c1"># def of YpGate() in terms of XGate() and phase_offset</span>
+            <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">phase_offset</span><span class="p">(</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">DriveChannel</span><span class="p">(</span><span class="n">qubit</span><span class="p">)):</span>
+                <span class="n">x_sched</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+                <span class="n">pulse</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">x_sched</span><span class="p">)</span>
+
+            <span class="c1"># add calibrations to circuits</span>
+            <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+                <span class="n">circ</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;yp&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ym gate for qubit </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sched</span><span class="p">:</span>
+            <span class="c1"># def of YGate() in terms of XGate() and phase_offset</span>
+            <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">phase_offset</span><span class="p">(</span><span class="o">-</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">DriveChannel</span><span class="p">(</span><span class="n">qubit</span><span class="p">)):</span>
+                <span class="n">x_sched</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+                <span class="n">x_pulse</span> <span class="o">=</span> <span class="n">x_sched</span><span class="o">.</span><span class="n">instructions</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pulse</span>
+                <span class="c1"># HACK is there a better way?</span>
+                <span class="n">x_pulse</span><span class="o">.</span><span class="n">_amp</span> <span class="o">=</span> <span class="o">-</span><span class="n">x_pulse</span><span class="o">.</span><span class="n">amp</span>  <span class="c1"># pylint:disable=protected-access</span>
+                <span class="n">pulse</span><span class="o">.</span><span class="n">play</span><span class="p">(</span><span class="n">x_pulse</span><span class="p">,</span> <span class="n">DriveChannel</span><span class="p">(</span><span class="n">qubit</span><span class="p">))</span>
+
+            <span class="c1"># add calibrations to circuits</span>
+            <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+                <span class="n">circ</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;ym&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../mzm_generation/index.html">Majorana zero mode generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">Qiskit Research API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

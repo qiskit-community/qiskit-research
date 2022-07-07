@@ -1,0 +1,620 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Tutorial &#8212; Qiskit Research 0.1.dev1+ge4350a0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Data collection" href="data-collection.html" />
+    <link rel="prev" title="Majorana zero mode generation" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Tutorial">
+<h1>Tutorial<a class="headerlink" href="#Tutorial" title="Permalink to this heading">¶</a></h1>
+<p>This experiment simulates Majorana zero modes on the IBM Quantum hardware. The results are published at <a class="reference external" href="https://arxiv.org/abs/2206.00563">arXiv:2206.00563</a>.</p>
+<section id="Background">
+<h2>Background<a class="headerlink" href="#Background" title="Permalink to this heading">¶</a></h2>
+<p>The Kitaev Hamiltonian is given by</p>
+<div class="math notranslate nohighlight">
+\[H =
+-t \sum_j (a_j^\dagger a_{j + 1} + a_{j + 1}^\dagger a_{j})
++ \sum_j (\Delta a_j^\dagger a_{j + 1}^\dagger + \Delta^* a_{j + 1} a_j)
++ \mu (\sum_j a_j^\dagger a_j - \frac12)\]</div>
+<p>where <span class="math notranslate nohighlight">\(t\)</span> is the tunneling amplitude, <span class="math notranslate nohighlight">\(\Delta\)</span> is the superconducting gap, <span class="math notranslate nohighlight">\(\mu\)</span> is the chemical potential, and the <span class="math notranslate nohighlight">\(\{a_j\}\)</span> are fermionic annihilation operators which satisfy the anticommutation relations</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+    a_j a_k + a_k a_j &amp;= 0 \\
+    a_j a^\dagger_k + a^\dagger_k a_j &amp;= \delta_{pq}
+\end{align}.\end{split}\]</div>
+<p>The adjoint of an annihilation operator is called a creation operator, and together they are called fermionic ladder operators.</p>
+<p>The Kitaev Hamiltonian is quadratic in the fermionic ladder operators. Eigenstates of quadratic Hamiltonians are called <em>fermionic Gaussian states</em>. They can be efficiently prepared on a quantum computer.</p>
+</section>
+<section id="State-preparation">
+<h2>State preparation<a class="headerlink" href="#State-preparation" title="Permalink to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">qiskit_research.mzm_generation</span></code> module contains a utility function for generating a Kitaev Hamiltonian. The object returned is an instance of the <code class="docutils literal notranslate"><span class="pre">QuadraticHamiltonian</span></code> class from Qiskit Nature. The general form of a quadratic Hamiltonian is</p>
+<div class="math notranslate nohighlight">
+\[H =
+\sum_{j, k} M_{jk} a^\dagger_j a_k
++ \frac12 \sum_{j, k}
+    (\Delta_{jk} a^\dagger_j a^\dagger_k + \Delta^*_{jk} a_k a_j)
++ \text{constant}\]</div>
+<p>where <span class="math notranslate nohighlight">\(M\)</span> is a Hermitian matrix and <span class="math notranslate nohighlight">\(\Delta\)</span> is an antisymmetric matrix. The <code class="docutils literal notranslate"><span class="pre">QuadraticHamiltonian</span></code> class stores these matrices (and the constant) as its internal representation of the Hamiltonian.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit_research.mzm_generation</span> <span class="kn">import</span> <span class="n">kitaev_hamiltonian</span>
+
+<span class="n">n_modes</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">tunneling</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+<span class="n">superconducting</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">chemical_potential</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="n">hamiltonian</span> <span class="o">=</span> <span class="n">kitaev_hamiltonian</span><span class="p">(</span>
+    <span class="n">n_modes</span><span class="o">=</span><span class="n">n_modes</span><span class="p">,</span>
+    <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+    <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span><span class="p">,</span>
+    <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hermitian part:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian</span><span class="o">.</span><span class="n">hermitian_part</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Antisymmetric part:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian</span><span class="o">.</span><span class="n">antisymmetric_part</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Hermitian part:
+[[1. 1. 0.]
+ [1. 1. 1.]
+ [0. 1. 1.]]
+
+Antisymmetric part:
+[[ 0.  1.  0.]
+ [-1.  0.  1.]
+ [ 0. -1.  0.]]
+</pre></div></div>
+</div>
+<p>A quadratic Hamiltonian can always be rewritten in the form</p>
+<div class="math notranslate nohighlight">
+\[H = \sum_{j} \varepsilon_j b^\dagger_j b_j + \text{constant}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\varepsilon_0 \leq \varepsilon_1 \leq \cdots \leq \varepsilon_N\)</span> are non-negative real numbers and the <span class="math notranslate nohighlight">\(\{b_j^\dagger\}\)</span> are a new set of fermionic creation operators that also satisfy the canonical anticommutation relations. These new creation operators are linear combinations of the original creation and annihilation operators:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{pmatrix}
+b^\dagger_1 \\
+\vdots \\
+b^\dagger_N \\
+\end{pmatrix}
+= W
+\begin{pmatrix}
+a^\dagger_1 \\
+\vdots \\
+a^\dagger_N \\
+a_1 \\
+\vdots \\
+a_N
+\end{pmatrix},\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(W\)</span> is an <span class="math notranslate nohighlight">\(N \times 2N\)</span> matrix. Given a basis of eigenvectors of the Hamiltonian, each eigenvector is labeled by a subset of <span class="math notranslate nohighlight">\(\{0, \ldots, N - 1\}\)</span>, which we call the occupied orbitals. The corresponding eigenvalue is the sum of the corresponding values of <span class="math notranslate nohighlight">\(\varepsilon_j\)</span>, plus the constant.</p>
+<p>Using Qiskit Nature, we can obtain the transformation matrix <span class="math notranslate nohighlight">\(W\)</span> and construct a circuit to prepare an eigenvector of the Hamiltonian.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit_nature.circuit.library</span> <span class="kn">import</span> <span class="n">FermionicGaussianState</span>
+
+<span class="n">transformation_matrix</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">hamiltonian</span><span class="o">.</span><span class="n">diagonalizing_bogoliubov_transform</span><span class="p">()</span>
+<span class="n">occupied_orbitals</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,)</span>
+
+<span class="n">circuit</span> <span class="o">=</span> <span class="n">FermionicGaussianState</span><span class="p">(</span>
+    <span class="n">transformation_matrix</span><span class="p">,</span> <span class="n">occupied_orbitals</span><span class="o">=</span><span class="n">occupied_orbitals</span>
+<span class="p">)</span>
+<span class="n">circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="s2">&quot;mpl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/mzm_generation_tutorial_4_0.png" src="../_images/mzm_generation_tutorial_4_0.png" />
+</div>
+</div>
+</section>
+<section id="Measurement">
+<h2>Measurement<a class="headerlink" href="#Measurement" title="Permalink to this heading">¶</a></h2>
+<p>All quantities of interest can be determined from the correlation matrix, which is defined as the block matrix</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+    \Gamma =
+    \begin{pmatrix}
+        T &amp; S \\
+        -S^* &amp; T^T
+    \end{pmatrix}
+\end{align}\end{split}\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+    T_{ij} &amp;= \langle a^\dagger_i a_j \rangle \\
+    S_{ij} &amp;= \langle a^\dagger_i a^\dagger_j \rangle.
+\end{align}\end{split}\]</div>
+<p>The correlation matrix is obtained by measuring the operators</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+    a_j^\dagger a_k + a_k^\dagger a_j \\
+    -i(a_j^\dagger a_k - a_k^\dagger a_j) \\
+    a_j^\dagger a_k^\dagger + a_k a_j \\
+    -i(a_j^\dagger a_k^\dagger - a_k a_j)
+\end{align}\end{split}\]</div>
+<p>By using virtual fermionic swaps, only measurements between neighboring modes are needed. For neighboring modes, the Jordan-Wigner transformation of these operators is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align}
+    a_j^\dagger a_k + a_k^\dagger a_j &amp;\mapsto \frac{X_j X_k + Y_j Y_k}{2} \\
+    -i(a_j^\dagger a_k - a_k^\dagger a_j) &amp;\mapsto \frac{X_j Y_k - Y_j X_k}{2} \\
+    a_j^\dagger a_k^\dagger + a_k a_j &amp;\mapsto \frac{X_j X_k - Y_j Y_k}{2} \\
+    -i(a_j^\dagger a_k^\dagger - a_k a_j) &amp;\mapsto \frac{-X_j Y_k - Y_j X_k}{2}
+\end{align}.\end{split}\]</div>
+<p>While these operators can be measured straighforwardly by measuring the individual Pauli terms, we take a different approach. Because the fermionic Gaussian state has a fixed parity, we would like to perform the measurement in a way that does not disturb the parity. That way, we can be sure that any measured bitstrings with the incorrect parity must have resulted from an incorrect execution, so we can discard them as an error mitigation technique. These measurements can be accomplished using the
+two-qubit gates with the following matrices:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}U_1 =
+\begin{pmatrix}
+    1 &amp; 0 &amp; 0 &amp; 0 \\
+    0 &amp; \frac{1}{\sqrt{2}} &amp; \frac{1}{\sqrt{2}} &amp; 0 \\
+    0 &amp; -\frac{1}{\sqrt{2}} &amp; \frac{1}{\sqrt{2}} &amp; 0 \\
+    0 &amp; 0 &amp; 0 &amp; 1 \\
+\end{pmatrix}, \quad
+U_2 =
+\begin{pmatrix}
+    1 &amp; 0 &amp; 0 &amp; 0 \\
+    0 &amp; \frac{1}{\sqrt{2}} &amp; -\frac{1}{\sqrt{2}}i &amp; 0 \\
+    0 &amp; -\frac{1}{\sqrt{2}}i &amp; \frac{1}{\sqrt{2}} &amp; 0 \\
+    0 &amp; 0 &amp; 0 &amp; 1 \\
+\end{pmatrix}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}U_3 =
+\begin{pmatrix}
+    \frac{1}{\sqrt{2}} &amp; 0 &amp; 0 &amp; \frac{1}{\sqrt{2}} \\
+    0 &amp; 1 &amp; 0 &amp; 0 \\
+    0 &amp; 0 &amp; 1 &amp; 0 \\
+    -\frac{1}{\sqrt{2}} &amp; 0 &amp; 0 &amp; \frac{1}{\sqrt{2}} \\
+\end{pmatrix}, \quad
+U_4 =
+\begin{pmatrix}
+    \frac{1}{\sqrt{2}} &amp; 0 &amp; 0 &amp; \frac{1}{\sqrt{2}}i \\
+    0 &amp; 1 &amp; 0 &amp; 0 \\
+    0 &amp; 0 &amp; 1 &amp; 0 \\
+    \frac{1}{\sqrt{2}}i &amp; 0 &amp; 0 &amp; \frac{1}{\sqrt{2}} \\
+\end{pmatrix}\end{split}\]</div>
+<p>These gates can be implemented using <code class="docutils literal notranslate"><span class="pre">XXPlusYYGate</span></code> and <code class="docutils literal notranslate"><span class="pre">XXMinusYYGate</span></code>.</p>
+<p>Once the state is prepared, the operators between neighboring modes can immediately be measured. This requires two separate circuits, one to measure the operator between pairs of qubits where the first qubit is even-indexed, and another circuit to measure pairs of qubits where the first qubit is odd-indexed. In order to measure operators between qubits that are not neighbors, a naive approach would use fermionic swap gates to permute the modes. However, the same effect can be achieved by
+permuting the transformation matrix used to construct the circuit, which amounts to a relabeling of the fermionic modes. This enables all the required operators to be measured using circuits with the same number of gates.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit_research.mzm_generation</span> <span class="kn">import</span> <span class="n">measure_interaction_op</span>
+
+<span class="n">measurement_circuit</span> <span class="o">=</span> <span class="n">measure_interaction_op</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="s2">&quot;tunneling_plus_even&quot;</span><span class="p">)</span>
+
+<span class="n">measurement_circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="s2">&quot;mpl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/mzm_generation_tutorial_6_0.png" src="../_images/mzm_generation_tutorial_6_0.png" />
+</div>
+</div>
+</section>
+<section id="Transpilation">
+<h2>Transpilation<a class="headerlink" href="#Transpilation" title="Permalink to this heading">¶</a></h2>
+<p>In order to execute a circuit on a hardware backend, it must be transpiled into gates supported by the backend.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit_research.mzm_generation</span> <span class="kn">import</span> <span class="n">transpile_circuit</span>
+<span class="kn">from</span> <span class="nn">qiskit.test.mock</span> <span class="kn">import</span> <span class="n">FakeLima</span>
+
+<span class="n">backend</span> <span class="o">=</span> <span class="n">FakeLima</span><span class="p">()</span>
+<span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">transpile_circuit</span><span class="p">(</span><span class="n">measurement_circuit</span><span class="p">,</span> <span class="n">backend</span><span class="p">)</span>
+<span class="n">transpiled_circuit</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span><span class="s2">&quot;mpl&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/tmp/ipykernel_3012/731090725.py:2: DeprecationWarning: The module &#39;qiskit.test.mock&#39; is deprecated since Qiskit Terra 0.21.0, and will be removed 3 months or more later. Instead, you should import the desired object directly &#39;qiskit.providers.fake_provider&#39;.
+  from qiskit.test.mock import FakeLima
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/mzm_generation_tutorial_8_1.png" src="../_images/mzm_generation_tutorial_8_1.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Majorana zero mode generation</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-collection.html">Data collection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="analysis.html">Data analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidocs/index.html">Qiskit Research API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Majorana zero mode generation</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Majorana zero mode generation</a></li>
+      <li>Next: <a href="data-collection.html" title="next chapter">Data collection</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/mzm_generation/tutorial.ipynb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

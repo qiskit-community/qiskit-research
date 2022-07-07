@@ -1,0 +1,453 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>qiskit_research.utils.pulse_scaling &#8212; Qiskit Research 0.1.dev1+ge4350a0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for qiskit_research.utils.pulse_scaling</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This code is part of Qiskit.</span>
+<span class="c1">#</span>
+<span class="c1"># (C) Copyright IBM 2022.</span>
+<span class="c1">#</span>
+<span class="c1"># This code is licensed under the Apache License, Version 2.0. You may</span>
+<span class="c1"># obtain a copy of this license in the LICENSE.txt file in the root directory</span>
+<span class="c1"># of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.</span>
+<span class="c1">#</span>
+<span class="c1"># Any modifications or derivative works of this code must retain this</span>
+<span class="c1"># copyright notice, and modified files need to carry a notice indicating</span>
+<span class="c1"># that they have been altered from the originals.</span>
+
+<span class="sd">&quot;&quot;&quot;Pulse scaling.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">Instruction</span> <span class="k">as</span> <span class="n">CircuitInst</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span>
+<span class="kn">from</span> <span class="nn">qiskit.converters</span> <span class="kn">import</span> <span class="n">circuit_to_dag</span><span class="p">,</span> <span class="n">dag_to_circuit</span>
+<span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span>
+<span class="kn">from</span> <span class="nn">qiskit.exceptions</span> <span class="kn">import</span> <span class="n">QiskitError</span>
+<span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ControlChannel</span><span class="p">,</span>
+    <span class="n">DriveChannel</span><span class="p">,</span>
+    <span class="n">GaussianSquare</span><span class="p">,</span>
+    <span class="n">InstructionScheduleMap</span><span class="p">,</span>
+    <span class="n">Play</span><span class="p">,</span>
+    <span class="n">Schedule</span><span class="p">,</span>
+    <span class="n">ScheduleBlock</span><span class="p">,</span>
+    <span class="n">ShiftPhase</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit.pulse.instruction_schedule_map</span> <span class="kn">import</span> <span class="n">CalibrationPublisher</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span><span class="p">,</span> <span class="n">TransformationPass</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.exceptions</span> <span class="kn">import</span> <span class="n">TranspilerError</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CXCancellation</span><span class="p">,</span>
+    <span class="n">Optimize1qGatesDecomposition</span><span class="p">,</span>
+    <span class="n">TemplateOptimization</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.calibration.builders</span> <span class="kn">import</span> <span class="n">CalibrationBuilder</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.utils.gate_decompositions</span> <span class="kn">import</span> <span class="n">RZXtoEchoedCR</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.utils.gates</span> <span class="kn">import</span> <span class="n">SECRGate</span>
+
+<span class="n">BASIS_GATES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sx&quot;</span><span class="p">,</span> <span class="s2">&quot;rz&quot;</span><span class="p">,</span> <span class="s2">&quot;rzx&quot;</span><span class="p">,</span> <span class="s2">&quot;cx&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="CombineRuns"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.CombineRuns">[docs]</a><span class="k">class</span> <span class="nc">CombineRuns</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
+    <span class="c1"># TODO: Check to see if this can be fixed in Optimize1qGatesDecomposition</span>
+    <span class="sd">&quot;&quot;&quot;Combine consecutive gates of same type.</span>
+
+<span class="sd">    This works with Parameters whereas other transpiling passes do not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_strs</span> <span class="o">=</span> <span class="n">gate_strs</span>
+
+<div class="viewcode-block" id="CombineRuns.run"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.CombineRuns.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">gate_str</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gate_strs</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">grun</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">([</span><span class="n">gate_str</span><span class="p">]):</span>
+                <span class="n">partition</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">chunk</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">grun</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">chunk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grun</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+                    <span class="n">qargs0</span> <span class="o">=</span> <span class="n">grun</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span>
+                    <span class="n">qargs1</span> <span class="o">=</span> <span class="n">grun</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span>
+
+                    <span class="k">if</span> <span class="n">qargs0</span> <span class="o">!=</span> <span class="n">qargs1</span><span class="p">:</span>
+                        <span class="n">partition</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                        <span class="n">chunk</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="n">chunk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grun</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">partition</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+                <span class="c1"># simplify each chunk in the partition</span>
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">partition</span><span class="p">:</span>
+                    <span class="n">theta</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">:</span>
+                        <span class="n">theta</span> <span class="o">+=</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                    <span class="c1"># set the first chunk to sum of params</span>
+                    <span class="n">chunk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta</span>
+
+                    <span class="c1"># remove remaining chunks if any</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                            <span class="n">dag</span><span class="o">.</span><span class="n">remove_op_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">dag</span></div></div>
+
+
+<div class="viewcode-block" id="BindParameters"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.BindParameters">[docs]</a><span class="k">class</span> <span class="nc">BindParameters</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Bind Parameters to circuit.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">param_bind</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param_bind</span> <span class="o">=</span> <span class="n">param_bind</span>
+
+<div class="viewcode-block" id="BindParameters.run"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.BindParameters.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
+        <span class="c1"># TODO: Must this convert the DAG back to a QuantumCircuit?</span>
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">dag_to_circuit</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span>
+        <span class="n">circuit</span><span class="o">.</span><span class="n">assign_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_bind</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">circuit_to_dag</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SECRCalibrationBuilder"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder">[docs]</a><span class="k">class</span> <span class="nc">SECRCalibrationBuilder</span><span class="p">(</span><span class="n">CalibrationBuilder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates calibrations for SECRGate(theta) by stretching and compressing</span>
+<span class="sd">    Gaussian square pulses in the CX gate. This is done by retrieving (for a given pair of</span>
+<span class="sd">    qubits) the CX schedule in the instruction schedule map of the backend defaults.</span>
+<span class="sd">    The CX schedule must be an echoed cross-resonance gate optionally with rotary tones.</span>
+<span class="sd">    The cross-resonance drive tones and rotary pulses must be Gaussian square pulses.</span>
+<span class="sd">    The width of the Gaussian square pulse is adjusted so as to match the desired rotation angle.</span>
+<span class="sd">    If the rotation angle is small such that the width disappears then the amplitude of the</span>
+<span class="sd">    zero width Gaussian square pulse (i.e. a Gaussian) is reduced to reach the target rotation</span>
+<span class="sd">    angle. Additional details can be found in https://arxiv.org/abs/2012.11660.</span>
+
+<span class="sd">    Note: this is modified from RZXCalibrationBuilder in qiskit.transpiler.passes.calibrations</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">instruction_schedule_map</span><span class="p">:</span> <span class="n">InstructionScheduleMap</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">qubit_channel_mapping</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes a SECRGate calibration builder.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            instruction_schedule_map: The :obj:`InstructionScheduleMap` object representing the</span>
+<span class="sd">                default pulse calibrations for the target backend</span>
+<span class="sd">            qubit_channel_mapping: The list mapping qubit indices to the list of</span>
+<span class="sd">                channel names that apply on that qubit.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            QiskitError: if open pulse is not supported by the backend.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">instruction_schedule_map</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">qubit_channel_mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">QiskitError</span><span class="p">(</span>
+                <span class="s2">&quot;Calibrations can only be added to Pulse-enabled backends&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_inst_map</span> <span class="o">=</span> <span class="n">instruction_schedule_map</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_channel_map</span> <span class="o">=</span> <span class="n">qubit_channel_mapping</span>
+
+<div class="viewcode-block" id="SECRCalibrationBuilder.supported"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder.supported">[docs]</a>    <span class="k">def</span> <span class="nf">supported</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_op</span><span class="p">:</span> <span class="n">CircuitInst</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Determine if a given node supports the calibration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node_op: Target instruction object.</span>
+<span class="sd">            qubits: Integer qubit indices to check.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Return ``True`` is calibration can be provided.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_op</span><span class="p">,</span> <span class="n">SECRGate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SECRCalibrationBuilder.rescale_cr_inst"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder.rescale_cr_inst">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">rescale_cr_inst</span><span class="p">(</span><span class="n">instruction</span><span class="p">:</span> <span class="n">Play</span><span class="p">,</span> <span class="n">theta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">sample_mult</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Play</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            instruction: The instruction from which to create a new shortened or lengthened pulse.</span>
+<span class="sd">            theta: desired angle, pi/2 is assumed to be the angle that the pulse in the given</span>
+<span class="sd">                play instruction implements.</span>
+<span class="sd">            sample_mult: All pulses must be a multiple of sample_mult.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            qiskit.pulse.Play: The play instruction with the stretched compressed</span>
+<span class="sd">                GaussianSquare pulse.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            QiskitError: if the pulses are not GaussianSquare.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pulse_</span> <span class="o">=</span> <span class="n">instruction</span><span class="o">.</span><span class="n">pulse</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pulse_</span><span class="p">,</span> <span class="n">GaussianSquare</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;SECRCalibrationBuilder only stretches/compresses GaussianSquare.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">amp</span> <span class="o">=</span> <span class="n">pulse_</span><span class="o">.</span><span class="n">amp</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="n">pulse_</span><span class="o">.</span><span class="n">width</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">pulse_</span><span class="o">.</span><span class="n">sigma</span>
+        <span class="n">n_sigmas</span> <span class="o">=</span> <span class="p">(</span><span class="n">pulse_</span><span class="o">.</span><span class="n">duration</span> <span class="o">-</span> <span class="n">width</span><span class="p">)</span> <span class="o">/</span> <span class="n">sigma</span>
+
+        <span class="c1"># The error function is used because the Gaussian may have chopped tails.</span>
+        <span class="n">gaussian_area</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">amp</span><span class="p">)</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">erf</span><span class="p">(</span><span class="n">n_sigmas</span><span class="p">)</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="n">gaussian_area</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">amp</span><span class="p">)</span> <span class="o">*</span> <span class="n">width</span>
+
+        <span class="n">target_area</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">area</span>
+        <span class="n">sign</span> <span class="o">=</span> <span class="n">theta</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">target_area</span> <span class="o">&gt;</span> <span class="n">gaussian_area</span><span class="p">:</span>
+            <span class="n">width</span> <span class="o">=</span> <span class="p">(</span><span class="n">target_area</span> <span class="o">-</span> <span class="n">gaussian_area</span><span class="p">)</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">amp</span><span class="p">)</span>
+            <span class="n">duration</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="n">width</span> <span class="o">+</span> <span class="n">n_sigmas</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">)</span> <span class="o">/</span> <span class="n">sample_mult</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_mult</span>
+            <span class="k">return</span> <span class="n">Play</span><span class="p">(</span>
+                <span class="n">GaussianSquare</span><span class="p">(</span>
+                    <span class="n">amp</span><span class="o">=</span><span class="n">sign</span> <span class="o">*</span> <span class="n">amp</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span>
+                <span class="p">),</span>
+                <span class="n">channel</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">amp_scale</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="n">target_area</span> <span class="o">/</span> <span class="n">gaussian_area</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">n_sigmas</span> <span class="o">*</span> <span class="n">sigma</span> <span class="o">/</span> <span class="n">sample_mult</span><span class="p">)</span> <span class="o">*</span> <span class="n">sample_mult</span>
+        <span class="k">return</span> <span class="n">Play</span><span class="p">(</span>
+            <span class="n">GaussianSquare</span><span class="p">(</span>
+                <span class="n">amp</span><span class="o">=</span><span class="n">amp</span> <span class="o">*</span> <span class="n">amp_scale</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span>
+            <span class="p">),</span>
+            <span class="n">channel</span><span class="o">=</span><span class="n">instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="SECRCalibrationBuilder.get_calibration"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder.get_calibration">[docs]</a>    <span class="k">def</span> <span class="nf">get_calibration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">node_op</span><span class="p">:</span> <span class="n">CircuitInst</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">List</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Schedule</span><span class="p">,</span> <span class="n">ScheduleBlock</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Builds the calibration schedule for the SECRGate(theta).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node_op: Instruction of the SECRGate(theta). I.e. params[0] is theta.</span>
+<span class="sd">            qubits: List of qubits for which to get the schedules. The first qubit is</span>
+<span class="sd">                the control and the second is the target.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            schedule: The calibration schedule for the SECRGate(theta).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            QiskitError: If the control and target</span>
+<span class="sd">                qubits cannot be identified, or the backend does not support cx between</span>
+<span class="sd">                the qubits.</span>
+<span class="sd">            TranspilerError: If all Parameters are not bound.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">theta</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">node_op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span>
+                <span class="s2">&quot;This transpilation pass requires all Parameters to be bound and real.&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span> <span class="nn">ex</span>
+
+        <span class="n">q1</span><span class="p">,</span> <span class="n">q2</span> <span class="o">=</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inst_map</span><span class="o">.</span><span class="n">has</span><span class="p">(</span><span class="s2">&quot;cx&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">QiskitError</span><span class="p">(</span>
+                <span class="s2">&quot;This transpilation pass requires the backend to support cx &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;between qubits </span><span class="si">{</span><span class="n">q1</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">q2</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">cx_sched</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inst_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cx&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">(</span><span class="n">q1</span><span class="p">,</span> <span class="n">q2</span><span class="p">))</span>
+        <span class="n">secr_theta</span> <span class="o">=</span> <span class="n">Schedule</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;secr(</span><span class="si">{</span><span class="n">theta</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="n">secr_theta</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;publisher&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">CalibrationPublisher</span><span class="o">.</span><span class="n">QISKIT</span>
+
+        <span class="k">if</span> <span class="n">theta</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">secr_theta</span>
+
+        <span class="n">crs</span><span class="p">,</span> <span class="n">comp_tones</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">control</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">time</span><span class="p">,</span> <span class="n">inst</span> <span class="ow">in</span> <span class="n">cx_sched</span><span class="o">.</span><span class="n">instructions</span><span class="p">:</span>
+
+            <span class="c1"># Identify the CR pulses.</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">Play</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">ShiftPhase</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">ControlChannel</span><span class="p">):</span>
+                    <span class="n">crs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">time</span><span class="p">,</span> <span class="n">inst</span><span class="p">))</span>
+
+            <span class="c1"># Identify the compensation tones.</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">DriveChannel</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">inst</span><span class="p">,</span> <span class="n">ShiftPhase</span>
+            <span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">pulse</span><span class="p">,</span> <span class="n">GaussianSquare</span><span class="p">):</span>
+                    <span class="n">comp_tones</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">time</span><span class="p">,</span> <span class="n">inst</span><span class="p">))</span>
+                    <span class="n">target</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">index</span>
+                    <span class="n">control</span> <span class="o">=</span> <span class="n">q1</span> <span class="k">if</span> <span class="n">target</span> <span class="o">==</span> <span class="n">q2</span> <span class="k">else</span> <span class="n">q2</span>
+
+        <span class="k">if</span> <span class="n">control</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">QiskitError</span><span class="p">(</span><span class="s2">&quot;Control qubit is None.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">QiskitError</span><span class="p">(</span><span class="s2">&quot;Target qubit is None.&quot;</span><span class="p">)</span>
+
+        <span class="n">echo_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inst_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="n">control</span><span class="p">)</span>
+
+        <span class="c1"># Build the schedule</span>
+
+        <span class="c1"># Stretch/compress the CR gates and compensation tones</span>
+        <span class="n">cr1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_cr_inst</span><span class="p">(</span><span class="n">crs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="n">cr2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_cr_inst</span><span class="p">(</span><span class="n">crs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">theta</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">comp_tones</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">comp1</span><span class="p">,</span> <span class="n">comp2</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">comp_tones</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">comp1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_cr_inst</span><span class="p">(</span><span class="n">comp_tones</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">theta</span><span class="p">)</span>
+            <span class="n">comp2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_cr_inst</span><span class="p">(</span><span class="n">comp_tones</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">theta</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">QiskitError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;CX must have either 0 or 2 rotary tones between qubits </span><span class="si">{</span><span class="n">control</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;but </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">comp_tones</span><span class="p">)</span><span class="si">}</span><span class="s2"> were found.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Build the schedule for the SECRGate</span>
+        <span class="n">secr_theta</span> <span class="o">=</span> <span class="n">secr_theta</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cr1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">comp1</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">secr_theta</span> <span class="o">=</span> <span class="n">secr_theta</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">comp1</span><span class="p">)</span>
+
+        <span class="n">secr_theta</span> <span class="o">=</span> <span class="n">secr_theta</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">comp1</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span> <span class="n">echo_x</span><span class="p">)</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">comp1</span><span class="o">.</span><span class="n">duration</span> <span class="o">+</span> <span class="n">echo_x</span><span class="o">.</span><span class="n">duration</span>
+        <span class="n">secr_theta</span> <span class="o">=</span> <span class="n">secr_theta</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">cr2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">comp2</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">secr_theta</span> <span class="o">=</span> <span class="n">secr_theta</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">comp2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">secr_theta</span></div></div>
+
+
+<div class="viewcode-block" id="cr_scaling_passes"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.cr_scaling_passes">[docs]</a><span class="k">def</span> <span class="nf">cr_scaling_passes</span><span class="p">(</span>
+    <span class="n">inst_sched_map</span><span class="p">:</span> <span class="n">InstructionScheduleMap</span><span class="p">,</span>
+    <span class="n">channel_map</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">templates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span>
+    <span class="n">param_bind</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Yields transpilation passes for CR pulse scaling.&quot;&quot;&quot;</span>
+
+    <span class="k">yield</span> <span class="n">TemplateOptimization</span><span class="p">(</span><span class="o">**</span><span class="n">templates</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">CombineRuns</span><span class="p">([</span><span class="s2">&quot;rzx&quot;</span><span class="p">])</span>
+    <span class="k">yield</span> <span class="n">RZXtoEchoedCR</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">Optimize1qGatesDecomposition</span><span class="p">(</span><span class="n">BASIS_GATES</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">CXCancellation</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">CombineRuns</span><span class="p">([</span><span class="s2">&quot;rz&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">param_bind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">yield from</span> <span class="n">pulse_attaching_passes</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">,</span> <span class="n">channel_map</span><span class="p">,</span> <span class="n">param_bind</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">pulse_attaching_passes</span><span class="p">(</span>
+    <span class="n">inst_sched_map</span><span class="p">:</span> <span class="n">InstructionScheduleMap</span><span class="p">,</span>
+    <span class="n">channel_map</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">param_bind</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Yields transpilation passes for attaching pulse schedules.&quot;&quot;&quot;</span>
+    <span class="k">yield</span> <span class="n">BindParameters</span><span class="p">(</span><span class="n">param_bind</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">Optimize1qGatesDecomposition</span><span class="p">(</span><span class="n">BASIS_GATES</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">CXCancellation</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">SECRCalibrationBuilder</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">,</span> <span class="n">channel_map</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../mzm_generation/index.html">Majorana zero mode generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">Qiskit Research API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

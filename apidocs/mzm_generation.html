@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Majorana zero modes experiment &#8212; Qiskit Research 0.1.dev1+ge4350a0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Utilities for running research experiments with Qiskit" href="utils.html" />
+    <link rel="prev" title="Qiskit Research API Reference" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-qiskit_research.mzm_generation"></span><section id="majorana-zero-modes-experiment">
+<h1>Majorana zero modes experiment<a class="headerlink" href="#majorana-zero-modes-experiment" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.KitaevHamiltonianAnalysis">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">KitaevHamiltonianAnalysis</span></span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/analysis.html#KitaevHamiltonianAnalysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.KitaevHamiltonianAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Analyze Kitaev Hamiltonian experimental data.</p>
+<p>Initialize the analysis object.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.KitaevHamiltonianExperiment">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">KitaevHamiltonianExperiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/experiment.html#KitaevHamiltonianExperiment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.KitaevHamiltonianExperiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare and measure eigenstates of the Kitaev Hamiltonian.</p>
+<p>Initialize the experiment object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qubits</strong> – list of physical qubits for the experiment.</p></li>
+<li><p><strong>analysis</strong> – Optional, the analysis to use for the experiment.</p></li>
+<li><p><strong>backend</strong> – Optional, the backend to run the experiment on.</p></li>
+<li><p><strong>experiment_type</strong> – Optional, the experiment type string.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>QiskitError</strong> – if qubits contains duplicates.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.KitaevHamiltonianExperiment.circuits">
+<span class="sig-name descname"><span class="pre">circuits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/experiment.html#KitaevHamiltonianExperiment.circuits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.KitaevHamiltonianExperiment.circuits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of experiment circuits.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumCircuit</span></code>]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of <code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumCircuit</span></code>.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These circuits should be on qubits <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">..,</span> <span class="pre">N-1]</span></code> for an
+<em>N</em>-qubit experiment. The circuits mapped to physical qubits
+are obtained via the <code class="xref py py-meth docutils literal notranslate"><span class="pre">transpiled_circuits()</span></code> method.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">KitaevHamiltonianExperimentParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timestamp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_modes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tunneling_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superconducting_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chemical_potential_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">occupied_orbitals_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamical_decoupling_sequences</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_scaling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_twirled_circuits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basedir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/experiment.html#KitaevHamiltonianExperimentParameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parameters for a Kitaev Hamiltonian Experiment.</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters.filename">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">filename</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters.filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filename for data from this experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.kitaev_hamiltonian">
+<span class="sig-name descname"><span class="pre">kitaev_hamiltonian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_modes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tunneling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superconducting</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chemical_potential</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/utils.html#kitaev_hamiltonian"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.kitaev_hamiltonian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create Kitaev model Hamiltonian.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">QuadraticHamiltonian</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.measure_interaction_op">
+<span class="sig-name descname"><span class="pre">measure_interaction_op</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/utils.html#measure_interaction_op"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.measure_interaction_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Measure fermionic interaction with a circuit that preserves parity.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.transpilation_passes">
+<span class="sig-name descname"><span class="pre">transpilation_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_layout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamical_decoupling_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_scaling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pauli_twirling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/utils.html#transpilation_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.transpilation_passes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transpilation passes for experiment circuits.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterator</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">BasePass</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qiskit_research.mzm_generation.transpile_circuit">
+<span class="sig-name descname"><span class="pre">transpile_circuit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_layout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamical_decoupling_sequence</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_scaling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pauli_twirling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/mzm_generation/utils.html#transpile_circuit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.mzm_generation.transpile_circuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transpile an experiment circuit.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantumCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../mzm_generation/index.html">Majorana zero mode generation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Qiskit Research API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Majorana zero modes experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities for running research experiments with Qiskit</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Qiskit Research API Reference</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Qiskit Research API Reference</a></li>
+      <li>Next: <a href="utils.html" title="next chapter">Utilities for running research experiments with Qiskit</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/apidocs/mzm_generation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

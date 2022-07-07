@@ -1,0 +1,1065 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>qiskit_research.mzm_generation.analysis &#8212; Qiskit Research 0.1.dev1+ge4350a0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for qiskit_research.mzm_generation.analysis</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This code is part of Qiskit.</span>
+<span class="c1">#</span>
+<span class="c1"># (C) Copyright IBM 2022.</span>
+<span class="c1">#</span>
+<span class="c1"># This code is licensed under the Apache License, Version 2.0. You may</span>
+<span class="c1"># obtain a copy of this license in the LICENSE.txt file in the root directory</span>
+<span class="c1"># of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.</span>
+<span class="c1">#</span>
+<span class="c1"># Any modifications or derivative works of this code must retain this</span>
+<span class="c1"># copyright notice, and modified files need to carry a notice indicating</span>
+<span class="c1"># that they have been altered from the originals.</span>
+
+<span class="sd">&quot;&quot;&quot;Analysis for Majorana zero mode experiment.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">mthree</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib.figure</span> <span class="kn">import</span> <span class="n">Figure</span>
+<span class="kn">from</span> <span class="nn">mthree.classes</span> <span class="kn">import</span> <span class="n">QuasiDistribution</span>
+<span class="kn">from</span> <span class="nn">qiskit.result</span> <span class="kn">import</span> <span class="n">Counts</span>
+<span class="kn">from</span> <span class="nn">qiskit_experiments.framework</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AnalysisResultData</span><span class="p">,</span>
+    <span class="n">BaseAnalysis</span><span class="p">,</span>
+    <span class="n">ExperimentData</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.mzm_generation.experiment</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CircuitParameters</span><span class="p">,</span>
+    <span class="n">KitaevHamiltonianExperimentParameters</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.mzm_generation.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_CovarianceDict</span><span class="p">,</span>
+    <span class="n">compute_correlation_matrix</span><span class="p">,</span>
+    <span class="n">compute_parity</span><span class="p">,</span>
+    <span class="n">counts_to_quasis</span><span class="p">,</span>
+    <span class="n">diagonalizing_bogoliubov_transform</span><span class="p">,</span>
+    <span class="n">edge_correlation_op</span><span class="p">,</span>
+    <span class="n">expectation_from_correlation_matrix</span><span class="p">,</span>
+    <span class="n">fidelity_witness</span><span class="p">,</span>
+    <span class="n">kitaev_hamiltonian</span><span class="p">,</span>
+    <span class="n">measurement_labels</span><span class="p">,</span>
+    <span class="n">number_op</span><span class="p">,</span>
+    <span class="n">orbital_combinations</span><span class="p">,</span>
+    <span class="n">post_select_quasis</span><span class="p">,</span>
+    <span class="n">purify_idempotent_matrix</span><span class="p">,</span>
+    <span class="n">site_correlation_op</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="KitaevHamiltonianAnalysis"><a class="viewcode-back" href="../../../apidocs/mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianAnalysis">[docs]</a><span class="k">class</span> <span class="nc">KitaevHamiltonianAnalysis</span><span class="p">(</span><span class="n">BaseAnalysis</span><span class="p">):</span>
+    <span class="s2">&quot;Analyze Kitaev Hamiltonian experimental data.&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_run_analysis</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">experiment_data</span><span class="p">:</span> <span class="n">ExperimentData</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Figure</span><span class="p">]]:</span>
+        <span class="n">experiment_params</span> <span class="o">=</span> <span class="n">experiment_data</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span>
+
+        <span class="c1"># put data into dictionary for easier handling</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">experiment_data</span><span class="o">.</span><span class="n">data</span><span class="p">():</span>
+            <span class="p">(</span>
+                <span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="p">,</span>
+                <span class="n">chemical_potential</span><span class="p">,</span>
+                <span class="n">occupied_orbitals</span><span class="p">,</span>
+                <span class="n">permutation</span><span class="p">,</span>
+                <span class="n">measurement_label</span><span class="p">,</span>
+                <span class="n">dynamical_decoupling_sequence</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">][:</span><span class="mi">7</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+                <span class="n">pauli_twirl_index</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">][</span><span class="mi">7</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pauli_twirl_index</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">circuit_params</span> <span class="o">=</span> <span class="n">CircuitParameters</span><span class="p">(</span>
+                <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">superconducting</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">))</span>
+                <span class="k">else</span> <span class="nb">complex</span><span class="p">(</span><span class="o">*</span><span class="n">superconducting</span><span class="p">),</span>
+                <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+                <span class="n">occupied_orbitals</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">),</span>
+                <span class="n">permutation</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">permutation</span><span class="p">),</span>
+                <span class="n">measurement_label</span><span class="o">=</span><span class="n">measurement_label</span><span class="p">,</span>
+                <span class="n">dynamical_decoupling_sequence</span><span class="o">=</span><span class="n">dynamical_decoupling_sequence</span><span class="p">,</span>
+                <span class="n">pauli_twirl_index</span><span class="o">=</span><span class="n">pauli_twirl_index</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">circuit_params</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span>
+
+        <span class="c1"># load readout calibration</span>
+        <span class="n">mit</span> <span class="o">=</span> <span class="n">mthree</span><span class="o">.</span><span class="n">M3Mitigation</span><span class="p">()</span>
+        <span class="n">mit</span><span class="o">.</span><span class="n">cals_from_file</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">experiment_params</span><span class="o">.</span><span class="n">basedir</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;data&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;readout_calibration&quot;</span><span class="p">,</span>
+                <span class="n">experiment_params</span><span class="o">.</span><span class="n">backend_name</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">experiment_params</span><span class="o">.</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># get results</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_analysis_results</span><span class="p">(</span><span class="n">experiment_params</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">mit</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_compute_analysis_results</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">KitaevHamiltonianExperimentParameters</span><span class="p">,</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CircuitParameters</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span>
+        <span class="n">mit</span><span class="p">:</span> <span class="n">mthree</span><span class="o">.</span><span class="n">M3Mitigation</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="c1"># fix tunneling and superconducting</span>
+        <span class="n">tunneling</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="n">superconducting</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="c1"># get simulation results</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_simulation_results</span><span class="p">(</span><span class="n">tunneling</span><span class="p">,</span> <span class="n">superconducting</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+        <span class="c1"># create data storage objects</span>
+        <span class="n">corr_matrices</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_CovarianceDict</span><span class="p">],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">quasi_dists</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">QuasiDistribution</span><span class="p">],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">ps_removed_masses</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># calculate results</span>
+        <span class="n">dd_sequences</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">dynamical_decoupling_sequences</span> <span class="ow">or</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="c1"># diagonalize</span>
+            <span class="p">(</span><span class="n">transformation_matrix</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,)</span> <span class="o">=</span> <span class="n">diagonalizing_bogoliubov_transform</span><span class="p">(</span>
+                <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+                <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span><span class="p">,</span>
+                <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># compute parity</span>
+            <span class="n">W1</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">]</span>
+            <span class="n">W2</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span> <span class="p">:]</span>
+            <span class="n">full_transformation_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">block</span><span class="p">([[</span><span class="n">W1</span><span class="p">,</span> <span class="n">W2</span><span class="p">],</span> <span class="p">[</span><span class="n">W2</span><span class="o">.</span><span class="n">conj</span><span class="p">(),</span> <span class="n">W1</span><span class="o">.</span><span class="n">conj</span><span class="p">()]])</span>
+            <span class="n">hamiltonian_parity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">full_transformation_matrix</span><span class="p">))</span>
+            <span class="p">)</span>
+            <span class="c1"># compute quasis and correlation matrices</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="n">exact_parity</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="nb">len</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)</span> <span class="o">*</span> <span class="n">hamiltonian_parity</span>
+                <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dd_sequences</span><span class="p">:</span>
+                    <span class="n">quasis_raw</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="p">{}</span>
+                    <span class="p">)</span>  <span class="c1"># dict[tuple[tuple[int, ...], str], QuasiDistribution]</span>
+                    <span class="n">quasis_mem</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="p">{}</span>
+                    <span class="p">)</span>  <span class="c1"># dict[tuple[tuple[int, ...], str], QuasiDistribution]</span>
+                    <span class="n">quasis_ps</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="p">{}</span>
+                    <span class="p">)</span>  <span class="c1"># dict[tuple[tuple[int, ...], str], QuasiDistribution]</span>
+                    <span class="n">ps_removed_mass</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># dict[tuple[tuple[int, ...], str], float]</span>
+                    <span class="k">for</span> <span class="n">permutation</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">measurement_labels</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">):</span>
+                        <span class="n">circuit_params</span> <span class="o">=</span> <span class="n">CircuitParameters</span><span class="p">(</span>
+                            <span class="n">tunneling</span><span class="p">,</span>
+                            <span class="n">superconducting</span><span class="p">,</span>
+                            <span class="n">chemical_potential</span><span class="p">,</span>
+                            <span class="n">occupied_orbitals</span><span class="p">,</span>
+                            <span class="n">permutation</span><span class="p">,</span>
+                            <span class="n">label</span><span class="p">,</span>
+                            <span class="n">dynamical_decoupling_sequence</span><span class="o">=</span><span class="n">dd_sequence</span><span class="p">,</span>
+                            <span class="n">pauli_twirl_index</span><span class="o">=</span><span class="mi">0</span>
+                            <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">num_twirled_circuits</span>
+                            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="n">circuit_params</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                            <span class="n">counts</span> <span class="o">=</span> <span class="n">Counts</span><span class="p">({})</span>
+                            <span class="k">for</span> <span class="n">pauli_twirl_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                                <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">num_twirled_circuits</span><span class="p">)</span>
+                            <span class="p">):</span>
+                                <span class="n">circuit_params</span> <span class="o">=</span> <span class="n">CircuitParameters</span><span class="p">(</span>
+                                    <span class="n">tunneling</span><span class="p">,</span>
+                                    <span class="n">superconducting</span><span class="p">,</span>
+                                    <span class="n">chemical_potential</span><span class="p">,</span>
+                                    <span class="n">occupied_orbitals</span><span class="p">,</span>
+                                    <span class="n">permutation</span><span class="p">,</span>
+                                    <span class="n">label</span><span class="p">,</span>
+                                    <span class="n">dynamical_decoupling_sequence</span><span class="o">=</span><span class="n">dd_sequence</span><span class="p">,</span>
+                                    <span class="n">pauli_twirl_index</span><span class="o">=</span><span class="n">pauli_twirl_index</span>
+                                    <span class="k">if</span> <span class="n">params</span><span class="o">.</span><span class="n">num_twirled_circuits</span>
+                                    <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                                <span class="p">)</span>
+                                <span class="n">these_counts</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">circuit_params</span><span class="p">][</span><span class="s2">&quot;counts&quot;</span><span class="p">]</span>
+                                <span class="k">for</span> <span class="n">bitstring</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">these_counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                                    <span class="k">if</span> <span class="n">bitstring</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
+                                        <span class="n">counts</span><span class="p">[</span><span class="n">bitstring</span><span class="p">]</span> <span class="o">+=</span> <span class="n">count</span>
+                                    <span class="k">else</span><span class="p">:</span>
+                                        <span class="n">counts</span><span class="p">[</span><span class="n">bitstring</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span>
+                            <span class="c1"># raw quasis</span>
+                            <span class="n">quasis_raw</span><span class="p">[</span><span class="n">permutation</span><span class="p">,</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts_to_quasis</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+                            <span class="c1"># measurement error mitigation</span>
+                            <span class="n">quasis_mem</span><span class="p">[</span><span class="n">permutation</span><span class="p">,</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">mit</span><span class="o">.</span><span class="n">apply_correction</span><span class="p">(</span>
+                                <span class="n">counts</span><span class="p">,</span>
+                                <span class="n">params</span><span class="o">.</span><span class="n">qubits</span><span class="p">,</span>
+                                <span class="n">return_mitigation_overhead</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                            <span class="p">)</span>
+                            <span class="c1"># post-selection</span>
+                            <span class="n">new_quasis</span><span class="p">,</span> <span class="n">removed_mass</span> <span class="o">=</span> <span class="n">post_select_quasis</span><span class="p">(</span>
+                                <span class="n">quasis_mem</span><span class="p">[</span><span class="n">permutation</span><span class="p">,</span> <span class="n">label</span><span class="p">],</span>
+                                <span class="k">lambda</span> <span class="n">bitstring</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                                <span class="o">**</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bitstring</span> <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">)</span>
+                                <span class="o">==</span> <span class="n">exact_parity</span><span class="p">,</span>  <span class="c1"># pylint: disable=cell-var-from-loop</span>
+                            <span class="p">)</span>
+                            <span class="n">quasis_ps</span><span class="p">[</span><span class="n">permutation</span><span class="p">,</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_quasis</span>
+                            <span class="n">ps_removed_mass</span><span class="p">[</span><span class="n">permutation</span><span class="p">,</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">removed_mass</span>
+                    <span class="c1"># save data</span>
+                    <span class="n">quasi_dists</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="s2">&quot;raw&quot;</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="n">quasis_raw</span>
+                    <span class="n">quasi_dists</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="s2">&quot;mem&quot;</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="n">quasis_mem</span>
+                    <span class="n">quasi_dists</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="s2">&quot;ps&quot;</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="n">quasis_ps</span>
+                    <span class="n">ps_removed_masses</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="n">ps_removed_mass</span>
+                    <span class="c1"># compute correlation matrices</span>
+                    <span class="n">corr_matrices</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="s2">&quot;raw&quot;</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="n">compute_correlation_matrix</span><span class="p">(</span><span class="n">quasis_raw</span><span class="p">)</span>
+                    <span class="n">corr_matrices</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="s2">&quot;mem&quot;</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="n">compute_correlation_matrix</span><span class="p">(</span><span class="n">quasis_mem</span><span class="p">)</span>
+                    <span class="n">corr_mat_ps</span><span class="p">,</span> <span class="n">cov_ps</span> <span class="o">=</span> <span class="n">compute_correlation_matrix</span><span class="p">(</span><span class="n">quasis_ps</span><span class="p">)</span>
+                    <span class="n">corr_matrices</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="s2">&quot;ps&quot;</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">corr_mat_ps</span><span class="p">,</span> <span class="n">cov_ps</span><span class="p">)</span>
+                    <span class="n">corr_matrices</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="s2">&quot;pur&quot;</span><span class="p">,</span>
+                    <span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">purify_idempotent_matrix</span><span class="p">(</span><span class="n">corr_mat_ps</span><span class="p">),</span> <span class="n">cov_ps</span><span class="p">)</span>
+
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_fidelity_witness</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;mem&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="s2">&quot;pur&quot;</span><span class="p">],</span>
+            <span class="n">corr_matrices</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+            <span class="n">tunneling</span><span class="p">,</span>
+            <span class="n">superconducting</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">,</span>
+            <span class="n">dd_sequences</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_energy</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;mem&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="s2">&quot;pur&quot;</span><span class="p">],</span>
+            <span class="n">corr_matrices</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+            <span class="n">tunneling</span><span class="p">,</span>
+            <span class="n">superconducting</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">,</span>
+            <span class="n">dd_sequences</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_edge_correlation</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;mem&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="s2">&quot;pur&quot;</span><span class="p">],</span>
+            <span class="n">corr_matrices</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+            <span class="n">tunneling</span><span class="p">,</span>
+            <span class="n">superconducting</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">,</span>
+            <span class="n">dd_sequences</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_number</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;mem&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="s2">&quot;pur&quot;</span><span class="p">],</span>
+            <span class="n">corr_matrices</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+            <span class="n">tunneling</span><span class="p">,</span>
+            <span class="n">superconducting</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">,</span>
+            <span class="n">dd_sequences</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_site_correlation</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;mem&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="s2">&quot;pur&quot;</span><span class="p">],</span>
+            <span class="n">corr_matrices</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+            <span class="n">tunneling</span><span class="p">,</span>
+            <span class="n">superconducting</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">,</span>
+            <span class="n">dd_sequences</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_parity</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;mem&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">],</span>
+            <span class="n">quasi_dists</span><span class="p">,</span>
+            <span class="n">tunneling</span><span class="p">,</span>
+            <span class="n">superconducting</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">,</span>
+            <span class="n">dd_sequences</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_simulation_results</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tunneling</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">superconducting</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">KitaevHamiltonianExperimentParameters</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="c1"># set chemical potential values to the experiment range but with fixed resolution</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># avoid discontinuities at 0</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="mf">1e-8</span>
+        <span class="n">chemical_potential_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
+            <span class="n">start</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">num</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># construct operators</span>
+        <span class="n">edge_correlation</span> <span class="o">=</span> <span class="n">edge_correlation_op</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">)</span>
+
+        <span class="c1"># create data storage objects</span>
+        <span class="n">energy_exact</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># dict[tuple[int, ...], list[float]]</span>
+        <span class="n">edge_correlation_exact</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># dict[tuple[int, ...], list[float]]</span>
+        <span class="n">parity_exact</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># dict[tuple[int, ...], list[float]]</span>
+        <span class="n">number_exact</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># dict[tuple[int, ...], list[float]]</span>
+
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="c1"># diagonalize Hamiltonian</span>
+            <span class="p">(</span>
+                <span class="n">transformation_matrix</span><span class="p">,</span>
+                <span class="n">orbital_energies</span><span class="p">,</span>
+                <span class="n">constant</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">diagonalizing_bogoliubov_transform</span><span class="p">(</span>
+                <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+                <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span><span class="p">,</span>
+                <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># compute parity</span>
+            <span class="n">W1</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">]</span>
+            <span class="n">W2</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span> <span class="p">:]</span>
+            <span class="n">full_transformation_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">block</span><span class="p">([[</span><span class="n">W1</span><span class="p">,</span> <span class="n">W2</span><span class="p">],</span> <span class="p">[</span><span class="n">W2</span><span class="o">.</span><span class="n">conj</span><span class="p">(),</span> <span class="n">W1</span><span class="o">.</span><span class="n">conj</span><span class="p">()]])</span>
+            <span class="n">hamiltonian_parity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">det</span><span class="p">(</span><span class="n">full_transformation_matrix</span><span class="p">))</span>
+            <span class="p">)</span>
+            <span class="c1"># compute results</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="c1"># compute exact correlation matrix</span>
+                <span class="n">occupation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">)</span>
+                <span class="n">occupation</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="n">corr_diag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">occupation</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">occupation</span><span class="p">]))</span>
+                <span class="n">corr_exact</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">full_transformation_matrix</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
+                    <span class="o">@</span> <span class="n">corr_diag</span>
+                    <span class="o">@</span> <span class="n">full_transformation_matrix</span>
+                <span class="p">)</span>
+                <span class="c1"># exact values</span>
+                <span class="n">exact_energy</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">orbital_energies</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)])</span> <span class="o">+</span> <span class="n">constant</span>
+                <span class="p">)</span>
+                <span class="n">exact_edge_correlation</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
+                    <span class="n">expectation_from_correlation_matrix</span><span class="p">(</span><span class="n">edge_correlation</span><span class="p">,</span> <span class="n">corr_exact</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">exact_parity</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="nb">len</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)</span> <span class="o">*</span> <span class="n">hamiltonian_parity</span>
+                <span class="n">exact_number</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">corr_exact</span><span class="p">)[:</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">]))</span>
+                <span class="c1"># add computed values to data storage objects</span>
+                <span class="n">energy_exact</span><span class="p">[</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exact_energy</span><span class="p">)</span>
+                <span class="n">edge_correlation_exact</span><span class="p">[</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exact_edge_correlation</span><span class="p">)</span>
+                <span class="n">parity_exact</span><span class="p">[</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exact_parity</span><span class="p">)</span>
+                <span class="n">number_exact</span><span class="p">[</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exact_number</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">zip_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">chemical_potential_values</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;energy_exact&quot;</span><span class="p">,</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span>
+            <span class="s2">&quot;edge_correlation_exact&quot;</span><span class="p">,</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">edge_correlation_exact</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;parity_exact&quot;</span><span class="p">,</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">parity_exact</span><span class="p">))</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;number_exact&quot;</span><span class="p">,</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">number_exact</span><span class="p">))</span>
+
+        <span class="c1"># BdG</span>
+        <span class="n">occupied_orbitals_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">)</span>
+        <span class="n">combs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">orbital_combinations</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">))</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">combs</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">combs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">occupied_orbitals_set</span>
+                <span class="ow">or</span> <span class="n">combs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">occupied_orbitals_set</span>
+            <span class="p">):</span>
+                <span class="k">break</span>
+            <span class="n">threshold</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">threshold</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">bdg_energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">threshold</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">)))</span>
+            <span class="n">low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">[()])</span>
+            <span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">))])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">threshold</span><span class="p">):</span>
+                <span class="n">particle</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">[</span><span class="n">combs</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]])</span>
+                <span class="n">hole</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">[</span><span class="n">combs</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]])</span>
+                <span class="n">bdg_energy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">particle</span> <span class="o">-</span> <span class="n">low</span>
+                <span class="n">bdg_energy</span><span class="p">[</span><span class="n">threshold</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">hole</span> <span class="o">-</span> <span class="n">high</span>
+            <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span>
+                <span class="s2">&quot;bdg_energy_exact&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">bdg_energy</span><span class="p">,</span> <span class="n">chemical_potential_values</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># site correlation</span>
+        <span class="c1"># construct operators</span>
+        <span class="n">site_correlation_ops</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">site_correlation_op</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># create data storage objects</span>
+        <span class="n">site_correlation_exact</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># dict[tuple[int, ...], list[float]]</span>
+
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="c1"># diagonalize Hamiltonian</span>
+            <span class="p">(</span>
+                <span class="n">transformation_matrix</span><span class="p">,</span>
+                <span class="n">orbital_energies</span><span class="p">,</span>
+                <span class="n">constant</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">diagonalizing_bogoliubov_transform</span><span class="p">(</span>
+                <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">,</span>
+                <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span><span class="p">,</span>
+                <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">W1</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">]</span>
+            <span class="n">W2</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="n">params</span><span class="o">.</span><span class="n">n_modes</span> <span class="p">:]</span>
+            <span class="n">full_transformation_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">block</span><span class="p">([[</span><span class="n">W1</span><span class="p">,</span> <span class="n">W2</span><span class="p">],</span> <span class="p">[</span><span class="n">W2</span><span class="o">.</span><span class="n">conj</span><span class="p">(),</span> <span class="n">W1</span><span class="o">.</span><span class="n">conj</span><span class="p">()]])</span>
+            <span class="c1"># compute results</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="c1"># compute exact correlation matrix</span>
+                <span class="n">occupation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">n_modes</span><span class="p">)</span>
+                <span class="n">occupation</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="n">corr_diag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">occupation</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">occupation</span><span class="p">]))</span>
+                <span class="n">corr_exact</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">full_transformation_matrix</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
+                    <span class="o">@</span> <span class="n">corr_diag</span>
+                    <span class="o">@</span> <span class="n">full_transformation_matrix</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">site_correlation</span> <span class="ow">in</span> <span class="n">site_correlation_ops</span><span class="p">:</span>
+                    <span class="n">exact_site_correlation</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
+                        <span class="n">expectation_from_correlation_matrix</span><span class="p">(</span>
+                            <span class="n">site_correlation</span><span class="p">,</span> <span class="n">corr_exact</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">site_correlation_exact</span><span class="p">[</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span> <span class="n">occupied_orbitals</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exact_site_correlation</span><span class="p">)</span>
+
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span>
+            <span class="s2">&quot;site_correlation_exact&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">site_correlation_exact</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_fidelity_witness</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_CovarianceDict</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">n_modes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tunneling</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">superconducting</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span>
+        <span class="n">chemical_potential_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">occupied_orbitals_list</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+        <span class="n">dynamical_decoupling_sequences</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="c1"># diagonalize Hamiltonian</span>
+            <span class="p">(</span><span class="n">transformation_matrix</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,)</span> <span class="o">=</span> <span class="n">diagonalizing_bogoliubov_transform</span><span class="p">(</span>
+                <span class="n">n_modes</span><span class="p">,</span>
+                <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span><span class="p">,</span>
+                <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">W1</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="p">:</span><span class="n">n_modes</span><span class="p">]</span>
+            <span class="n">W2</span> <span class="o">=</span> <span class="n">transformation_matrix</span><span class="p">[:,</span> <span class="n">n_modes</span><span class="p">:]</span>
+            <span class="n">full_transformation_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">block</span><span class="p">([[</span><span class="n">W1</span><span class="p">,</span> <span class="n">W2</span><span class="p">],</span> <span class="p">[</span><span class="n">W2</span><span class="o">.</span><span class="n">conj</span><span class="p">(),</span> <span class="n">W1</span><span class="o">.</span><span class="n">conj</span><span class="p">()]])</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="c1"># compute exact correlation matrix</span>
+                <span class="n">occupation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_modes</span><span class="p">)</span>
+                <span class="n">occupation</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="n">corr_diag</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">occupation</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">occupation</span><span class="p">]))</span>
+                <span class="n">corr_exact</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">full_transformation_matrix</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
+                    <span class="o">@</span> <span class="n">corr_diag</span>
+                    <span class="o">@</span> <span class="n">full_transformation_matrix</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+                    <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+                <span class="p">):</span>
+                    <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="n">label</span><span class="p">,</span>
+                    <span class="p">]</span>
+                    <span class="n">fidelity_wit</span><span class="p">,</span> <span class="n">stddev</span> <span class="o">=</span> <span class="n">fidelity_witness</span><span class="p">(</span><span class="n">corr_mat</span><span class="p">,</span> <span class="n">corr_exact</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">fidelity_wit</span><span class="p">,</span> <span class="n">stddev</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">zip_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">data_zipped</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k1</span><span class="p">:</span> <span class="p">{</span><span class="n">k2</span><span class="p">:</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">v1</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;fidelity_witness&quot;</span><span class="p">,</span> <span class="n">data_zipped</span><span class="p">)</span>
+
+        <span class="n">data_avg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+            <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+        <span class="p">):</span>
+            <span class="n">fidelity_witness_avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">))</span>
+            <span class="n">fidelity_witness_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="n">values</span><span class="p">,</span> <span class="n">stddevs</span> <span class="o">=</span> <span class="n">data_zipped</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span><span class="n">occupied_orbitals</span><span class="p">]</span>
+                <span class="n">fidelity_witness_avg</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+                <span class="n">fidelity_witness_stddev</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stddevs</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">fidelity_witness_avg</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">occupied_orbitals_list</span><span class="p">)</span>
+            <span class="n">fidelity_witness_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">fidelity_witness_stddev</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">occupied_orbitals_list</span>
+            <span class="p">)</span>
+            <span class="n">data_avg</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">fidelity_witness_avg</span><span class="p">,</span>
+                <span class="n">fidelity_witness_stddev</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;fidelity_witness_avg&quot;</span><span class="p">,</span> <span class="n">data_avg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_energy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_CovarianceDict</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">n_modes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tunneling</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">superconducting</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span>
+        <span class="n">chemical_potential_values</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">occupied_orbitals_list</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+        <span class="n">dynamical_decoupling_sequences</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="n">energy_exact</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>  <span class="c1"># dict[tuple[int, ...], list[float]]</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="c1"># create Hamiltonian</span>
+            <span class="n">hamiltonian_quad</span> <span class="o">=</span> <span class="n">kitaev_hamiltonian</span><span class="p">(</span>
+                <span class="n">n_modes</span><span class="p">,</span>
+                <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span><span class="p">,</span>
+                <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="c1"># diagonalize</span>
+            <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">orbital_energies</span><span class="p">,</span> <span class="n">constant</span><span class="p">,)</span> <span class="o">=</span> <span class="n">diagonalizing_bogoliubov_transform</span><span class="p">(</span>
+                <span class="n">n_modes</span><span class="p">,</span>
+                <span class="n">tunneling</span><span class="o">=</span><span class="n">tunneling</span><span class="p">,</span>
+                <span class="n">superconducting</span><span class="o">=</span><span class="n">superconducting</span><span class="p">,</span>
+                <span class="n">chemical_potential</span><span class="o">=</span><span class="n">chemical_potential</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="n">exact_energy</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">orbital_energies</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)])</span> <span class="o">+</span> <span class="n">constant</span>
+                <span class="p">)</span>
+                <span class="n">energy_exact</span><span class="p">[</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">exact_energy</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+                    <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+                <span class="p">):</span>
+                    <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="n">label</span><span class="p">,</span>
+                    <span class="p">]</span>
+                    <span class="n">energy</span><span class="p">,</span> <span class="n">stddevs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
+                        <span class="n">expectation_from_correlation_matrix</span><span class="p">(</span>
+                            <span class="n">hamiltonian_quad</span><span class="p">,</span> <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">energy</span><span class="p">,</span> <span class="n">stddevs</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">zip_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">data_zipped</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k1</span><span class="p">:</span> <span class="p">{</span><span class="n">k2</span><span class="p">:</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">v1</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;energy&quot;</span><span class="p">,</span> <span class="n">data_zipped</span><span class="p">)</span>
+
+        <span class="c1"># error</span>
+        <span class="n">data_error</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+            <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+        <span class="p">):</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">))</span>
+            <span class="n">error_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="n">exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">[</span><span class="n">occupied_orbitals</span><span class="p">])</span>
+                <span class="n">values</span><span class="p">,</span> <span class="n">stddevs</span> <span class="o">=</span> <span class="n">data_zipped</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span><span class="n">occupied_orbitals</span><span class="p">]</span>
+                <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+                <span class="n">error</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">values</span> <span class="o">-</span> <span class="n">exact</span><span class="p">)</span>
+                <span class="n">error_stddev</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">stddevs</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">error</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">occupied_orbitals_list</span><span class="p">)</span>
+            <span class="n">error_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">error_stddev</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">occupied_orbitals_list</span><span class="p">)</span>
+            <span class="n">data_error</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span><span class="p">,</span> <span class="n">error_stddev</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;energy_error&quot;</span><span class="p">,</span> <span class="n">data_error</span><span class="p">)</span>
+
+        <span class="c1"># BdG</span>
+        <span class="n">occupied_orbitals_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">occupied_orbitals_list</span><span class="p">)</span>
+        <span class="n">combs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">orbital_combinations</span><span class="p">(</span><span class="n">n_modes</span><span class="p">))</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">combs</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">combs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">occupied_orbitals_set</span>
+                <span class="ow">or</span> <span class="n">combs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">occupied_orbitals_set</span>
+            <span class="p">):</span>
+                <span class="k">break</span>
+            <span class="n">threshold</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">threshold</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">data_bdg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+            <span class="p">}</span>
+            <span class="n">data_bdg_error</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{}</span> <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+                <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+            <span class="p">):</span>
+                <span class="n">bdg_energy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">threshold</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">)))</span>
+                <span class="n">bdg_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">threshold</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">)))</span>
+                <span class="n">low</span><span class="p">,</span> <span class="n">low_stddev</span> <span class="o">=</span> <span class="n">data_zipped</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][()]</span>
+                <span class="n">high</span><span class="p">,</span> <span class="n">high_stddev</span> <span class="o">=</span> <span class="n">data_zipped</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span>
+                    <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_modes</span><span class="p">))</span>
+                <span class="p">]</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">))</span>
+                <span class="n">error_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chemical_potential_values</span><span class="p">))</span>
+                <span class="n">low_exact</span> <span class="o">=</span> <span class="n">energy_exact</span><span class="p">[()]</span>
+                <span class="n">high_exact</span> <span class="o">=</span> <span class="n">energy_exact</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_modes</span><span class="p">))]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">threshold</span><span class="p">):</span>
+                    <span class="c1"># data</span>
+                    <span class="n">particle</span><span class="p">,</span> <span class="n">particle_stddev</span> <span class="o">=</span> <span class="n">data_zipped</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span>
+                        <span class="n">combs</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="n">hole</span><span class="p">,</span> <span class="n">hole_stddev</span> <span class="o">=</span> <span class="n">data_zipped</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span>
+                        <span class="n">combs</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span>
+                    <span class="p">]</span>
+                    <span class="c1"># exact values</span>
+                    <span class="n">particle_exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">[</span><span class="n">combs</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]])</span>
+                    <span class="n">hole_exact</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">energy_exact</span><span class="p">[</span><span class="n">combs</span><span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]])</span>
+                    <span class="c1"># energy</span>
+                    <span class="n">bdg_energy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">particle</span> <span class="o">-</span> <span class="n">low</span>
+                    <span class="n">bdg_energy</span><span class="p">[</span><span class="n">threshold</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">hole</span> <span class="o">-</span> <span class="n">high</span>
+                    <span class="c1"># stddev</span>
+                    <span class="n">bdg_stddev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">low_stddev</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">particle_stddev</span><span class="o">**</span><span class="mi">2</span>
+                    <span class="n">bdg_stddev</span><span class="p">[</span><span class="n">threshold</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">high_stddev</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">hole_stddev</span><span class="o">**</span><span class="mi">2</span>
+                    <span class="c1"># error</span>
+                    <span class="n">error</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">particle</span> <span class="o">-</span> <span class="n">low</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">particle_exact</span> <span class="o">-</span> <span class="n">low_exact</span><span class="p">))</span>
+                    <span class="n">error</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">hole</span> <span class="o">-</span> <span class="n">high</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">hole_exact</span> <span class="o">-</span> <span class="n">high_exact</span><span class="p">))</span>
+                    <span class="c1"># error stddev</span>
+                    <span class="n">error_stddev</span> <span class="o">+=</span> <span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">low_stddev</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+                        <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">particle_stddev</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+                        <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">high_stddev</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+                        <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hole_stddev</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+                    <span class="p">)</span>
+                <span class="n">bdg_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">bdg_stddev</span><span class="p">)</span>
+                <span class="n">error</span> <span class="o">/=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">threshold</span>
+                <span class="n">error_stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">error_stddev</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">threshold</span><span class="p">)</span>
+                <span class="n">data_bdg</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">bdg_energy</span><span class="p">,</span> <span class="n">bdg_stddev</span>
+                <span class="n">data_bdg_error</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">error</span><span class="p">,</span> <span class="n">error_stddev</span>
+            <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;bdg_energy&quot;</span><span class="p">,</span> <span class="n">data_bdg</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;bdg_energy_error&quot;</span><span class="p">,</span> <span class="n">data_bdg_error</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_edge_correlation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_CovarianceDict</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">n_modes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tunneling</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">superconducting</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span>
+        <span class="n">chemical_potential_values</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">occupied_orbitals_list</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+        <span class="n">dynamical_decoupling_sequences</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="n">edge_correlation</span> <span class="o">=</span> <span class="n">edge_correlation_op</span><span class="p">(</span><span class="n">n_modes</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+                    <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+                <span class="p">):</span>
+                    <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="n">label</span><span class="p">,</span>
+                    <span class="p">]</span>
+                    <span class="n">edge_correlation_val</span><span class="p">,</span> <span class="n">stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
+                        <span class="n">expectation_from_correlation_matrix</span><span class="p">(</span>
+                            <span class="n">edge_correlation</span><span class="p">,</span> <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">edge_correlation_val</span><span class="p">,</span> <span class="n">stddev</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">zip_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">data_zipped</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k1</span><span class="p">:</span> <span class="p">{</span><span class="n">k2</span><span class="p">:</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">v1</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;edge_correlation&quot;</span><span class="p">,</span> <span class="n">data_zipped</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_number</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_CovarianceDict</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">n_modes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tunneling</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">superconducting</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span>
+        <span class="n">chemical_potential_values</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">occupied_orbitals_list</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+        <span class="n">dynamical_decoupling_sequences</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="n">number_op</span><span class="p">(</span><span class="n">n_modes</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+                    <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+                <span class="p">):</span>
+                    <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="n">label</span><span class="p">,</span>
+                    <span class="p">]</span>
+                    <span class="n">number_val</span><span class="p">,</span> <span class="n">stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
+                        <span class="n">expectation_from_correlation_matrix</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">number_val</span><span class="p">,</span> <span class="n">stddev</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">zip_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">data_zipped</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k1</span><span class="p">:</span> <span class="p">{</span><span class="n">k2</span><span class="p">:</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">v1</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;number&quot;</span><span class="p">,</span> <span class="n">data_zipped</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_parity</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">quasi_dists</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">QuasiDistribution</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">tunneling</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">superconducting</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span>
+        <span class="n">chemical_potential_values</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">occupied_orbitals_list</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+        <span class="n">dynamical_decoupling_sequences</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+                    <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+                <span class="p">):</span>
+                    <span class="n">quasis</span> <span class="o">=</span> <span class="n">quasi_dists</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="n">label</span><span class="p">,</span>
+                    <span class="p">]</span>
+                    <span class="n">parity</span><span class="p">,</span> <span class="n">stddev</span> <span class="o">=</span> <span class="n">compute_parity</span><span class="p">(</span><span class="n">quasis</span><span class="p">)</span>
+                    <span class="n">data</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span><span class="n">occupied_orbitals</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">parity</span><span class="p">,</span> <span class="n">stddev</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">zip_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">data_zipped</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k1</span><span class="p">:</span> <span class="p">{</span><span class="n">k2</span><span class="p">:</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">v1</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;parity&quot;</span><span class="p">,</span> <span class="n">data_zipped</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_site_correlation</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">corr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">tuple</span><span class="p">[</span>
+                <span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span>
+            <span class="p">],</span>
+            <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">_CovarianceDict</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">n_modes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">tunneling</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">superconducting</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">complex</span><span class="p">],</span>
+        <span class="n">chemical_potential_values</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">occupied_orbitals_list</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span>
+        <span class="n">dynamical_decoupling_sequences</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">AnalysisResultData</span><span class="p">]:</span>
+        <span class="n">site_correlation_ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">site_correlation_op</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">n_modes</span><span class="p">)]</span>
+        <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]],</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">dd_sequence</span><span class="p">:</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">dd_sequence</span> <span class="ow">in</span> <span class="n">dynamical_decoupling_sequences</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">chemical_potential</span> <span class="ow">in</span> <span class="n">chemical_potential_values</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">occupied_orbitals_list</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">dd_sequence</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span>
+                    <span class="n">dynamical_decoupling_sequences</span><span class="p">,</span> <span class="n">labels</span>
+                <span class="p">):</span>
+                    <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span>
+                        <span class="n">tunneling</span><span class="p">,</span>
+                        <span class="n">superconducting</span><span class="p">,</span>
+                        <span class="n">chemical_potential</span><span class="p">,</span>
+                        <span class="n">occupied_orbitals</span><span class="p">,</span>
+                        <span class="n">dd_sequence</span><span class="p">,</span>
+                        <span class="n">label</span><span class="p">,</span>
+                    <span class="p">]</span>
+                    <span class="k">for</span> <span class="n">site_correlation</span> <span class="ow">in</span> <span class="n">site_correlation_ops</span><span class="p">:</span>
+                        <span class="n">site_correlation_val</span><span class="p">,</span> <span class="n">stddev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
+                            <span class="n">expectation_from_correlation_matrix</span><span class="p">(</span>
+                                <span class="n">site_correlation</span><span class="p">,</span> <span class="n">corr_mat</span><span class="p">,</span> <span class="n">cov</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                        <span class="n">data</span><span class="p">[</span><span class="n">dd_sequence</span><span class="p">][</span><span class="n">label</span><span class="p">][</span>
+                            <span class="n">chemical_potential</span><span class="p">,</span> <span class="n">occupied_orbitals</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">site_correlation_val</span><span class="p">,</span> <span class="n">stddev</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">zip_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">data_zipped</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k1</span><span class="p">:</span> <span class="p">{</span><span class="n">k2</span><span class="p">:</span> <span class="n">zip_dict</span><span class="p">(</span><span class="n">v2</span><span class="p">)</span> <span class="k">for</span> <span class="n">k2</span><span class="p">,</span> <span class="n">v2</span> <span class="ow">in</span> <span class="n">v1</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span> <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">v1</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;site_correlation&quot;</span><span class="p">,</span> <span class="n">data_zipped</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../mzm_generation/index.html">Majorana zero mode generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">Qiskit Research API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

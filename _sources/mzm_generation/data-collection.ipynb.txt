@@ -1,0 +1,196 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "8fa54338-d066-40d7-8a91-ac183f056ce0",
+   "metadata": {},
+   "source": [
+    "# Data collection"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "53e9839f-e320-4fd7-8b0b-05ec22461daa",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import datetime\n",
+    "import json\n",
+    "import os\n",
+    "import mthree\n",
+    "import numpy as np\n",
+    "from qiskit import IBMQ\n",
+    "from qiskit_experiments.framework import ExperimentEncoder\n",
+    "from qiskit_research.mzm_generation import (\n",
+    "    KitaevHamiltonianExperiment,\n",
+    "    KitaevHamiltonianExperimentParameters,\n",
+    ")\n",
+    "from qiskit_research.mzm_generation.utils import pick_qubit_layout, orbital_combinations"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "f1abedc6-820d-4f74-8aa9-714b2a07f0cd",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# get backend\n",
+    "\n",
+    "# uncomment to use hardware backend\n",
+    "# IBMQ.load_account()\n",
+    "# provider = IBMQ.get_provider(hub='ibm-q-internal', group='deployed', project='default')\n",
+    "# backend_name = 'ibmq_quito'\n",
+    "\n",
+    "# Aer simulator backend\n",
+    "provider = None\n",
+    "backend_name = \"aer_simulator\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "381df658-1296-4972-9baa-e6af393139af",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Using qubits [0, 1, 2].\n",
+      "Total number of circuits: 270\n"
+     ]
+    }
+   ],
+   "source": [
+    "# experiment parameters\n",
+    "n_modes = 3\n",
+    "tunneling_values = [-1.0]\n",
+    "superconducting_values = [1.0]\n",
+    "chemical_potential_values = list(np.linspace(0.0, 3.0, num=5))\n",
+    "occupied_orbitals_list = list(orbital_combinations(n_modes, threshold=2))\n",
+    "dynamical_decoupling_sequences = None\n",
+    "# dynamical_decoupling_sequences=['XY4pm']\n",
+    "shots = 10000\n",
+    "readout_calibration_shots = 10000\n",
+    "\n",
+    "# pick qubits\n",
+    "qubits, backend_name, error_score = pick_qubit_layout(n_modes, backend_name, provider)\n",
+    "print(f\"Using qubits {qubits}.\")\n",
+    "\n",
+    "# date\n",
+    "date = datetime.datetime.now().isoformat().replace(\":\", \"\")\n",
+    "\n",
+    "# create experiment\n",
+    "params = KitaevHamiltonianExperimentParameters(\n",
+    "    timestamp=date,\n",
+    "    backend_name=backend_name,\n",
+    "    qubits=qubits,\n",
+    "    n_modes=n_modes,\n",
+    "    tunneling_values=tunneling_values,\n",
+    "    superconducting_values=superconducting_values,\n",
+    "    chemical_potential_values=chemical_potential_values,\n",
+    "    occupied_orbitals_list=occupied_orbitals_list,\n",
+    "    dynamical_decoupling_sequences=dynamical_decoupling_sequences,\n",
+    "    seed=11364,\n",
+    ")\n",
+    "experiment = KitaevHamiltonianExperiment(params, provider)\n",
+    "\n",
+    "print(f\"Total number of circuits: {len(experiment.circuits())}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "9702acc6-535d-426c-9791-f116f14f8790",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Scheduling readout calibration ...\n",
+      "Scheduling experiment ...\n",
+      "Waiting for readout calibration data ...\n",
+      "Readout calibration saved.\n",
+      "CPU times: user 5.75 s, sys: 69.1 ms, total: 5.82 s\n",
+      "Wall time: 5.84 s\n"
+     ]
+    }
+   ],
+   "source": [
+    "%%time\n",
+    "\n",
+    "# schedule readout calibration\n",
+    "print(\"Scheduling readout calibration ...\")\n",
+    "mit = mthree.M3Mitigation(experiment.backend)\n",
+    "mit.cals_from_system(qubits, shots=readout_calibration_shots, async_cal=True)\n",
+    "\n",
+    "# schedule experiment jobs\n",
+    "print(f\"Scheduling experiment ...\")\n",
+    "# limit number of circuits per job to avoid timeouts\n",
+    "experiment.backend.configuration().max_experiments = 300\n",
+    "data = experiment.run(shots=shots)\n",
+    "if provider:\n",
+    "    # this only works if the Qiskit Experiments database service is available\n",
+    "    data.save()\n",
+    "\n",
+    "# save readout calibration\n",
+    "filename = f\"data/readout_calibration/{experiment.backend.name()}/{date}.json\"\n",
+    "os.makedirs(os.path.dirname(filename), exist_ok=True)\n",
+    "print(f\"Waiting for readout calibration data ...\")\n",
+    "mit.cals_to_file(filename)\n",
+    "print(f\"Readout calibration saved.\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "23f959b0-0999-475e-b3c9-b962089e392c",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2022-06-09T012809.963762_aer_simulator_n3\n"
+     ]
+    }
+   ],
+   "source": [
+    "# wait for experiment results\n",
+    "data.block_for_results()\n",
+    "\n",
+    "# save data\n",
+    "filename = f\"data/{params.filename}.json\"\n",
+    "os.makedirs(os.path.dirname(filename), exist_ok=True)\n",
+    "with open(filename, \"w\") as f:\n",
+    "    json.dump(data, f, cls=ExperimentEncoder)\n",
+    "\n",
+    "print(params.filename)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "qiskit-research",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}

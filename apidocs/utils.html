@@ -1,0 +1,410 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>Utilities for running research experiments with Qiskit &#8212; Qiskit Research 0.1.dev1+ge4350a0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Majorana zero modes experiment" href="mzm_generation.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <span class="target" id="module-qiskit_research.utils"></span><section id="utilities-for-running-research-experiments-with-qiskit">
+<h1>Utilities for running research experiments with Qiskit<a class="headerlink" href="#utilities-for-running-research-experiments-with-qiskit" title="Permalink to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.utils.BindParameters">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BindParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_bind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#BindParameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.BindParameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bind Parameters to circuit.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.BindParameters.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#BindParameters.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.BindParameters.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dag</strong> (<em>DAGCircuit</em>) – the dag on which the pass is run.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – when this is left unimplemented for a pass.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DAGCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.utils.CombineRuns">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CombineRuns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gate_strs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#CombineRuns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.CombineRuns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine consecutive gates of same type.</p>
+<p>This works with Parameters whereas other transpiling passes do not.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.CombineRuns.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#CombineRuns.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.CombineRuns.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dag</strong> (<em>DAGCircuit</em>) – the dag on which the pass is run.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – when this is left unimplemented for a pass.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DAGCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.utils.PauliTwirl">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliTwirl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gates_to_twirl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#PauliTwirl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PauliTwirl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Pauli twirls.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gates_to_twirl</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – Names of gates to twirl. The default behavior is to twirl all
+supported gates.</p></li>
+<li><p><strong>seed</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]) – Seed for the pseudorandom number generator.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.PauliTwirl.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#PauliTwirl.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PauliTwirl.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dag</strong> (<em>DAGCircuit</em>) – the dag on which the pass is run.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – when this is left unimplemented for a pass.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DAGCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.utils.RZXtoEchoedCR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RZXtoEchoedCR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction_schedule_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for the RZXGate to echoed cross resonance gate pass. The RZXGate
+is equivalent to the SECR gate plus a second XGate on the control qubit
+to return it to the initial state.</p>
+<p>See: <a class="reference external" href="https://arxiv.org/abs/1603.04821">https://arxiv.org/abs/1603.04821</a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.RZXtoEchoedCR.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dag</strong> (<em>DAGCircuit</em>) – the dag on which the pass is run.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – when this is left unimplemented for a pass.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DAGCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SECRCalibrationBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction_schedule_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubit_channel_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates calibrations for SECRGate(theta) by stretching and compressing
+Gaussian square pulses in the CX gate. This is done by retrieving (for a given pair of
+qubits) the CX schedule in the instruction schedule map of the backend defaults.
+The CX schedule must be an echoed cross-resonance gate optionally with rotary tones.
+The cross-resonance drive tones and rotary pulses must be Gaussian square pulses.
+The width of the Gaussian square pulse is adjusted so as to match the desired rotation angle.
+If the rotation angle is small such that the width disappears then the amplitude of the
+zero width Gaussian square pulse (i.e. a Gaussian) is reduced to reach the target rotation
+angle. Additional details can be found in <a class="reference external" href="https://arxiv.org/abs/2012.11660">https://arxiv.org/abs/2012.11660</a>.</p>
+<p>Note: this is modified from RZXCalibrationBuilder in qiskit.transpiler.passes.calibrations</p>
+<p>Initializes a SECRGate calibration builder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>instruction_schedule_map</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">InstructionScheduleMap</span></code>]) – The <code class="xref py py-obj docutils literal notranslate"><span class="pre">InstructionScheduleMap</span></code> object representing the
+default pulse calibrations for the target backend</p></li>
+<li><p><strong>qubit_channel_mapping</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – The list mapping qubit indices to the list of
+channel names that apply on that qubit.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>QiskitError</strong> – if open pulse is not supported by the backend.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder.get_calibration">
+<span class="sig-name descname"><span class="pre">get_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.get_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.get_calibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds the calibration schedule for the SECRGate(theta).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_op</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Instruction</span></code>) – Instruction of the SECRGate(theta). I.e. params[0] is theta.</p></li>
+<li><p><strong>qubits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>) – List of qubits for which to get the schedules. The first qubit is
+the control and the second is the target.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The calibration schedule for the SECRGate(theta).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>schedule</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>QiskitError</strong> – If the control and target
+    qubits cannot be identified, or the backend does not support cx between
+    the qubits.</p></li>
+<li><p><strong>TranspilerError</strong> – If all Parameters are not bound.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder.rescale_cr_inst">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rescale_cr_inst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_mult</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.rescale_cr_inst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.rescale_cr_inst" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>instruction</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Play</span></code>) – The instruction from which to create a new shortened or lengthened pulse.</p></li>
+<li><p><strong>theta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – desired angle, pi/2 is assumed to be the angle that the pulse in the given
+play instruction implements.</p></li>
+<li><p><strong>sample_mult</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – All pulses must be a multiple of sample_mult.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The play instruction with the stretched compressed</dt><dd><p>GaussianSquare pulse.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>qiskit.pulse.Play</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>QiskitError</strong> – if the pulses are not GaussianSquare.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder.supported">
+<span class="sig-name descname"><span class="pre">supported</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.supported"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if a given node supports the calibration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_op</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Instruction</span></code>) – Target instruction object.</p></li>
+<li><p><strong>qubits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>) – Integer qubit indices to check.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> is calibration can be provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.utils.XXMinusYYtoRZX">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">XXMinusYYtoRZX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXMinusYYtoRZX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXMinusYYtoRZX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transformation pass to decompose XXMinusYYGate to RZXGate.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.XXMinusYYtoRZX.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXMinusYYtoRZX.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXMinusYYtoRZX.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dag</strong> (<em>DAGCircuit</em>) – the dag on which the pass is run.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – when this is left unimplemented for a pass.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DAGCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="qiskit_research.utils.XXPlusYYtoRZX">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">XXPlusYYtoRZX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXPlusYYtoRZX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXPlusYYtoRZX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transformation pass to decompose XXPlusYYGate to RZXGate.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="qiskit_research.utils.XXPlusYYtoRZX.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXPlusYYtoRZX.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXPlusYYtoRZX.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dag</strong> (<em>DAGCircuit</em>) – the dag on which the pass is run.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>NotImplementedError</strong> – when this is left unimplemented for a pass.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">DAGCircuit</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qiskit_research.utils.add_pulse_calibrations">
+<span class="sig-name descname"><span class="pre">add_pulse_calibrations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#add_pulse_calibrations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.add_pulse_calibrations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add pulse calibrations for custom gates to circuits in-place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qiskit_research.utils.cr_scaling_passes">
+<span class="sig-name descname"><span class="pre">cr_scaling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inst_sched_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#cr_scaling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.cr_scaling_passes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yields transpilation passes for CR pulse scaling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">BasePass</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qiskit_research.utils.dynamical_decoupling_passes">
+<span class="sig-name descname"><span class="pre">dynamical_decoupling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dd_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=&lt;class</span> <span class="pre">'qiskit.transpiler.passes.scheduling.alap.ALAPSchedule'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#dynamical_decoupling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.dynamical_decoupling_passes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yields transpilation passes for dynamical decoupling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">BasePass</span></code>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../mzm_generation/index.html">Majorana zero mode generation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Qiskit Research API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html">Majorana zero modes experiment</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Utilities for running research experiments with Qiskit</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Qiskit Research API Reference</a><ul>
+      <li>Previous: <a href="mzm_generation.html" title="previous chapter">Majorana zero modes experiment</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/apidocs/utils.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
