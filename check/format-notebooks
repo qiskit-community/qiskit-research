@@ -1,0 +1,46 @@
+#!python
+
+import argparse
+import fnmatch
+import os
+
+import nbformat
+
+DOCS_DIR = "docs"
+EXCLUDE = [
+    "*/_build",
+    "*/_build/*",
+    "*/__pycache__",
+    "*/__pycache__/*",
+    "*/.ipynb_checkpoints",
+    "*/.ipynb_checkpoints/*",
+]
+
+parser = argparse.ArgumentParser(description="Format Jupyter notebooks")
+parser.add_argument("--apply", action="store_true", help="Whether to apply the changes")
+args = parser.parse_args()
+
+num_issues = 0
+num_changes = 0
+for dirpath, dirnames, filenames in os.walk(DOCS_DIR):
+    if any(fnmatch.fnmatch(dirpath, pattern) for pattern in EXCLUDE):
+        continue
+    for filename in filenames:
+        if not filename.endswith(".ipynb"):
+            continue
+        filepath = os.path.join(dirpath, filename)
+        nb = nbformat.read(filepath, as_version=nbformat.NO_CONVERT)
+        if nb["metadata"]["kernelspec"]["name"] != "python3":
+            if args.apply:
+                nb["metadata"]["kernelspec"]["name"] = "python3"
+                nbformat.write(nb, filepath)
+                print(f"{filepath} kernel name changed to 'python3'.")
+                num_changes += 1
+            else:
+                print(f"{filepath} kernel name needs to be changed to 'python3'.")
+                num_issues += 1
+
+if args.apply:
+    print(f"Applied {num_changes} changes.")
+else:
+    print(f"Found {num_issues} issues.")
