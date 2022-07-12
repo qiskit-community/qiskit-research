@@ -15,7 +15,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from xmlrpc.client import boolean
 
 from qiskit import QuantumRegister
 from qiskit.circuit import Gate, Qubit
@@ -37,12 +36,12 @@ from qiskit.transpiler.basepasses import TransformationPass
 from .gates import SECRGate
 
 
-def cr_forward_direction(qc, qt, inst_sched_map, ctrl_chans) -> bool:
+def cr_forward_direction(control, target, inst_sched_map, ctrl_chans) -> bool:
     """
     Determines if the direction of cross resonance is forward (True), applied on control qubit qc or
     reverse (False), applied to target qubit qt.
     """
-    cx_sched = inst_sched_map.get("cx", qubits=[qc, qt])
+    cx_sched = inst_sched_map.get("cx", qubits=[control, target])
     cx_ctrl_chan = (
         cx_sched.filter(
             channels=[
@@ -54,15 +53,15 @@ def cr_forward_direction(qc, qt, inst_sched_map, ctrl_chans) -> bool:
         .instructions[0][1]
         .channel
     )
-    forward_ctrl_chan = ctrl_chans[(qc, qt)][0]
-    reverse_ctrl_chan = ctrl_chans[(qt, qc)][0]
+    forward_ctrl_chan = ctrl_chans[(control, target)][0]
+    reverse_ctrl_chan = ctrl_chans[(target, control)][0]
 
     if cx_ctrl_chan == forward_ctrl_chan:
         return True
     if cx_ctrl_chan == reverse_ctrl_chan:
         return False
 
-    raise ValueError(f"Qubits {qc} and {qt} are not a cross resonance pair.")
+    raise ValueError(f"Qubits {control} and {target} are not a cross resonance pair.")
 
 
 class RZXtoEchoedCR(TransformationPass):
@@ -88,10 +87,10 @@ class RZXtoEchoedCR(TransformationPass):
     ) -> DAGCircuit:
 
         for rzx_run in dag.collect_runs(["rzx"]):
-            qc = rzx_run[0].qargs[0].index
-            qt = rzx_run[0].qargs[1].index
+            control = rzx_run[0].qargs[0].index
+            target = rzx_run[0].qargs[1].index
             cr_forward_dir = cr_forward_direction(
-                qc, qt, self._inst_map, self._ctrl_chans
+                control, target, self._inst_map, self._ctrl_chans
             )
 
             for node in rzx_run:
