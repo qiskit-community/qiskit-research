@@ -124,7 +124,7 @@ class SECRCalibrationBuilder(CalibrationBuilder):
     zero width Gaussian square pulse (i.e. a Gaussian) is reduced to reach the target rotation
     angle. Additional details can be found in https://arxiv.org/abs/2012.11660.
 
-    Note this is modified from RZXCalibrationBuilder in qiskit.transpiler.passes.calibrations
+    Note: this is modified from RZXCalibrationBuilder in qiskit.transpiler.passes.calibrations
     """
 
     def __init__(
