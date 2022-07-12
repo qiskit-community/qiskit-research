@@ -21,6 +21,7 @@ from qiskit.circuit import QuantumCircuit
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.exceptions import QiskitError
+from qiskit.providers.backend import Backend
 from qiskit.pulse import (
     ControlChannel,
     DriveChannel,
@@ -316,29 +317,32 @@ class SECRCalibrationBuilder(CalibrationBuilder):
 
 
 def cr_scaling_passes(
-    inst_sched_map: InstructionScheduleMap,
-    channel_map: List[List[str]],
+    backend: Backend,
     templates: List[QuantumCircuit],
+    unroll_rzx_to_ecr: bool = True,
     param_bind: Optional[dict] = None,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for CR pulse scaling."""
 
     yield TemplateOptimization(**templates)
     yield CombineRuns(["rzx"])
-    yield RZXtoEchoedCR(inst_sched_map)
+    if unroll_rzx_to_ecr:
+        yield RZXtoEchoedCR(backend)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()
     yield CombineRuns(["rz"])
     if param_bind is not None:
-        yield from pulse_attaching_passes(inst_sched_map, channel_map, param_bind)
+        yield from pulse_attaching_passes(backend, param_bind)
 
 
 def pulse_attaching_passes(
-    inst_sched_map: InstructionScheduleMap,
-    channel_map: List[List[str]],
+    backend: Backend,
     param_bind: dict,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for attaching pulse schedules."""
+    inst_sched_map = backend.defaults().instruction_schedule_map
+    channel_map = backend.configuration().qubit_channel_mapping
+
     yield BindParameters(param_bind)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()
