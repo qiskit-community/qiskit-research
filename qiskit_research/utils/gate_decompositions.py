@@ -37,7 +37,7 @@ from qiskit.transpiler.basepasses import TransformationPass
 from .gates import SECRGate
 
 
-def cr_forward_direction(qc, qt, inst_sched_map, ctrl_chans) -> boolean:
+def cr_forward_direction(qc, qt, inst_sched_map, ctrl_chans) -> bool:
     """
     Determines if the direction of cross resonance is forward (True), applied on control qubit qc or
     reverse (False), applied to target qubit qt.
