@@ -48,7 +48,7 @@ class TestPulseScaling(unittest.TestCase):
         qc.rz(-2 * JJ * dt, 2)
         qc.cx(1, 2)
 
-        scaled_qc = scale_cr_pulses(qc, backend)
+        scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True)
         scaled_qc.assign_parameters(param_bind, inplace=True)
         qc.assign_parameters(param_bind, inplace=True)
 
@@ -78,7 +78,9 @@ class TestPulseScaling(unittest.TestCase):
         qc.rz(-2 * JJ * dt, 0)
         qc.cx(1, 0)
 
-        scaled_qc = scale_cr_pulses(qc, backend, param_bind)
+        scaled_qc = scale_cr_pulses(
+            qc, backend, unroll_rzx_to_ecr=True, param_bind=param_bind
+        )
         qc.assign_parameters(param_bind, inplace=True)
 
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
@@ -92,11 +94,11 @@ class TestPulseScaling(unittest.TestCase):
         qc = QuantumCircuit(2)
         qc.rzx(theta, 0, 1)
 
-        scaled_qc = scale_cr_pulses(qc, backend, {})
+        scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True, param_bind={})
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
         qc = QuantumCircuit(2)
         qc.rzx(theta, 1, 0)
 
-        scaled_qc = scale_cr_pulses(qc, backend, {})
+        scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True, param_bind={})
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))

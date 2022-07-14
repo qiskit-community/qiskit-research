@@ -98,6 +98,7 @@ def add_pauli_twirls(
 def scale_cr_pulses(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Backend,
+    unroll_rzx_to_ecr: Optional[bool] = True,
     param_bind: Optional[dict] = None,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
@@ -107,13 +108,14 @@ def scale_cr_pulses(
     pulse gates are attached.
     """
     templates = rzx_templates()
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    channel_map = backend.configuration().qubit_channel_mapping
 
     pass_manager = PassManager(
         list(
             cr_scaling_passes(
-                inst_sched_map, channel_map, templates, param_bind=param_bind
+                backend,
+                templates,
+                unroll_rzx_to_ecr=unroll_rzx_to_ecr,
+                param_bind=param_bind,
             )
         )
     )
@@ -130,12 +132,7 @@ def attach_cr_pulses(
     http://arxiv.org/abs/2012.11660. Binds parameters
     in param_bind and attaches pulse gates.
     """
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    channel_map = backend.configuration().qubit_channel_mapping
-
-    pass_manager = PassManager(
-        list(pulse_attaching_passes(inst_sched_map, channel_map, param_bind))
-    )
+    pass_manager = PassManager(list(pulse_attaching_passes(backend, param_bind)))
     return pass_manager.run(circuits)
 
 

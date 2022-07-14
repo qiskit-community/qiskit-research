@@ -28,11 +28,45 @@ from qiskit.circuit.library import (
     XXPlusYYGate,
 )
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.pulse.instruction_schedule_map import InstructionScheduleMap
+from qiskit.providers.backend import Backend
+from qiskit.pulse import ControlChannel, InstructionScheduleMap, Play
 from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import TransformationPass
 
 from .gates import SECRGate
+
+
+def cr_forward_direction(
+    control: int,
+    target: int,
+    inst_sched_map: InstructionScheduleMap,
+    ctrl_chans: dict,
+) -> bool:
+    """
+    Determines if the direction of cross resonance is forward (True), applied on control qubit qc or
+    reverse (False), applied to target qubit qt.
+    """
+    cx_sched = inst_sched_map.get("cx", qubits=[control, target])
+    cx_ctrl_chan = (
+        cx_sched.filter(
+            channels=[
+                ControlChannel(idx)
+                for idx in range(len(inst_sched_map.qubits_with_instruction("cx")))
+            ],
+            instruction_types=Play,
+        )
+        .instructions[0][1]
+        .channel
+    )
+    forward_ctrl_chan = ctrl_chans[(control, target)][0]
+    reverse_ctrl_chan = ctrl_chans[(target, control)][0]
+
+    if cx_ctrl_chan == forward_ctrl_chan:
+        return True
+    if cx_ctrl_chan == reverse_ctrl_chan:
+        return False
+
+    raise ValueError(f"Qubits {control} and {target} are not a cross resonance pair.")
 
 
 class RZXtoEchoedCR(TransformationPass):
@@ -46,10 +80,11 @@ class RZXtoEchoedCR(TransformationPass):
 
     def __init__(
         self,
-        instruction_schedule_map: InstructionScheduleMap = None,
+        backend: Backend,
     ):
         super().__init__()
-        self._inst_map = instruction_schedule_map
+        self._inst_map = backend.defaults().instruction_schedule_map
+        self._ctrl_chans = backend.configuration().control_channels
 
     def run(
         self,
@@ -57,11 +92,11 @@ class RZXtoEchoedCR(TransformationPass):
     ) -> DAGCircuit:
 
         for rzx_run in dag.collect_runs(["rzx"]):
-            qc = rzx_run[0].qargs[0].index
-            qt = rzx_run[0].qargs[1].index
-            cx_f_sched = self._inst_map.get("cx", qubits=[qc, qt])
-            cx_r_sched = self._inst_map.get("cx", qubits=[qt, qc])
-            cr_forward_dir = cx_f_sched.duration < cx_r_sched.duration
+            control = rzx_run[0].qargs[0].index
+            target = rzx_run[0].qargs[1].index
+            cr_forward_dir = cr_forward_direction(
+                control, target, self._inst_map, self._ctrl_chans
+            )
 
             for node in rzx_run:
                 mini_dag = DAGCircuit()
