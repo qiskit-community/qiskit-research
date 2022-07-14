@@ -29,14 +29,19 @@ from qiskit.circuit.library import (
 )
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.providers.backend import Backend
-from qiskit.pulse import ControlChannel, Play
+from qiskit.pulse import ControlChannel, InstructionScheduleMap, Play
 from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import TransformationPass
 
 from .gates import SECRGate
 
 
-def cr_forward_direction(control, target, inst_sched_map, ctrl_chans) -> bool:
+def cr_forward_direction(
+    control: int,
+    target: int,
+    inst_sched_map: InstructionScheduleMap,
+    ctrl_chans: dict,
+) -> bool:
     """
     Determines if the direction of cross resonance is forward (True), applied on control qubit qc or
     reverse (False), applied to target qubit qt.
