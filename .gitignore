@@ -164,3 +164,6 @@ docs/mzm_generation/data/
 
 # plot directories
 docs/mzm_generation/plots/
+
+# Binary file from running notebook on MacOS
+.DS_Store

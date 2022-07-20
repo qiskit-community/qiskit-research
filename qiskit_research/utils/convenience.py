@@ -17,10 +17,9 @@ from typing import Any, Iterable, List, Optional, Union
 from qiskit.circuit import QuantumCircuit
 from qiskit.providers.backend import Backend
 from qiskit.transpiler import PassManager
-from qiskit.transpiler.basepasses import BasePass
-from qiskit.transpiler.passes import (
-    ALAPSchedule,
-)
+from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
+from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
+
 from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
 from qiskit_research.utils import (
     PauliTwirl,
@@ -36,7 +35,7 @@ def add_dynamical_decoupling(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
     backend: Backend,
     dd_str: str,
-    scheduler: BasePass = ALAPSchedule,
+    scheduler: BaseScheduler = ALAPScheduleAnalysis,
     add_pulse_cals: bool = False,
 ) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """Add dynamical decoupling sequences and calibrations to circuits.

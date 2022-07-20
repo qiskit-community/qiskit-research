@@ -42,7 +42,6 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler import CouplingMap, Layout, PassManager
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes import (
-    ALAPSchedule,
     ApplyLayout,
     BasisTranslator,
     EnlargeWithAncilla,
@@ -52,6 +51,7 @@ from qiskit.transpiler.passes import (
     UnrollCustomDefinitions,
     VF2Layout,
 )
+from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_nature.mappers.second_quantization import JordanWignerMapper
 from qiskit_nature.operators.second_quantization import (
@@ -826,5 +826,5 @@ def transpilation_passes(
     # add dynamical decoupling if needed
     if dynamical_decoupling_sequence:
         yield from dynamical_decoupling_passes(
-            backend, dynamical_decoupling_sequence, ALAPSchedule
+            backend, dynamical_decoupling_sequence, ALAPScheduleAnalysis
         )
