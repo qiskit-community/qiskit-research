@@ -22,9 +22,11 @@ from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel
 from qiskit.qasm import pi
 from qiskit.transpiler import InstructionDurations
-from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.instruction_durations import InstructionDurationsType
-from qiskit.transpiler.passes import ALAPSchedule, DynamicalDecoupling
+from qiskit.transpiler.passes import PadDynamicalDecoupling
+from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
+from qiskit.transpiler.basepasses import BasePass
+from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
 from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate
 
 X = XGate()
@@ -46,13 +48,17 @@ DD_SEQUENCE = {
 
 
 def dynamical_decoupling_passes(
-    backend, dd_str: str, scheduler: BasePass = ALAPSchedule
+    backend, dd_str: str, scheduler: BaseScheduler = ALAPScheduleAnalysis
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for dynamical decoupling."""
     durations = get_instruction_durations(backend)
+    pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
+
     sequence = DD_SEQUENCE[dd_str]
     yield scheduler(durations)
-    yield DynamicalDecoupling(durations, list(sequence))
+    yield PadDynamicalDecoupling(
+        durations, list(sequence), pulse_alignment=pulse_alignment
+    )
 
 
 # TODO this should take instruction schedule map instead of backend
