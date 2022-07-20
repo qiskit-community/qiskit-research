@@ -1,7 +1,6 @@
 name: Build and deploy sphinx docs
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
@@ -9,6 +8,8 @@ on:
 
 jobs:
   build_and_deploy_docs:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
