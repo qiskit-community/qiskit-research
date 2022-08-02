@@ -30,6 +30,11 @@ def test_add_dynamical_decoupling():
 
     backend = FakeWashington()
     transpiled = transpile(circuit, backend)
-    transpiled_dd = add_periodic_dynamical_decoupling(transpiled, backend, 
-    base_dd_sequence=[XGate(), YGate(), XGate(), YGate()], max_repeats=3, add_pulse_cals=True)
+    transpiled_dd = add_periodic_dynamical_decoupling(
+        transpiled,
+        backend,
+        base_dd_sequence=[XGate(), YGate(), XGate(), YGate()],
+        max_repeats=3,
+        add_pulse_cals=True,
+    )
     assert isinstance(transpiled_dd, QuantumCircuit)

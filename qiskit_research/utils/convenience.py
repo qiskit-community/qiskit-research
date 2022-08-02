@@ -61,9 +61,10 @@ def add_dynamical_decoupling(
 
     return circuits_dd
 
+
 def add_periodic_dynamical_decoupling(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
-    backend: Backend, 
+    backend: Backend,
     base_dd_sequence: List[Gate] = [XGate(), XGate()],
     base_spacing: List[float] = None,
     avg_min_delay: int = None,
@@ -77,9 +78,16 @@ def add_periodic_dynamical_decoupling(
     to run them on an IBM backend.
     """
     pass_manager = PassManager(
-        list(periodic_dynamical_decoupling(backend, base_dd_sequence=base_dd_sequence, 
-        base_spacing=base_spacing, avg_min_delay=avg_min_delay, max_repeats=max_repeats,
-        scheduler=scheduler))
+        list(
+            periodic_dynamical_decoupling(
+                backend,
+                base_dd_sequence=base_dd_sequence,
+                base_spacing=base_spacing,
+                avg_min_delay=avg_min_delay,
+                max_repeats=max_repeats,
+                scheduler=scheduler,
+            )
+        )
     )
     if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
         circuits_dd = pass_manager.run(circuits)
@@ -90,7 +98,7 @@ def add_periodic_dynamical_decoupling(
         if add_pulse_cals:
             for circs_dd in circuits_dd:
                 add_pulse_calibrations(circs_dd, backend)
-    
+
     return circuits_dd
 
 
