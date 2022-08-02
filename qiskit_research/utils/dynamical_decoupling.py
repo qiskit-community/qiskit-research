@@ -71,7 +71,7 @@ def periodic_dynamical_decoupling(
     pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
 
     yield scheduler(durations)
-    yield PeriodicDynamicalDecoupling(durations, base_dd_sequence, spacing=base_spacing, 
+    yield PeriodicDynamicalDecoupling(durations, base_dd_sequence, base_spacing=base_spacing, 
     avg_min_delay=avg_min_delay, max_repeats=max_repeats, pulse_alignment=pulse_alignment)
 
 

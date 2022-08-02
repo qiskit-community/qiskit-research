@@ -191,12 +191,12 @@ class PeriodicDynamicalDecoupling(BasePadding):
             raise TranspilerError("DD runs on physical circuits only.")
 
         # Set default spacing otherwise validate user input
-        if base_ is None:
+        if self._base_spacing is None:
             mid = 1 / num_pulses
             end = mid / 2
-            base_ = [end] + [mid] * (num_pulses - 1) + [end]
+            self._base_spacing = [end] + [mid] * (num_pulses - 1) + [end]
         else:
-            if sum(base_) != 1 or any(a < 0 for a in base_):
+            if sum(self._base_spacing) != 1 or any(a < 0 for a in self._base_spacing):
                 raise TranspilerError(
                     "The spacings must be given in terms of fractions "
                     "of the slack period and sum to 1."
