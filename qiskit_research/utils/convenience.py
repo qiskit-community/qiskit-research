@@ -64,8 +64,8 @@ def add_dynamical_decoupling(
 def add_periodic_dynamical_decoupling(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
     backend: Backend, 
-    base_dd_sequence: list[Gate] = [XGate(), XGate()],
-    base_spacing: list[float] = None,
+    base_dd_sequence: List[Gate] = [XGate(), XGate()],
+    base_spacing: List[float] = None,
     avg_min_delay: int = None,
     max_repeats: int = 1,
     scheduler: BaseScheduler = ALAPScheduleAnalysis,

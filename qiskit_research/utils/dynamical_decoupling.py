@@ -63,7 +63,7 @@ def dynamical_decoupling_passes(
     )
 
 def periodic_dynamical_decoupling(
-    backend: Backend, base_dd_sequence: list[Gate] = [XGate(), XGate()], base_spacing: list[float] = None, 
+    backend: Backend, base_dd_sequence: List[Gate] = [XGate(), XGate()], base_spacing: List[float] = None, 
     avg_min_delay: int = None, max_repeats: int = 1, scheduler: BaseScheduler = ALAPScheduleAnalysis,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for periodic dynamical decoupling."""
