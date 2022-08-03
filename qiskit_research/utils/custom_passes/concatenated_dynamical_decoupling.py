@@ -115,11 +115,11 @@ class ConcatenatedDynamicalDecoupling(BasePadding):
     def __init__(
         self,
         durations: InstructionDurations,
-        base_dd_sequence: List[Gate],
+        base_dd_sequences: List[List[Gate]],
         qubits: Optional[List[int]] = None,
         base_spacing: Optional[List[float]] = None,
         avg_min_delay: Optional[int] = None,
-        max_concatenates: int = 1,
+        max_concatenations: int = 1,
         skip_reset_qubits: bool = True,
         pulse_alignment: int = 1,
         extra_slack_distribution: str = "middle",
@@ -175,7 +175,7 @@ class ConcatenatedDynamicalDecoupling(BasePadding):
         self.avg_min_delay = avg_min_delay
         if avg_min_delay is None:
             self.avg_min_delay = pulse_alignment
-        self.max_repeats = max_repeats
+        self.max_concatenations = max_concatenations
         self._extra_slack_distribution = extra_slack_distribution
 
         self._base_dd_sequence_lengths = {}
