@@ -65,7 +65,7 @@ def add_dynamical_decoupling(
 def add_periodic_dynamical_decoupling(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
     backend: Backend,
-    base_dd_sequence: List[Gate] = [XGate(), XGate()],
+    base_dd_sequence: List[Gate] = None,
     base_spacing: List[float] = None,
     avg_min_delay: int = None,
     max_repeats: int = 1,
@@ -77,6 +77,9 @@ def add_periodic_dynamical_decoupling(
     Adds periodic dynamical decoupling sequences and the calibrations necessary
     to run them on an IBM backend.
     """
+    if base_dd_sequence is None:
+        base_dd_sequence = [XGate(), XGate()]
+
     pass_manager = PassManager(
         list(
             periodic_dynamical_decoupling(

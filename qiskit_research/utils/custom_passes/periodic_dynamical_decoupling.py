@@ -149,8 +149,8 @@ class PeriodicDynamicalDecoupling(BasePadding):
                 satisfy this constraint.
             extra_slack_distribution: The option to control the behavior of DD sequence generation.
                 The duration of the DD sequence should be identical to an idle time in the
-                scheduled quantum circuit, however, the delay in between gates comprising the sequence
-                should be integer number in units of dt, and it might be further truncated
+                scheduled quantum circuit, however, the delay in between gates comprising the
+                sequence should be integer number in units of dt, and it might be further truncated
                 when ``pulse_alignment`` is specified. This sometimes results in the duration of
                 the created sequence being shorter than the idle time
                 that you want to fill with the sequence, i.e. `extra slack`.
@@ -173,12 +173,12 @@ class PeriodicDynamicalDecoupling(BasePadding):
         self._alignment = pulse_alignment
         self._base_spacing = base_spacing
         self.avg_min_delay = avg_min_delay
-        if avg_min_delay == None:
+        if avg_min_delay is None:
             self.avg_min_delay = pulse_alignment
         self.max_repeats = max_repeats
         self._extra_slack_distribution = extra_slack_distribution
 
-        self._base_dd_sequence_lengths = dict()
+        self._base_dd_sequence_lengths = {}
         self._sequence_phase = 0
 
     def _pre_runhook(self, dag: DAGCircuit):
@@ -201,7 +201,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
                     "The spacings must be given in terms of fractions "
                     "of the slack period and sum to 1."
                 )
-            if not (len(self._base_spacing) == len(self._base_dd_sequence) + 1):
+            if not len(self._base_spacing) == len(self._base_dd_sequence) + 1:
                 raise TranspilerError(
                     "The number of spacings must be 1 more than the "
                     "number of gates in the sequence"
@@ -251,7 +251,8 @@ class PeriodicDynamicalDecoupling(BasePadding):
                 except KeyError:
                     gate_length = self._durations.get(gate, physical_index)
                 sequence_lengths.append(gate_length)
-                # Update gate duration. This is necessary for current timeline drawer, i.e. scheduled.
+                # Update gate duration. This is necessary for current timeline drawer,
+                # i.e. scheduled.
                 gate.duration = gate_length
             self._base_dd_sequence_lengths[qubit] = sequence_lengths
 
@@ -353,7 +354,8 @@ class PeriodicDynamicalDecoupling(BasePadding):
         def _constrained_length(values):
             return self._alignment * np.floor(values / self._alignment)
 
-        # Calculates the number of repeats based on inequality: avg_min_delay < (time_interval - repeats * _base_dd_sequence_lengths[qubit]) / repeats
+        # Calculates the number of repeats based on inequality:
+        # avg_min_delay < (time_interval - repeats * _base_dd_sequence_lengths[qubit]) / repeats
         # The actual number of repeats is the smaller of this value and max_repeats
         actual_repeats = int(
             min(
@@ -383,8 +385,9 @@ class PeriodicDynamicalDecoupling(BasePadding):
         sequence_gphase *= actual_repeats
 
         # Calculate spacings after repeating actual_repeats times
-        # For each repetition, the last spacing of the original and the first spacing of the spacing ot be
-        # appended are added together. Then each spacing is divided by the number of actual repeats to ensure
+        # For each repetition, the last spacing of the original and the first
+        # spacing of the spacing ot be appended are added together.
+        # Then each spacing is divided by the number of actual repeats to ensure
         # the sum of the fractions add to 1
         actual_spacing = copy(self._base_spacing)
         last_spacing = actual_spacing.pop()

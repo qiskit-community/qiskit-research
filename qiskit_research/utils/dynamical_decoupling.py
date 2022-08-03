@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Optional
 
 from qiskit import QuantumCircuit, pulse
 from qiskit.circuit import Gate
@@ -67,8 +67,8 @@ def dynamical_decoupling_passes(
 
 def periodic_dynamical_decoupling(
     backend: Backend,
-    base_dd_sequence: List[Gate] = [XGate(), XGate()],
-    base_spacing: List[float] = None,
+    base_dd_sequence: Optional[List[Gate]] = None,
+    base_spacing: Optional[List[float]] = None,
     avg_min_delay: int = None,
     max_repeats: int = 1,
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
@@ -76,6 +76,9 @@ def periodic_dynamical_decoupling(
     """Yields transpilation passes for periodic dynamical decoupling."""
     durations = get_instruction_durations(backend)
     pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
+
+    if base_dd_sequence is None:
+        base_dd_sequence = [XGate(), XGate()]
 
     yield scheduler(durations)
     yield PeriodicDynamicalDecoupling(
