@@ -17,9 +17,7 @@ Custom transpilation and padding passes for running research experiments with Qi
 """
 
 from qiskit_research.utils.custom_passes.periodic_dynamical_decoupling import (
-    PeriodicDynamicalDecoupling
+    PeriodicDynamicalDecoupling,
 )
 
-__all__ = [
-    "PeriodicDynamicalDecoupling"
-]
+__all__ = ["PeriodicDynamicalDecoupling"]
