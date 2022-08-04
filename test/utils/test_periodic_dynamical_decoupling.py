@@ -65,57 +65,105 @@ class TestPeriodicDynamicalDecoupling(unittest.TestCase):
         )
         circ_dd = pm.run(circuit)
 
-        test_circ = QuantumCircuit(4)
-        test_circ.h(0)
+        # test_circ = QuantumCircuit(4)
+        # test_circ.h(0)
 
-        test_circ.delay(50, 1)
+        # test_circ.delay(50, 1)
 
-        test_circ.cx(0, 1)
+        # test_circ.cx(0, 1)
 
-        test_circ.delay(25, 2)
-        for i in range(2):
-            test_circ.x(2)
-            test_circ.delay(75, 2)
-        test_circ.x(2)
-        test_circ.delay(100, 2)
-        for i in range(2):
-            test_circ.x(2)
-            test_circ.delay(75, 2)
-        test_circ.x(2)
-        test_circ.delay(25, 2)
+        # test_circ.delay(25, 2)
+        # for i in range(2):
+        #     test_circ.x(2)
+        #     test_circ.delay(75, 2)
+        # test_circ.x(2)
+        # test_circ.delay(100, 2)
+        # for i in range(2):
+        #     test_circ.x(2)
+        #     test_circ.delay(75, 2)
+        # test_circ.x(2)
+        # test_circ.delay(25, 2)
 
-        test_circ.cx(1, 2)
+        # test_circ.cx(1, 2)
 
-        test_circ.delay(50, 3)
-        for i in range(2):
-            test_circ.x(3)
-            test_circ.delay(100, 3)
-        test_circ.x(3)
-        test_circ.delay(150, 3)
-        for i in range(2):
-            test_circ.x(3)
-            test_circ.delay(100, 3)
-        test_circ.x(3)
-        test_circ.delay(50, 3)
+        # test_circ.delay(50, 3)
+        # for i in range(2):
+        #     test_circ.x(3)
+        #     test_circ.delay(100, 3)
+        # test_circ.x(3)
+        # test_circ.delay(150, 3)
+        # for i in range(2):
+        #     test_circ.x(3)
+        #     test_circ.delay(100, 3)
+        # test_circ.x(3)
+        # test_circ.delay(50, 3)
 
-        test_circ.cx(2, 3)
+        # test_circ.cx(2, 3)
 
-        test_circ.delay(25, 0)
-        test_circ.x(0)
-        test_circ.delay(75, 0)
-        test_circ.x(0)
-        test_circ.delay(100, 0)
-        test_circ.x(0)
-        test_circ.delay(75, 0)
-        test_circ.x(0)
-        test_circ.delay(25, 0)
+        # test_circ.delay(25, 0)
+        # test_circ.x(0)
+        # test_circ.delay(75, 0)
+        # test_circ.x(0)
+        # test_circ.delay(100, 0)
+        # test_circ.x(0)
+        # test_circ.delay(75, 0)
+        # test_circ.x(0)
+        # test_circ.delay(25, 0)
 
-        test_circ.delay(50, 1)
-        test_circ.x(1)
-        test_circ.delay(100, 1)
-        test_circ.x(1)
-        test_circ.delay(50, 1)
+        # test_circ.delay(50, 1)
+        # test_circ.x(1)
+        # test_circ.delay(100, 1)
+        # test_circ.x(1)
+        # test_circ.delay(50, 1)
 
-        test_circ.measure_all()
+        # test_circ.measure_all()
 
-        self.assertTrue(circ_dd == test_circ)
+        self.assertTrue(
+            str(circ_dd.draw()).strip()
+            == """
+              ┌───┐           ┌───────────────┐ ┌───┐┌───────────────┐ ┌───┐»
+   q_0: ──────┤ H ├────────■──┤ Delay(25[dt]) ├─┤ X ├┤ Delay(75[dt]) ├─┤ X ├»
+        ┌─────┴───┴─────┐┌─┴─┐└───────────────┘ └───┘└───────────────┘ └───┘»
+   q_1: ┤ Delay(50[dt]) ├┤ X ├──────────────────────────────────────────────»
+        ├───────────────┤├───┤┌───────────────┐ ┌───┐┌───────────────┐ ┌───┐»
+   q_2: ┤ Delay(25[dt]) ├┤ X ├┤ Delay(75[dt]) ├─┤ X ├┤ Delay(75[dt]) ├─┤ X ├»
+        ├───────────────┤├───┤├───────────────┴┐├───┤├───────────────┴┐├───┤»
+   q_3: ┤ Delay(50[dt]) ├┤ X ├┤ Delay(100[dt]) ├┤ X ├┤ Delay(100[dt]) ├┤ X ├»
+        └───────────────┘└───┘└────────────────┘└───┘└────────────────┘└───┘»
+meas: 4/════════════════════════════════════════════════════════════════════»
+                                                                            »
+«        ┌────────────────┐┌───┐┌───────────────┐ ┌───┐┌───────────────┐      »
+«   q_0: ┤ Delay(100[dt]) ├┤ X ├┤ Delay(75[dt]) ├─┤ X ├┤ Delay(25[dt]) ├──────»
+«        └────────────────┘└───┘└───────────────┘ └───┘└───────────────┘      »
+«   q_1: ─────────────────────────────────────────────────────────────────────»
+«        ┌────────────────┐┌───┐┌───────────────┐ ┌───┐┌───────────────┐ ┌───┐»
+«   q_2: ┤ Delay(100[dt]) ├┤ X ├┤ Delay(75[dt]) ├─┤ X ├┤ Delay(75[dt]) ├─┤ X ├»
+«        ├────────────────┤├───┤├───────────────┴┐├───┤├───────────────┴┐├───┤»
+«   q_3: ┤ Delay(150[dt]) ├┤ X ├┤ Delay(100[dt]) ├┤ X ├┤ Delay(100[dt]) ├┤ X ├»
+«        └────────────────┘└───┘└────────────────┘└───┘└────────────────┘└───┘»
+«meas: 4/═════════════════════════════════════════════════════════════════════»
+«                                                                             »
+«                                                                           »
+«   q_0: ───────────────────────────────────────────────────────────────────»
+«                              ┌───────────────┐┌───┐┌────────────────┐┌───┐»
+«   q_1: ───────────────────■──┤ Delay(50[dt]) ├┤ X ├┤ Delay(100[dt]) ├┤ X ├»
+«        ┌───────────────┐┌─┴─┐└───────────────┘└───┘└────────────────┘└───┘»
+«   q_2: ┤ Delay(25[dt]) ├┤ X ├────────■────────────────────────────────────»
+«        ├───────────────┤└───┘      ┌─┴─┐                                  »
+«   q_3: ┤ Delay(50[dt]) ├───────────┤ X ├──────────────────────────────────»
+«        └───────────────┘           └───┘                                  »
+«meas: 4/═══════════════════════════════════════════════════════════════════»
+«                                                                           »
+«                          ░ ┌─┐         
+«   q_0: ──────────────────░─┤M├─────────
+«        ┌───────────────┐ ░ └╥┘┌─┐      
+«   q_1: ┤ Delay(50[dt]) ├─░──╫─┤M├──────
+«        └───────────────┘ ░  ║ └╥┘┌─┐   
+«   q_2: ──────────────────░──╫──╫─┤M├───
+«                          ░  ║  ║ └╥┘┌─┐
+«   q_3: ──────────────────░──╫──╫──╫─┤M├
+«                          ░  ║  ║  ║ └╥┘
+«meas: 4/═════════════════════╩══╩══╩══╩═
+«                             0  1  2  3 
+""".strip()
+        )
