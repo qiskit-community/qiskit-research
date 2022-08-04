@@ -12,29 +12,109 @@
 
 """Test dynamical decoupling."""
 
+import unittest
+
 from qiskit import transpile
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit.library import XGate, YGate
 from qiskit.providers.fake_provider import FakeWashington
-from qiskit_research.utils.convenience import add_periodic_dynamical_decoupling
+
+from qiskit.transpiler.instruction_durations import InstructionDurations
+from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
+from qiskit.transpiler import PassManager
+
+from qiskit_research.utils.custom_passes.periodic_dynamical_decoupling import (
+    PeriodicDynamicalDecoupling,
+)
 
 
-def test_add_dynamical_decoupling():
-    """Test adding periodic dynamical decoupling."""
-    # TODO make this an actual test
-    circuit = QuantumCircuit(3)
-    circuit.cx(0, 1)
-    circuit.rz(1.0, 1)
-    circuit.cx(0, 1)
-    circuit.rx(1.0, [0, 1, 2])
+class TestPeriodicDynamicalDecoupling(unittest.TestCase):
+    def test_add_periodic_dynamical_decoupling(self):
+        circuit = QuantumCircuit(4)
+        circuit.h(0)
+        for i in range(3):
+            circuit.cx(i, i + 1)
+        circuit.measure_all()
 
-    backend = FakeWashington()
-    transpiled = transpile(circuit, backend)
-    transpiled_dd = add_periodic_dynamical_decoupling(
-        transpiled,
-        backend,
-        base_dd_sequence=[XGate(), YGate(), XGate(), YGate()],
-        max_repeats=3,
-        add_pulse_cals=True,
-    )
-    assert isinstance(transpiled_dd, QuantumCircuit)
+        durations = InstructionDurations(
+            [
+                ("h", 0, 50),
+                ("cx", [0, 1], 700),
+                ("cx", [1, 2], 200),
+                ("cx", [2, 3], 300),
+                ("x", None, 50),
+                ("measure", None, 1000),
+                ("reset", None, 1500),
+            ]
+        )
+        pulse_alignment = 25
+
+        pm = PassManager(
+            [
+                ALAPScheduleAnalysis(durations=durations),
+                PeriodicDynamicalDecoupling(
+                    durations=durations,
+                    base_dd_sequence=[XGate(), XGate()],
+                    max_repeats=3,
+                    avg_min_delay=50,
+                    pulse_alignment=pulse_alignment,
+                    skip_reset_qubits=False,
+                ),
+            ]
+        )
+        circ_dd = pm.run(circuit)
+
+        test_circ = QuantumCircuit(4)
+        test_circ.h(0)
+
+        test_circ.delay(50, 1)
+
+        test_circ.cx(0, 1)
+
+        test_circ.delay(25, 2)
+        for i in range(2):
+            test_circ.x(2)
+            test_circ.delay(75, 2)
+        test_circ.x(2)
+        test_circ.delay(100, 2)
+        for i in range(2):
+            test_circ.x(2)
+            test_circ.delay(75, 2)
+        test_circ.x(2)
+        test_circ.delay(25, 2)
+
+        test_circ.cx(1, 2)
+
+        test_circ.delay(50, 3)
+        for i in range(2):
+            test_circ.x(3)
+            test_circ.delay(100, 3)
+        test_circ.x(3)
+        test_circ.delay(150, 3)
+        for i in range(2):
+            test_circ.x(3)
+            test_circ.delay(100, 3)
+        test_circ.x(3)
+        test_circ.delay(50, 3)
+
+        test_circ.cx(2, 3)
+
+        test_circ.delay(25, 0)
+        test_circ.x(0)
+        test_circ.delay(75, 0)
+        test_circ.x(0)
+        test_circ.delay(100, 0)
+        test_circ.x(0)
+        test_circ.delay(75, 0)
+        test_circ.x(0)
+        test_circ.delay(25, 0)
+
+        test_circ.delay(50, 1)
+        test_circ.x(1)
+        test_circ.delay(100, 1)
+        test_circ.x(1)
+        test_circ.delay(50, 1)
+
+        test_circ.measure_all()
+
+        self.assertTrue(circ_dd == test_circ)

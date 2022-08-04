@@ -355,7 +355,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
             return self._alignment * np.floor(values / self._alignment)
 
         # Calculates the number of repeats based on inequality:
-        # avg_min_delay < (time_interval - repeats * _base_dd_sequence_lengths[qubit]) / repeats
+        # avg_min_delay < (time_interval - repeats * _base_dd_sequence_lengths[qubit]) / (repeats * len(_base_dd_sequence)
         # The actual number of repeats is the smaller of this value and max_repeats
         actual_repeats = int(
             min(
@@ -363,7 +363,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
                     np.floor(
                         time_interval
                         / (
-                            self.avg_min_delay
+                            self.avg_min_delay * len(self._base_dd_sequence)
                             + np.sum(self._base_dd_sequence_lengths[qubit])
                         )
                     ),
