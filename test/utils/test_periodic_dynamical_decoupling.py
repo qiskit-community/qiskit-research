@@ -14,10 +14,8 @@
 
 import unittest
 
-from qiskit import transpile
 from qiskit.circuit import QuantumCircuit
-from qiskit.circuit.library import XGate, YGate
-from qiskit.providers.fake_provider import FakeWashington
+from qiskit.circuit.library import XGate
 
 from qiskit.transpiler.instruction_durations import InstructionDurations
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
@@ -29,7 +27,10 @@ from qiskit_research.utils.custom_passes.periodic_dynamical_decoupling import (
 
 
 class TestPeriodicDynamicalDecoupling(unittest.TestCase):
+    """Test PeriodicDynamicalDecoupling pass."""
+
     def test_add_periodic_dynamical_decoupling(self):
+        """Test adding XX sequence with max 3 repeats and min_avg_delay"""
         circuit = QuantumCircuit(4)
         circuit.h(0)
         for i in range(3):
