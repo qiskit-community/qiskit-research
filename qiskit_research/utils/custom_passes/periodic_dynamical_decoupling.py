@@ -21,14 +21,12 @@ from typing import List, Optional
 import numpy as np
 from qiskit.circuit import Qubit, Gate
 from qiskit.circuit.delay import Delay
-from qiskit.circuit.library.standard_gates import IGate, UGate, U3Gate
+from qiskit.circuit.library.standard_gates import IGate
 from qiskit.circuit.reset import Reset
-from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGInNode, DAGOpNode
+from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGInNode
 from qiskit.quantum_info.operators.predicates import matrix_equal
-from qiskit.quantum_info.synthesis import OneQubitEulerDecomposer
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.instruction_durations import InstructionDurations
-from qiskit.transpiler.passes.optimization import Optimize1qGates
 
 from qiskit.transpiler.passes.scheduling.padding.base_padding import BasePadding
 
@@ -208,19 +206,18 @@ class PeriodicDynamicalDecoupling(BasePadding):
                 )
 
         # Check if DD sequence is identity
-        if num_pulses != 1:
-            if num_pulses % 2 != 0:
-                raise TranspilerError(
-                    "DD sequence must contain an even number of gates (or 1)."
-                )
-            noop = np.eye(2)
-            for gate in self._base_dd_sequence:
-                noop = noop.dot(gate.to_matrix())
-            if not matrix_equal(noop, IGate().to_matrix(), ignore_phase=True):
-                raise TranspilerError(
-                    "The DD sequence does not make an identity operation."
-                )
-            self._sequence_phase = np.angle(noop[0][0])
+        if num_pulses % 2 != 0:
+            raise TranspilerError(
+                "DD sequence must contain an even number of gates (or 1)."
+            )
+        noop = np.eye(2)
+        for gate in self._base_dd_sequence:
+            noop = noop.dot(gate.to_matrix())
+        if not matrix_equal(noop, IGate().to_matrix(), ignore_phase=True):
+            raise TranspilerError(
+                "The DD sequence does not make an identity operation."
+            )
+        self._sequence_phase = np.angle(noop[0][0])
 
         # Precompute qubit-wise DD sequence length for performance
         for qubit in dag.qubits:
@@ -322,35 +319,6 @@ class PeriodicDynamicalDecoupling(BasePadding):
             )
             return
 
-        if len(self._base_dd_sequence) == 1:
-            # Special case of using a single gate for DD
-            u_inv = self._base_dd_sequence[0].inverse().to_matrix()
-            theta, phi, lam, phase = OneQubitEulerDecomposer().angles_and_phase(u_inv)
-            if isinstance(next_node, DAGOpNode) and isinstance(
-                next_node.op, (UGate, U3Gate)
-            ):
-                # Absorb the inverse into the successor (from left in circuit)
-                theta_r, phi_r, lam_r = next_node.op.params
-                next_node.op.params = Optimize1qGates.compose_u3(
-                    theta_r, phi_r, lam_r, theta, phi, lam
-                )
-                sequence_gphase += phase
-            elif isinstance(prev_node, DAGOpNode) and isinstance(
-                prev_node.op, (UGate, U3Gate)
-            ):
-                # Absorb the inverse into the predecessor (from right in circuit)
-                theta_l, phi_l, lam_l = prev_node.op.params
-                prev_node.op.params = Optimize1qGates.compose_u3(
-                    theta, phi, lam, theta_l, phi_l, lam_l
-                )
-                sequence_gphase += phase
-            else:
-                # Don't do anything if there's no single-qubit gate to absorb the inverse
-                self._apply_scheduled_op(
-                    dag, t_start, Delay(time_interval, dag.unit), qubit
-                )
-                return
-
         def _constrained_length(values):
             return self._alignment * np.floor(values / self._alignment)
 
@@ -386,8 +354,8 @@ class PeriodicDynamicalDecoupling(BasePadding):
         sequence_gphase *= actual_repeats
 
         # Calculate spacings after repeating actual_repeats times
-        # For each repetition, the last spacing of the original and the first
-        # spacing of the spacing ot be appended are added together.
+        # For each repetition, the last spacing of the original sequence and the first
+        # spacing of the the next sequence to be appended are added together.
         # Then each spacing is divided by the number of actual repeats to ensure
         # the sum of the fractions add to 1
         actual_spacing = copy(self._base_spacing)
