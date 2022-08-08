@@ -65,59 +65,6 @@ class TestPeriodicDynamicalDecoupling(unittest.TestCase):
         )
         circ_dd = pm.run(circuit)
 
-        # test_circ = QuantumCircuit(4)
-        # test_circ.h(0)
-
-        # test_circ.delay(50, 1)
-
-        # test_circ.cx(0, 1)
-
-        # test_circ.delay(25, 2)
-        # for i in range(2):
-        #     test_circ.x(2)
-        #     test_circ.delay(75, 2)
-        # test_circ.x(2)
-        # test_circ.delay(100, 2)
-        # for i in range(2):
-        #     test_circ.x(2)
-        #     test_circ.delay(75, 2)
-        # test_circ.x(2)
-        # test_circ.delay(25, 2)
-
-        # test_circ.cx(1, 2)
-
-        # test_circ.delay(50, 3)
-        # for i in range(2):
-        #     test_circ.x(3)
-        #     test_circ.delay(100, 3)
-        # test_circ.x(3)
-        # test_circ.delay(150, 3)
-        # for i in range(2):
-        #     test_circ.x(3)
-        #     test_circ.delay(100, 3)
-        # test_circ.x(3)
-        # test_circ.delay(50, 3)
-
-        # test_circ.cx(2, 3)
-
-        # test_circ.delay(25, 0)
-        # test_circ.x(0)
-        # test_circ.delay(75, 0)
-        # test_circ.x(0)
-        # test_circ.delay(100, 0)
-        # test_circ.x(0)
-        # test_circ.delay(75, 0)
-        # test_circ.x(0)
-        # test_circ.delay(25, 0)
-
-        # test_circ.delay(50, 1)
-        # test_circ.x(1)
-        # test_circ.delay(100, 1)
-        # test_circ.x(1)
-        # test_circ.delay(50, 1)
-
-        # test_circ.measure_all()
-
         self.assertTrue(
             str(circ_dd.draw()).strip()
             == """

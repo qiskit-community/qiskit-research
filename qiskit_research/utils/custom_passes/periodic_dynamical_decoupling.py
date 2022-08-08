@@ -347,10 +347,10 @@ class PeriodicDynamicalDecoupling(BasePadding):
             )
             return
         actual_dd_sequence_length = (
-            copy(self._base_dd_sequence_lengths[qubit]) * actual_repeats
+            self._base_dd_sequence_lengths[qubit] * actual_repeats
         )
         actual_slack = time_interval - np.sum(actual_dd_sequence_length)
-        actual_sequence = copy(self._base_dd_sequence) * actual_repeats
+        actual_sequence = self._base_dd_sequence * actual_repeats
         sequence_gphase *= actual_repeats
 
         # Calculate spacings after repeating actual_repeats times
@@ -388,8 +388,6 @@ class PeriodicDynamicalDecoupling(BasePadding):
             raise TranspilerError(
                 f"Option extra_slack_distribution = {self._extra_slack_distribution} is invalid."
             )
-        # print(taus)
-        # print("")
 
         # (3) Construct DD sequence with delays
         num_elements = max(len(actual_sequence), len(taus))
