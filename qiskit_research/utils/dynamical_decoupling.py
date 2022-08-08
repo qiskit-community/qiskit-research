@@ -29,7 +29,7 @@ from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
 from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate
-from qiskit_research.utils.custom_passes.periodic_dynamical_decoupling import (
+from qiskit_research.utils.periodic_dynamical_decoupling import (
     PeriodicDynamicalDecoupling,
 )
 

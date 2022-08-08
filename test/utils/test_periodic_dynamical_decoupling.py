@@ -21,7 +21,7 @@ from qiskit.transpiler.instruction_durations import InstructionDurations
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler import PassManager
 
-from qiskit_research.utils.custom_passes.periodic_dynamical_decoupling import (
+from qiskit_research.utils.periodic_dynamical_decoupling import (
     PeriodicDynamicalDecoupling,
 )
 
