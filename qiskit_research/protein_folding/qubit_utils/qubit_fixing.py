@@ -58,7 +58,9 @@ def _fix_qubits(
         new_tables.append(new_table)
         new_coeffs.append(coeffs)
     new_pauli_table = PauliTable(data=new_tables)
-    operator_updated = PauliSumOp(SparsePauliOp(data=new_pauli_table, coeffs=new_coeffs))
+    operator_updated = PauliSumOp(
+        SparsePauliOp(data=new_pauli_table, coeffs=new_coeffs)
+    )
     operator_updated = operator_updated.reduce()
     return operator_updated
 
@@ -69,7 +71,11 @@ def _calc_updated_coeffs(
     coeffs = np.copy(hamiltonian.primitive.coeffs[0])
     if len(table_z) > 1 and table_z[1] == np.bool_(True):
         coeffs = -1 * coeffs
-    if not has_side_chain_second_bead and len(table_z) > 6 and table_z[5] == np.bool_(True):
+    if (
+        not has_side_chain_second_bead
+        and len(table_z) > 6
+        and table_z[5] == np.bool_(True)
+    ):
         coeffs = -1 * coeffs
     return coeffs
 

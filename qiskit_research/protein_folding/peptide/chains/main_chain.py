@@ -81,7 +81,9 @@ class MainChain(BaseChain):
 
         for main_bead_id in range(main_chain_len - 1):
             bead_turn_qubit_1 = self._build_turn_qubit(main_chain_len, 2 * main_bead_id)
-            bead_turn_qubit_2 = self._build_turn_qubit(main_chain_len, 2 * main_bead_id + 1)
+            bead_turn_qubit_2 = self._build_turn_qubit(
+                main_chain_len, 2 * main_bead_id + 1
+            )
             side_chain = self._create_side_chain(
                 main_bead_id, main_chain_len, side_chain_residue_sequences
             )
@@ -113,7 +115,8 @@ class MainChain(BaseChain):
         side_chain_residue_sequences: List[str],
     ) -> None:
         if side_chain_residue_sequences is not None and (
-            side_chain_residue_sequences[0] != "" or side_chain_residue_sequences[-1] != ""
+            side_chain_residue_sequences[0] != ""
+            or side_chain_residue_sequences[-1] != ""
         ):
             raise InvalidSideChainException(
                 "First and last main beads are not allowed to have a side chain. Nonempty "
@@ -163,6 +166,7 @@ class MainChain(BaseChain):
             A boolean indicating whether a given main bead hosts a side chain.
         """
         is_side_chain_present = bool(
-            side_chain_residue_sequences and side_chain_residue_sequences[main_bead_id] != ""
+            side_chain_residue_sequences
+            and side_chain_residue_sequences[main_bead_id] != ""
         )
         return is_side_chain_present

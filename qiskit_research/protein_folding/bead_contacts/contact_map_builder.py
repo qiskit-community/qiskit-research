@@ -62,10 +62,18 @@ def _create_contact_qubits(
     main_chain_len = len(peptide.get_main_chain)
     side_chain = peptide.get_side_chain_hot_vector()
 
-    lower_main_upper_main: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(dict)
-    lower_side_upper_main: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(dict)
-    lower_main_upper_side: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(dict)
-    lower_side_upper_side: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(dict)
+    lower_main_upper_main: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(
+        dict
+    )
+    lower_side_upper_main: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(
+        dict
+    )
+    lower_main_upper_side: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(
+        dict
+    )
+    lower_side_upper_side: Dict[int, Dict[int, OperatorBase]] = collections.defaultdict(
+        dict
+    )
 
     num_contacts = 0
     num_qubits = pow(main_chain_len - 1, 2)
@@ -78,7 +86,9 @@ def _create_contact_qubits(
             if _are_beads_in_different_sets(upper_bead_id, lower_bead_id):
                 if _are_beads_k_plus_steps_apart(upper_bead_id, lower_bead_id, k=5):
                     contact_op_block_position = 3
-                    _log_contact(lower_bead_id, upper_bead_id, "main_chain", "main_chain")
+                    _log_contact(
+                        lower_bead_id, upper_bead_id, "main_chain", "main_chain"
+                    )
                     lower_main_upper_main[lower_bead_id][
                         upper_bead_id
                     ] = _create_contact_op_for_axis(
@@ -92,7 +102,9 @@ def _create_contact_qubits(
                     num_contacts += 1
                 if side_chain[lower_bead_id - 1] and side_chain[upper_bead_id - 1]:
                     contact_op_block_position = 2
-                    _log_contact(lower_bead_id, upper_bead_id, "side_chain", "side_chain")
+                    _log_contact(
+                        lower_bead_id, upper_bead_id, "side_chain", "side_chain"
+                    )
                     lower_side_upper_side[lower_bead_id][
                         upper_bead_id
                     ] = _create_contact_op_for_axis(
@@ -108,7 +120,9 @@ def _create_contact_qubits(
                 if _are_beads_k_plus_steps_apart(upper_bead_id, lower_bead_id, k=4):
                     if side_chain[upper_bead_id - 1]:
                         contact_op_block_position = 1
-                        _log_contact(lower_bead_id, upper_bead_id, "main_chain", "side_chain")
+                        _log_contact(
+                            lower_bead_id, upper_bead_id, "main_chain", "side_chain"
+                        )
                         lower_main_upper_side[lower_bead_id][
                             upper_bead_id
                         ] = _create_contact_op_for_axis(
@@ -123,7 +137,9 @@ def _create_contact_qubits(
 
                     if side_chain[lower_bead_id - 1]:
                         contact_op_block_position = 0
-                        _log_contact(lower_bead_id, upper_bead_id, "side_chain", "main_chain")
+                        _log_contact(
+                            lower_bead_id, upper_bead_id, "side_chain", "main_chain"
+                        )
                         lower_side_upper_main[lower_bead_id][
                             upper_bead_id
                         ] = _create_contact_op_for_axis(
@@ -172,11 +188,15 @@ def _are_beads_in_different_sets(upper_bead_id: int, lower_bead_id: int) -> bool
     return (upper_bead_id - lower_bead_id) % 2 == 1
 
 
-def _are_beads_k_plus_steps_apart(upper_bead_id: int, lower_bead_id: int, k: int) -> bool:
+def _are_beads_k_plus_steps_apart(
+    upper_bead_id: int, lower_bead_id: int, k: int
+) -> bool:
     return (upper_bead_id - lower_bead_id) >= k
 
 
-def _log_contact(lower_bead_id, upper_bead_id, lower_chain_type, upper_chain_type) -> None:
+def _log_contact(
+    lower_bead_id, upper_bead_id, lower_chain_type, upper_chain_type
+) -> None:
     logger.info(
         "possible contact between a bead %s on the %s and a bead %s on the %s",
         lower_bead_id,
@@ -191,7 +211,9 @@ def _calc_index(chain_len: int, lower_bead_pos: int, upper_bead_pos: int) -> int
     return lower_bead_pos * chain_len + upper_bead_pos
 
 
-def _convert_to_qubits(pauli_sum_op: Union[PauliSumOp, PauliOp]) -> Union[PauliSumOp, PauliOp]:
+def _convert_to_qubits(
+    pauli_sum_op: Union[PauliSumOp, PauliOp]
+) -> Union[PauliSumOp, PauliOp]:
     num_qubits_num = pauli_sum_op.num_qubits
     full_id = _build_full_identity(num_qubits_num)
     return (full_id - pauli_sum_op) / 2.0

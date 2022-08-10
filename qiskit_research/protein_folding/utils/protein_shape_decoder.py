@@ -74,7 +74,9 @@ class ProteinShapeDecoder:
         # Therefore we only need to encode N-3 turns. By symmetry as well if we don't have a side
         # chain in the second beat we only need 1 bit to encode the third turn.
         # The final formula is # = 2*(N-3) and we subtract 1 if we don't have that secondary chain.
-        n_qbits_encoding_main_turns = 2 * (self._main_chain_length - 3) - (self._fifth_bit)
+        n_qbits_encoding_main_turns = 2 * (self._main_chain_length - 3) - (
+            self._fifth_bit
+        )
         # The side chains always use 2 qubits to be encoded.
         n_qbits_encoding_side_turns = 2 * sum(self._side_chain_hot_vector)
         return n_qbits_encoding_main_turns, n_qbits_encoding_side_turns
@@ -95,10 +97,14 @@ class ProteinShapeDecoder:
                 if no side chain on second main bead or 2(N-3) otherwise.
         """
 
-        main_turns_bitstring = self._turn_sequence[-self._split_bitstring()[0] :] + "0010"
+        main_turns_bitstring = (
+            self._turn_sequence[-self._split_bitstring()[0] :] + "0010"
+        )
 
         if self._fifth_bit:
-            main_turns_bitstring = main_turns_bitstring[:-5] + "1" + main_turns_bitstring[-5:]
+            main_turns_bitstring = (
+                main_turns_bitstring[:-5] + "1" + main_turns_bitstring[-5:]
+            )
 
         return self._bitstring_to_turns(main_turns_bitstring)
 

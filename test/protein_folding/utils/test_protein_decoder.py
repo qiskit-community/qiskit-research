@@ -11,7 +11,9 @@
 # that they have been altered from the originals.
 """Tests ProteinShapeDecoder."""
 from ddt import ddt, data, unpack
-from qiskit_research.protein_folding.utils.protein_shape_decoder import ProteinShapeDecoder
+from qiskit_research.protein_folding.utils.protein_shape_decoder import (
+    ProteinShapeDecoder,
+)
 
 from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 
@@ -48,7 +50,13 @@ class TestProteinShapeDecoder(ProteinFoldingTestCase):
         ),
     )
     def test_decoder(
-        self, turn_sequence, side_chain_hot_vector, fifth_bit, split, main_turns, side_turns
+        self,
+        turn_sequence,
+        side_chain_hot_vector,
+        fifth_bit,
+        split,
+        main_turns,
+        side_turns,
     ):
         """
         Tests if the main and side turns are generated correctly and if the separation

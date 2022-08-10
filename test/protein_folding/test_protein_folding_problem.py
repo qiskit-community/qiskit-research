@@ -42,7 +42,9 @@ class TestProteinFoldingProblem(ProteinFoldingTestCase):
 
         mj_interaction = MiyazawaJerniganInteraction()
 
-        protein_folding_problem = ProteinFoldingProblem(peptide, mj_interaction, penalty_terms)
+        protein_folding_problem = ProteinFoldingProblem(
+            peptide, mj_interaction, penalty_terms
+        )
         qubit_op = protein_folding_problem._qubit_op_full()
 
         expected_path = self.get_resource_path(
@@ -66,7 +68,9 @@ class TestProteinFoldingProblem(ProteinFoldingTestCase):
 
         mj_interaction = MiyazawaJerniganInteraction()
 
-        protein_folding_problem = ProteinFoldingProblem(peptide, mj_interaction, penalty_terms)
+        protein_folding_problem = ProteinFoldingProblem(
+            peptide, mj_interaction, penalty_terms
+        )
         qubit_op = protein_folding_problem._qubit_op_full()
 
         expected_path = self.get_resource_path(
@@ -91,7 +95,9 @@ class TestProteinFoldingProblem(ProteinFoldingTestCase):
 
         mj_interaction = MiyazawaJerniganInteraction()
 
-        protein_folding_problem = ProteinFoldingProblem(peptide, mj_interaction, penalty_terms)
+        protein_folding_problem = ProteinFoldingProblem(
+            peptide, mj_interaction, penalty_terms
+        )
         qubit_op = protein_folding_problem._qubit_op_full()
 
         expected_path = self.get_resource_path(

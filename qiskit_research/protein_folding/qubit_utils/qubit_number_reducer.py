@@ -35,10 +35,16 @@ def _remove_unused_qubits(
     unused_qubits = _find_unused_qubits(total_hamiltonian)
     num_qubits = total_hamiltonian.num_qubits
     if isinstance(total_hamiltonian, PauliOp):
-        return _compress_pauli_op(num_qubits, total_hamiltonian, unused_qubits), unused_qubits
+        return (
+            _compress_pauli_op(num_qubits, total_hamiltonian, unused_qubits),
+            unused_qubits,
+        )
 
     elif isinstance(total_hamiltonian, PauliSumOp):
-        return _compress_pauli_sum_op(num_qubits, total_hamiltonian, unused_qubits), unused_qubits
+        return (
+            _compress_pauli_sum_op(num_qubits, total_hamiltonian, unused_qubits),
+            unused_qubits,
+        )
     return None, None
 
 

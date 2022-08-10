@@ -17,7 +17,9 @@ import numpy as np
 from qiskit.utils import optionals as _optionals
 
 
-from qiskit_research.protein_folding.utils.protein_shape_file_gen import ProteinShapeFileGen
+from qiskit_research.protein_folding.utils.protein_shape_file_gen import (
+    ProteinShapeFileGen,
+)
 
 if _optionals.HAS_MATPLOTLIB:
     # pylint: disable=import-error,unused-import
@@ -45,7 +47,11 @@ class ProteinPlotter:
             self._y_main,
             self._z_main,
         ) = np.split(self._shape_gen.main_positions.transpose(), 3, 0)
-        self._x_main, self._y_main, self._z_main = self._x_main[0], self._y_main[0], self._z_main[0]
+        self._x_main, self._y_main, self._z_main = (
+            self._x_main[0],
+            self._y_main[0],
+            self._z_main[0],
+        )
 
         self._fig = plt.figure()
         self._ax_graph = self._fig.add_subplot(projection="3d")

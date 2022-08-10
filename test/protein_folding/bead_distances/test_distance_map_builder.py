@@ -12,7 +12,9 @@
 """Tests DistanceMapBuilder."""
 from qiskit_research.protein_folding import Peptide
 from qiskit_research.protein_folding.bead_distances.distance_map import DistanceMap
-from qiskit_research.protein_folding.bead_distances.distance_map_builder import DistanceMapBuilder
+from qiskit_research.protein_folding.bead_distances.distance_map_builder import (
+    DistanceMapBuilder,
+)
 from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 from test.protein_folding.resources.file_parser import read_expected_file
 
@@ -68,19 +70,27 @@ class TestDistanceMapBuilder(ProteinFoldingTestCase):
 
         # checking only some of the entries
         self.assertEqual(
-            self.distance_map_builder._distance_map_axes[0][lower_main_bead_0][upper_main_bead_4],
+            self.distance_map_builder._distance_map_axes[0][lower_main_bead_0][
+                upper_main_bead_4
+            ],
             expected_1,
         )
         self.assertEqual(
-            self.distance_map_builder._distance_map_axes[0][lower_main_bead_1][upper_main_bead_4],
+            self.distance_map_builder._distance_map_axes[0][lower_main_bead_1][
+                upper_main_bead_4
+            ],
             expected_2,
         )
         self.assertEqual(
-            self.distance_map_builder._distance_map_axes[1][lower_main_bead_0][upper_main_bead_3],
+            self.distance_map_builder._distance_map_axes[1][lower_main_bead_0][
+                upper_main_bead_3
+            ],
             expected_3,
         )
         self.assertEqual(
-            self.distance_map_builder._distance_map_axes[1][lower_main_bead_0][upper_main_bead_4],
+            self.distance_map_builder._distance_map_axes[1][lower_main_bead_0][
+                upper_main_bead_4
+            ],
             expected_4,
         )
 
@@ -99,7 +109,9 @@ class TestDistanceMapBuilder(ProteinFoldingTestCase):
         upper_side_bead = self.peptide.get_main_chain[2].side_chain[0]
         # checking only some of the entries
         self.assertEqual(
-            self.distance_map_builder._distance_map_axes[0][lower_main_bead][upper_side_bead],
+            self.distance_map_builder._distance_map_axes[0][lower_main_bead][
+                upper_side_bead
+            ],
             expected,
         )
 

@@ -16,7 +16,9 @@ import tempfile
 import numpy as np
 from ddt import ddt, data, unpack
 from qiskit_research.protein_folding.peptide.peptide import Peptide
-from qiskit_research.protein_folding.utils.protein_shape_file_gen import ProteinShapeFileGen
+from qiskit_research.protein_folding.utils.protein_shape_file_gen import (
+    ProteinShapeFileGen,
+)
 
 from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 
@@ -48,11 +50,26 @@ class TestProteinShapeFileGen(ProteinFoldingTestCase):
             np.array(
                 [
                     ["A", "0.0", "0.0", "0.0"],
-                    ["P", "0.5773502691896258", "0.5773502691896258", "-0.5773502691896258"],
+                    [
+                        "P",
+                        "0.5773502691896258",
+                        "0.5773502691896258",
+                        "-0.5773502691896258",
+                    ],
                     ["R", "1.1547005383792517", "0.0", "-1.1547005383792517"],
-                    ["L", "1.7320508075688776", "-0.5773502691896258", "-0.5773502691896258"],
+                    [
+                        "L",
+                        "1.7320508075688776",
+                        "-0.5773502691896258",
+                        "-0.5773502691896258",
+                    ],
                     ["R", "2.3094010767585034", "0.0", "0.0"],
-                    ["F", "1.7320508075688776", "0.5773502691896258", "0.5773502691896258"],
+                    [
+                        "F",
+                        "1.7320508075688776",
+                        "0.5773502691896258",
+                        "0.5773502691896258",
+                    ],
                     ["Y", "1.154700538379252", "1.1547005383792517", "0.0"],
                 ],
                 dtype="<U32",
@@ -84,11 +101,26 @@ class TestProteinShapeFileGen(ProteinFoldingTestCase):
             np.array(
                 [
                     ["A", "0.0", "0.0", "0.0"],
-                    ["P", "0.5773502691896258", "0.5773502691896258", "-0.5773502691896258"],
+                    [
+                        "P",
+                        "0.5773502691896258",
+                        "0.5773502691896258",
+                        "-0.5773502691896258",
+                    ],
                     ["R", "1.1547005383792517", "0.0", "-1.1547005383792517"],
-                    ["L", "1.7320508075688776", "-0.5773502691896258", "-0.5773502691896258"],
+                    [
+                        "L",
+                        "1.7320508075688776",
+                        "-0.5773502691896258",
+                        "-0.5773502691896258",
+                    ],
                     ["R", "2.3094010767585034", "0.0", "0.0"],
-                    ["F", "0.5773502691896258", "0.5773502691896258", "-1.7320508075688776"],
+                    [
+                        "F",
+                        "0.5773502691896258",
+                        "0.5773502691896258",
+                        "-1.7320508075688776",
+                    ],
                     ["Y", "2.3094010767585034", "-1.1547005383792517", "0.0"],
                 ],
                 dtype="<U32",
@@ -139,7 +171,9 @@ class TestProteinShapeFileGen(ProteinFoldingTestCase):
             file_test = os.path.join(test_path, name_file + "_test.xyz")
             with tempfile.TemporaryDirectory() as tmpdirname:
                 filegen.save_xyz_file(
-                    name=name_file + "_temp", path=tmpdirname, comment="This is a dummy comment."
+                    name=name_file + "_temp",
+                    path=tmpdirname,
+                    comment="This is a dummy comment.",
                 )
 
                 file_temp = os.path.join(tmpdirname, name_file + "_temp.xyz")

@@ -59,7 +59,9 @@ class ProteinFoldingResult:
         self._turn_sequence = turn_sequence
         self._unused_qubits = unused_qubits
         self._peptide = peptide
-        self._main_chain_length = len(self._peptide.get_main_chain.main_chain_residue_sequence)
+        self._main_chain_length = len(
+            self._peptide.get_main_chain.main_chain_residue_sequence
+        )
         self._side_chain_hot_vector = self._peptide.get_side_chain_hot_vector()
 
         self._protein_shape_decoder = ProteinShapeDecoder(
@@ -136,7 +138,11 @@ class ProteinFoldingResult:
         return "".join(result[::-1])
 
     def save_xyz_file(
-        self, name: Optional[str] = None, path: str = "", comment: str = "", replace: bool = False
+        self,
+        name: Optional[str] = None,
+        path: str = "",
+        comment: str = "",
+        replace: bool = False,
     ) -> None:
 
         """

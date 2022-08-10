@@ -53,9 +53,9 @@ class DistanceMapBuilder:
         self._add_distances_side_chain(peptide)
         main_chain_len = len(peptide.get_main_chain)
 
-        distance_map: DefaultDict[BaseBead, Dict[BaseBead, OperatorBase]] = collections.defaultdict(
-            dict
-        )
+        distance_map: DefaultDict[
+            BaseBead, Dict[BaseBead, OperatorBase]
+        ] = collections.defaultdict(dict)
 
         for lower_bead_ind in range(1, main_chain_len):  # upper_bead_ind>lower_bead_ind
             for upper_bead_ind in range(lower_bead_ind + 1, main_chain_len + 1):
@@ -128,8 +128,12 @@ class DistanceMapBuilder:
 
                 for k in range(lower_bead_ind, upper_bead_ind):
                     indic_funs = peptide.get_main_chain[k - 1].indicator_functions
-                    for dist_map_ax, indic_fun_x in zip(self._distance_map_axes, indic_funs):
-                        dist_map_ax[lower_main_bead][upper_main_bead] += (-1) ** k * indic_fun_x
+                    for dist_map_ax, indic_fun_x in zip(
+                        self._distance_map_axes, indic_funs
+                    ):
+                        dist_map_ax[lower_main_bead][upper_main_bead] += (
+                            -1
+                        ) ** k * indic_fun_x
 
                 for dist_map_ax in self._distance_map_axes:
                     dist_map_ax[lower_main_bead][upper_main_bead] = _fix_qubits(
@@ -165,8 +169,12 @@ class DistanceMapBuilder:
                     upper_bead_ind, peptide
                 )
 
-                upper_indic_funs = self._get_indicator_funs(peptide, side_chain, upper_bead_ind)
-                lower_indic_funs = self._get_indicator_funs(peptide, side_chain, lower_bead_ind)
+                upper_indic_funs = self._get_indicator_funs(
+                    peptide, side_chain, upper_bead_ind
+                )
+                lower_indic_funs = self._get_indicator_funs(
+                    peptide, side_chain, lower_bead_ind
+                )
 
                 self._calc_dists_main_side_all_axes(
                     peptide,
@@ -197,7 +205,9 @@ class DistanceMapBuilder:
                 )
 
     @staticmethod
-    def _get_main_and_side_beads(bead_ind: int, peptide: Peptide) -> Tuple[MainBead, SideBead]:
+    def _get_main_and_side_beads(
+        bead_ind: int, peptide: Peptide
+    ) -> Tuple[MainBead, SideBead]:
         main_bead = peptide.get_main_chain[bead_ind - 1]
         if main_bead.side_chain:
             side_bead = main_bead.side_chain[0]
@@ -209,7 +219,8 @@ class DistanceMapBuilder:
     def _get_indicator_funs(
         peptide: Peptide, side_chain: List[bool], bead_ind: int
     ) -> Union[
-        Tuple[None, None, None, None], Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase]
+        Tuple[None, None, None, None],
+        Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase],
     ]:
         if side_chain[bead_ind - 1]:
             indic_0, indic_1, indic_2, indic_3 = (

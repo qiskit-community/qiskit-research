@@ -50,7 +50,9 @@ def create_protein_folding_result(
 
     penalty_terms = PenaltyParameters(penalty_chiral, penalty_back, penalty_1)
 
-    protein_folding_problem = ProteinFoldingProblem(peptide, mj_interaction, penalty_terms)
+    protein_folding_problem = ProteinFoldingProblem(
+        peptide, mj_interaction, penalty_terms
+    )
     protein_folding_problem.qubit_op()
 
     return ProteinFoldingResult(
@@ -125,7 +127,9 @@ class TestProteinFoldingResult(ProteinFoldingTestCase):
 
         with self.subTest("Unused Qubits"):
             max_index, used_qubits = unused_qubits_compact
-            expected_unused_qubits = [n for n in range(max_index + 1) if n not in used_qubits]
+            expected_unused_qubits = [
+                n for n in range(max_index + 1) if n not in used_qubits
+            ]
             self.assertEqual(
                 result._unused_qubits,
                 expected_unused_qubits,

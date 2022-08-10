@@ -57,22 +57,29 @@ class MainBead(BaseBead):
     def __eq__(self, other):
         if not isinstance(MainBead, other):
             return False
-        return self.main_index == other.main_index and self.chain_type == other.chain_type
+        return (
+            self.main_index == other.main_index and self.chain_type == other.chain_type
+        )
 
     def _build_turn_indicator_fun_0(self) -> OperatorBase:
         return (
             self._full_id
-            ^ ((self._full_id - self._turn_qubits[0]) @ (self._full_id - self._turn_qubits[1]))
+            ^ (
+                (self._full_id - self._turn_qubits[0])
+                @ (self._full_id - self._turn_qubits[1])
+            )
         ).reduce()
 
     def _build_turn_indicator_fun_1(self) -> OperatorBase:
         return (
-            self._full_id ^ (self._turn_qubits[1] @ (self._turn_qubits[1] - self._turn_qubits[0]))
+            self._full_id
+            ^ (self._turn_qubits[1] @ (self._turn_qubits[1] - self._turn_qubits[0]))
         ).reduce()
 
     def _build_turn_indicator_fun_2(self) -> OperatorBase:
         return (
-            self._full_id ^ (self._turn_qubits[0] @ (self._turn_qubits[0] - self._turn_qubits[1]))
+            self._full_id
+            ^ (self._turn_qubits[0] @ (self._turn_qubits[0] - self._turn_qubits[1]))
         ).reduce()
 
     def _build_turn_indicator_fun_3(self) -> OperatorBase:

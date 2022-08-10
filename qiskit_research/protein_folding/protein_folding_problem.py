@@ -24,7 +24,9 @@ from .qubit_utils import qubit_number_reducer
 from .sampling_problem import SamplingProblem
 
 if TYPE_CHECKING:
-    from qiskit_research.protein_folding.protein_folding_result import ProteinFoldingResult
+    from qiskit_research.protein_folding.protein_folding_result import (
+        ProteinFoldingResult,
+    )
 
 
 class ProteinFoldingProblem(SamplingProblem):
@@ -42,7 +44,10 @@ class ProteinFoldingProblem(SamplingProblem):
     """
 
     def __init__(
-        self, peptide: Peptide, interaction: Interaction, penalty_parameters: PenaltyParameters
+        self,
+        peptide: Peptide,
+        interaction: Interaction,
+        penalty_parameters: PenaltyParameters,
     ):
         """
         Args:

@@ -45,5 +45,7 @@ class MiyazawaJerniganInteraction(Interaction):
             for j in range(i + 1, chain_len + 1):
                 aa_i = list_aa.index(residue_sequence[i - 1])
                 aa_j = list_aa.index(residue_sequence[j - 1])
-                pair_energies[i, 0, j, 0] = mj_interaction[min(aa_i, aa_j), max(aa_i, aa_j)]
+                pair_energies[i, 0, j, 0] = mj_interaction[
+                    min(aa_i, aa_j), max(aa_i, aa_j)
+                ]
         return pair_energies

@@ -51,7 +51,11 @@ class SideBead(BaseBead):
 
     def __str__(self):
         return (
-            self.chain_type + "_" + str(self.side_index) + "_main_chain_ind_" + str(self.main_index)
+            self.chain_type
+            + "_"
+            + str(self.side_index)
+            + "_main_chain_ind_"
+            + str(self.main_index)
         )
 
     def __hash__(self):
@@ -68,18 +72,23 @@ class SideBead(BaseBead):
 
     def _build_turn_indicator_fun_0(self) -> OperatorBase:
         return (
-            ((self._full_id - self._turn_qubits[0]) @ (self._full_id - self._turn_qubits[1]))
+            (
+                (self._full_id - self._turn_qubits[0])
+                @ (self._full_id - self._turn_qubits[1])
+            )
             ^ self._full_id
         ).reduce()
 
     def _build_turn_indicator_fun_1(self) -> OperatorBase:
         return (
-            (self._turn_qubits[1] @ (self._turn_qubits[1] - self._turn_qubits[0])) ^ self._full_id
+            (self._turn_qubits[1] @ (self._turn_qubits[1] - self._turn_qubits[0]))
+            ^ self._full_id
         ).reduce()
 
     def _build_turn_indicator_fun_2(self) -> OperatorBase:
         return (
-            (self._turn_qubits[0] @ (self._turn_qubits[0] - self._turn_qubits[1])) ^ self._full_id
+            (self._turn_qubits[0] @ (self._turn_qubits[0] - self._turn_qubits[1]))
+            ^ self._full_id
         ).reduce()
 
     def _build_turn_indicator_fun_3(self) -> OperatorBase:
