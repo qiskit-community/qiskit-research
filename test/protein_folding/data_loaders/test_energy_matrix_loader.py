@@ -10,10 +10,10 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 """Tests EnergyMatrixLoader."""
+from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 from qiskit_research.protein_folding.data_loaders.energy_matrix_loader import (
     _load_energy_matrix_file,
 )
-from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 
 
 class TestEnergyMatrixLoader(ProteinFoldingTestCase):

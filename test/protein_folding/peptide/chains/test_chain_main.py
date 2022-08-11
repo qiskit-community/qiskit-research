@@ -11,13 +11,14 @@
 # that they have been altered from the originals.
 """Tests MainChain."""
 
+from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 from qiskit_research.protein_folding.exceptions.invalid_side_chain_exception import (
     InvalidSideChainException,
 )
 from qiskit_research.protein_folding.peptide.chains.main_chain import MainChain
 
 
-class TestMainChain:
+class TestMainChain(ProteinFoldingTestCase):
     """Tests MainChain."""
 
     def test_main_chain_constructor(self):

@@ -40,7 +40,7 @@ def _remove_unused_qubits(
             unused_qubits,
         )
 
-    elif isinstance(total_hamiltonian, PauliSumOp):
+    if isinstance(total_hamiltonian, PauliSumOp):
         return (
             _compress_pauli_sum_op(num_qubits, total_hamiltonian, unused_qubits),
             unused_qubits,

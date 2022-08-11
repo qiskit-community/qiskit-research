@@ -107,6 +107,7 @@ class ProteinFoldingProblem(SamplingProblem):
             A :class:`~qiskit_research.protein_folding.ProteinFoldingResult`
             instance that contains the protein folding result.
         """
+        # pylint: disable=import-error
         from .protein_folding_result import ProteinFoldingResult
 
         best_turn_sequence = max(raw_result.eigenstate, key=raw_result.eigenstate.get)

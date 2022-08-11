@@ -10,13 +10,11 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 """Tests ProteinShapeDecoder."""
+from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 from ddt import ddt, data, unpack
 from qiskit_research.protein_folding.utils.protein_shape_decoder import (
     ProteinShapeDecoder,
 )
-
-from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
-
 
 @ddt
 class TestProteinShapeDecoder(ProteinFoldingTestCase):

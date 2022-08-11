@@ -12,7 +12,7 @@
 """An exception for an invalid size of chains in a peptide."""
 
 
-class InvalidSizeException:
+class InvalidSizeException(Exception):
     """An exception for an invalid size of chains in a peptide."""
 
     pass

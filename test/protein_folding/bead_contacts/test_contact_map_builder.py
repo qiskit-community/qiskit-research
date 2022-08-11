@@ -10,10 +10,10 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 """Tests ContactMapBuilder."""
-from qiskit_research.protein_folding import Peptide
-from qiskit_research.protein_folding.bead_contacts import contact_map_builder
 from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 from test.protein_folding.resources.file_parser import read_expected_file
+from qiskit_research.protein_folding import Peptide
+from qiskit_research.protein_folding.bead_contacts import contact_map_builder
 
 PATH = "resources/test_contact_map_builder"
 

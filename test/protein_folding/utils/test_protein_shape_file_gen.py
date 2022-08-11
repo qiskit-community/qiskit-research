@@ -10,6 +10,7 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 """Tests ProteinShapeFileGen."""
+from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 import os
 import filecmp
 import tempfile
@@ -19,8 +20,6 @@ from qiskit_research.protein_folding.peptide.peptide import Peptide
 from qiskit_research.protein_folding.utils.protein_shape_file_gen import (
     ProteinShapeFileGen,
 )
-
-from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCase
 
 
 @ddt
