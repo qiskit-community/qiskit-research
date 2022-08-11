@@ -36,6 +36,9 @@ from qiskit_research.utils.pulse_scaling import (
     cr_scaling_passes,
     pulse_attaching_passes,
 )
+from qiskit_research.utils.periodic_dynamical_decoupling import (
+    PeriodicDynamicalDecoupling,
+)
 
 __all__ = [
     "add_pulse_calibrations",
@@ -48,4 +51,5 @@ __all__ = [
     "SECRCalibrationBuilder",
     "cr_scaling_passes",
     "PauliTwirl",
+    "PeriodicDynamicalDecoupling",
 ]

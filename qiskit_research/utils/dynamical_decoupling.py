@@ -14,9 +14,10 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Optional
 
 from qiskit import QuantumCircuit, pulse
+from qiskit.circuit import Gate
 from qiskit.circuit.library import XGate, YGate
 from qiskit.providers.backend import Backend
 from qiskit.pulse import DriveChannel
@@ -28,6 +29,9 @@ from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
 from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate
+from qiskit_research.utils.periodic_dynamical_decoupling import (
+    PeriodicDynamicalDecoupling,
+)
 
 X = XGate()
 Xp = XpGate()
@@ -48,7 +52,7 @@ DD_SEQUENCE = {
 
 
 def dynamical_decoupling_passes(
-    backend, dd_str: str, scheduler: BaseScheduler = ALAPScheduleAnalysis
+    backend: Backend, dd_str: str, scheduler: BaseScheduler = ALAPScheduleAnalysis
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for dynamical decoupling."""
     durations = get_instruction_durations(backend)
@@ -58,6 +62,32 @@ def dynamical_decoupling_passes(
     yield scheduler(durations)
     yield PadDynamicalDecoupling(
         durations, list(sequence), pulse_alignment=pulse_alignment
+    )
+
+
+def periodic_dynamical_decoupling(
+    backend: Backend,
+    base_dd_sequence: Optional[List[Gate]] = None,
+    base_spacing: Optional[List[float]] = None,
+    avg_min_delay: int = None,
+    max_repeats: int = 1,
+    scheduler: BaseScheduler = ALAPScheduleAnalysis,
+) -> Iterable[BasePass]:
+    """Yields transpilation passes for periodic dynamical decoupling."""
+    durations = get_instruction_durations(backend)
+    pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
+
+    if base_dd_sequence is None:
+        base_dd_sequence = [XGate(), XGate()]
+
+    yield scheduler(durations)
+    yield PeriodicDynamicalDecoupling(
+        durations,
+        base_dd_sequence,
+        base_spacing=base_spacing,
+        avg_min_delay=avg_min_delay,
+        max_repeats=max_repeats,
+        pulse_alignment=pulse_alignment,
     )
 
 

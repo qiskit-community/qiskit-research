@@ -15,6 +15,8 @@
 from typing import Any, Iterable, List, Optional, Union
 
 from qiskit.circuit import QuantumCircuit
+from qiskit.circuit import Gate
+from qiskit.circuit.library import XGate
 from qiskit.providers.backend import Backend
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
@@ -29,6 +31,7 @@ from qiskit_research.utils import (
     pulse_attaching_passes,
     add_pulse_calibrations,
 )
+from qiskit_research.utils.dynamical_decoupling import periodic_dynamical_decoupling
 
 
 def add_dynamical_decoupling(
@@ -45,6 +48,49 @@ def add_dynamical_decoupling(
     """
     pass_manager = PassManager(
         list(dynamical_decoupling_passes(backend, dd_str, scheduler))
+    )
+    if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
+        circuits_dd = pass_manager.run(circuits)
+        if add_pulse_cals:
+            add_pulse_calibrations(circuits_dd, backend)
+    else:
+        circuits_dd = [pass_manager.run(circs) for circs in circuits]
+        if add_pulse_cals:
+            for circs_dd in circuits_dd:
+                add_pulse_calibrations(circs_dd, backend)
+
+    return circuits_dd
+
+
+def add_periodic_dynamical_decoupling(
+    circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
+    backend: Backend,
+    base_dd_sequence: List[Gate] = None,
+    base_spacing: List[float] = None,
+    avg_min_delay: int = None,
+    max_repeats: int = 1,
+    scheduler: BaseScheduler = ALAPScheduleAnalysis,
+    add_pulse_cals: bool = False,
+) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
+    """Add periodic dynamical decoupling sequences and calibrations to circuits.
+
+    Adds periodic dynamical decoupling sequences and the calibrations necessary
+    to run them on an IBM backend.
+    """
+    if base_dd_sequence is None:
+        base_dd_sequence = [XGate(), XGate()]
+
+    pass_manager = PassManager(
+        list(
+            periodic_dynamical_decoupling(
+                backend,
+                base_dd_sequence=base_dd_sequence,
+                base_spacing=base_spacing,
+                avg_min_delay=avg_min_delay,
+                max_repeats=max_repeats,
+                scheduler=scheduler,
+            )
+        )
     )
     if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
         circuits_dd = pass_manager.run(circuits)
