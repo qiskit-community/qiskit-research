@@ -67,7 +67,8 @@ class TestScaledCostFuncs(unittest.TestCase):
             cost_function=cost_func_scaled_cr,
         )[0]
 
-        self.assertTrue(best_layout[1] < 1 and best_layout[1] > 0)
+self.assertGreater(best_layout[1], 0)
+self.assertLess(best_layout[1], 1)
 
         qc2_routed = transpile(qc2, backend, initial_layout=best_layout[0])
         qc2_bound = attach_cr_pulses(qc2_routed, backend, param_bind=param_bind)
