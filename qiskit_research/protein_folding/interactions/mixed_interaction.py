@@ -19,6 +19,8 @@ from ..data_loaders.energy_matrix_loader import (
     _load_energy_matrix_file,
 )
 
+# pylint: disable=too-few-public-methods
+
 
 class MixedInteraction(Interaction):
     """A class defining a mixed interaction between beads of a peptide."""

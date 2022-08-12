@@ -27,6 +27,8 @@ from .qubit_utils.qubit_fixing import _fix_qubits
 from .peptide.beads.base_bead import BaseBead
 from .peptide.peptide import Peptide
 
+# pylint: disable=too-few-public-methods
+
 
 class QubitOpBuilder:
     """Builds qubit operators for all Hamiltonian terms in the protein folding problem."""
@@ -55,7 +57,7 @@ class QubitOpBuilder:
             _side_chain_hot_vector[1] if len(_side_chain_hot_vector) > 1 else False
         )
 
-    def _build_qubit_op(self) -> Union[PauliSumOp, PauliOp]:
+    def build_qubit_op(self) -> Union[PauliSumOp, PauliOp]:
         """
         Builds a qubit operator for a total Hamiltonian for a protein folding problem. It includes
         8 terms responsible for chirality, geometry and nearest neighbors interactions.

@@ -92,7 +92,7 @@ class ProteinFoldingProblem(SamplingProblem):
         Returns:
             A qubit operator for the Hamiltonian encoding a protein folding problem.
         """
-        qubit_operator = self._qubit_op_builder._build_qubit_op()
+        qubit_operator = self._qubit_op_builder.build_qubit_op()
         return qubit_operator
 
     def interpret(self, raw_result: MinimumEigensolverResult) -> "ProteinFoldingResult":

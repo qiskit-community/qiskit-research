@@ -14,6 +14,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+# pylint: disable=too-few-public-methods
+
 
 class Interaction(ABC):
     """An abstract class defining an interaction between beads of a peptide."""

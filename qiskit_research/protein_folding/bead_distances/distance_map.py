@@ -34,7 +34,7 @@ class DistanceMap:
         (
             self._distance_map,
             self._num_distances,
-        ) = DistanceMapBuilder()._create_distance_qubits(peptide)
+        ) = DistanceMapBuilder().create_distance_qubits(peptide)
 
     def __getitem__(self, position: Tuple[BaseBead, BaseBead]) -> OperatorBase:
         item1, item2 = position

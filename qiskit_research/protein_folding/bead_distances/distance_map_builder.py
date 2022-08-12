@@ -23,6 +23,7 @@ from ..qubit_utils.qubit_fixing import _fix_qubits
 from ..peptide.peptide import Peptide
 
 logger = logging.getLogger(__name__)
+# pylint: disable=too-few-public-methods
 
 
 class DistanceMapBuilder:
@@ -34,7 +35,7 @@ class DistanceMapBuilder:
         self._distance_map_axes = self._init_dicts()
         self.num_distances = 0
 
-    def _create_distance_qubits(
+    def create_distance_qubits(
         self,
         peptide: Peptide,
     ) -> Tuple[DefaultDict[BaseBead, Dict[BaseBead, OperatorBase]], int]:

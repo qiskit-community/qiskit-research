@@ -93,7 +93,7 @@ class TestQubitOpBuilder(ProteinFoldingTestCase):
         penalty_params = PenaltyParameters(lambda_chiral, lambda_back, lambda_1)
         pair_energies = mj_interaction.calculate_energy_matrix(main_chain_residue_seq)
         qubit_op_builder = QubitOpBuilder(peptide, pair_energies, penalty_params)
-        qubit_op = qubit_op_builder._build_qubit_op()
+        qubit_op = qubit_op_builder.build_qubit_op()
         expected_path = self.get_resource_path(
             "test_build_qubit_op_expected",
             PATH,
@@ -114,7 +114,7 @@ class TestQubitOpBuilder(ProteinFoldingTestCase):
         penalty_params = PenaltyParameters(lambda_chiral, lambda_back, lambda_1)
         pair_energies = mj_interaction.calculate_energy_matrix(main_chain_residue_seq)
         qubit_op_builder = QubitOpBuilder(peptide, pair_energies, penalty_params)
-        qubit_op = qubit_op_builder._build_qubit_op()
+        qubit_op = qubit_op_builder.build_qubit_op()
         expected_path = self.get_resource_path(
             "test_build_qubit_op_2_expected",
             PATH,

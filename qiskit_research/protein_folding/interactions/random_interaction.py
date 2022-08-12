@@ -16,6 +16,8 @@ from qiskit.utils import algorithm_globals
 
 from .interaction import Interaction
 
+# pylint: disable=too-few-public-methods
+
 
 class RandomInteraction(Interaction):
     """A class defining a random interaction between beads of a peptide."""

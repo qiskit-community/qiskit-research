@@ -25,6 +25,7 @@ if _optionals.HAS_MATPLOTLIB:
     # pylint: disable=import-error,unused-import
     from matplotlib.pyplot import figure
     from matplotlib.axes import Axes
+# pylint: disable=too-few-public-methods
 
 
 @_optionals.HAS_MATPLOTLIB.require_in_instance
