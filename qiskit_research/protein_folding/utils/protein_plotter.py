@@ -62,7 +62,7 @@ class ProteinPlotter:
         Draws the main chain.
 
         """
-        for i, main_aminoacid in enumerate(self._shape_gen._main_chain_aminoacid_list):
+        for i, main_aminoacid in enumerate(self._shape_gen.main_chain_aminoacid_list):
             self._ax_graph.text(
                 self._x_main[i],
                 self._y_main[i],
@@ -83,7 +83,7 @@ class ProteinPlotter:
         Draws the side chain.
         """
         side_positions = self._shape_gen.side_positions
-        side_aminoacids = self._shape_gen._side_chain_aminoacid_list
+        side_aminoacids = self._shape_gen.side_chain_aminoacid_list
         for i, side_chain in enumerate(side_positions):
             if side_chain is not None:
                 x_side, y_side, z_side = side_chain
@@ -162,7 +162,7 @@ class ProteinPlotter:
 
         main_scatter = self._draw_main_chain()
 
-        if self._shape_gen._side_chain_aminoacid_list.any() is not None:
+        if self._shape_gen.side_chain_aminoacid_list.any() is not None:
             side_scatter = self._draw_side_chains()
         else:
             side_scatter = None

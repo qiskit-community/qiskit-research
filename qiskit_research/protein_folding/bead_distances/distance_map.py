@@ -55,7 +55,7 @@ class DistanceMap:
         """Returns the number of distances calculated."""
         return self._num_distances
 
-    def _first_neighbor(
+    def first_neighbor(
         self,
         peptide: Peptide,
         lower_bead_ind: int,
@@ -104,7 +104,7 @@ class DistanceMap:
         ) + pair_energies_multiplier * energy * _build_full_identity(x.num_qubits)
         return _fix_qubits(expression)
 
-    def _second_neighbor(
+    def second_neighbor(
         self,
         peptide: Peptide,
         lower_bead_ind: int,

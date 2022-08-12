@@ -307,13 +307,13 @@ class QubitOpBuilder:
                 if (j - i) % 2 == 0:
                     continue
                 h_bbbb += (self._contact_map.lower_main_upper_main[i][j]) ^ (
-                    self._distance_map._first_neighbor(
+                    self._distance_map.first_neighbor(
                         self._peptide, i, 0, j, 0, penalty_1, self._pair_energies
                     )
                 )
                 try:
                     h_bbbb += (self._contact_map.lower_main_upper_main[i][j]) ^ (
-                        self._distance_map._second_neighbor(
+                        self._distance_map.second_neighbor(
                             self._peptide,
                             i - 1,
                             0,
@@ -327,7 +327,7 @@ class QubitOpBuilder:
                     pass
                 try:
                     h_bbbb += (self._contact_map.lower_main_upper_main[i][j]) ^ (
-                        self._distance_map._second_neighbor(
+                        self._distance_map.second_neighbor(
                             self._peptide,
                             i + 1,
                             0,
@@ -341,7 +341,7 @@ class QubitOpBuilder:
                     pass
                 try:
                     h_bbbb += (self._contact_map.lower_main_upper_main[i][j]) ^ (
-                        self._distance_map._second_neighbor(
+                        self._distance_map.second_neighbor(
                             self._peptide,
                             i,
                             0,
@@ -355,7 +355,7 @@ class QubitOpBuilder:
                     pass
                 try:
                     h_bbbb += (self._contact_map.lower_main_upper_main[i][j]) ^ (
-                        self._distance_map._second_neighbor(
+                        self._distance_map.second_neighbor(
                             self._peptide,
                             i,
                             0,
@@ -392,17 +392,17 @@ class QubitOpBuilder:
                 if side_chain[j - 1] == 1:
 
                     h_bbsc += self._contact_map.lower_main_upper_side[i][j] ^ (
-                        self._distance_map._first_neighbor(
+                        self._distance_map.first_neighbor(
                             self._peptide, i, 0, j, 1, penalty_1, self._pair_energies
                         )
-                        + self._distance_map._second_neighbor(
+                        + self._distance_map.second_neighbor(
                             self._peptide, i, 0, j, 0, penalty_1, self._pair_energies
                         )
                     )
                     try:
                         h_bbsc += self._contact_map.lower_side_upper_side[i][
                             j
-                        ] ^ self._distance_map._first_neighbor(
+                        ] ^ self._distance_map.first_neighbor(
                             self._peptide, i, 1, j, 1, penalty_1, self._pair_energies
                         )
                     except (IndexError, KeyError, TypeError):
@@ -410,7 +410,7 @@ class QubitOpBuilder:
                     try:
                         h_bbsc += self._contact_map.lower_main_upper_side[i][
                             j
-                        ] ^ self._distance_map._second_neighbor(
+                        ] ^ self._distance_map.second_neighbor(
                             self._peptide,
                             i + 1,
                             0,
@@ -424,7 +424,7 @@ class QubitOpBuilder:
                     try:
                         h_bbsc += self._contact_map.lower_main_upper_side[i][
                             j
-                        ] ^ self._distance_map._second_neighbor(
+                        ] ^ self._distance_map.second_neighbor(
                             self._peptide,
                             i - 1,
                             0,
@@ -437,17 +437,17 @@ class QubitOpBuilder:
                         pass
                 if side_chain[i - 1] == 1:
                     h_scbb += self._contact_map.lower_side_upper_main[i][j] ^ (
-                        self._distance_map._first_neighbor(
+                        self._distance_map.first_neighbor(
                             self._peptide, i, 1, j, 0, penalty_1, self._pair_energies
                         )
-                        + self._distance_map._second_neighbor(
+                        + self._distance_map.second_neighbor(
                             self._peptide, i, 0, j, 0, penalty_1, self._pair_energies
                         )
                     )
                     try:
                         h_scbb += self._contact_map.lower_side_upper_main[i][
                             j
-                        ] ^ self._distance_map._second_neighbor(
+                        ] ^ self._distance_map.second_neighbor(
                             self._peptide, i, 1, j, 1, penalty_1, self._pair_energies
                         )
                     except (IndexError, KeyError, TypeError):
@@ -455,7 +455,7 @@ class QubitOpBuilder:
                     try:
                         h_scbb += self._contact_map.lower_side_upper_main[i][
                             j
-                        ] ^ self._distance_map._second_neighbor(
+                        ] ^ self._distance_map.second_neighbor(
                             self._peptide,
                             i,
                             1,
@@ -469,7 +469,7 @@ class QubitOpBuilder:
                     try:
                         h_scbb += self._contact_map.lower_side_upper_main[i][
                             j
-                        ] ^ self._distance_map._second_neighbor(
+                        ] ^ self._distance_map.second_neighbor(
                             self._peptide,
                             i,
                             1,
@@ -505,13 +505,13 @@ class QubitOpBuilder:
                 if side_chain[i - 1] == 0 or side_chain[j - 1] == 0:
                     continue
                 h_scsc += self._contact_map.lower_side_upper_side[i][j] ^ (
-                    self._distance_map._first_neighbor(
+                    self._distance_map.first_neighbor(
                         self._peptide, i, 1, j, 1, penalty_1, self._pair_energies
                     )
-                    + self._distance_map._second_neighbor(
+                    + self._distance_map.second_neighbor(
                         self._peptide, i, 1, j, 0, penalty_1, self._pair_energies
                     )
-                    + self._distance_map._second_neighbor(
+                    + self._distance_map.second_neighbor(
                         self._peptide, i, 0, j, 1, penalty_1, self._pair_energies
                     )
                 )

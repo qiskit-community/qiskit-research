@@ -45,10 +45,10 @@ class ProteinShapeFileGen:
         self._main_chain_turns = main_chain_turns
         self._side_chain_turns = side_chain_turns
 
-        self._main_chain_aminoacid_list = np.array(
+        self.main_chain_aminoacid_list = np.array(
             list(peptide.get_main_chain.main_chain_residue_sequence)
         )
-        self._side_chain_aminoacid_list = np.array(
+        self.side_chain_aminoacid_list = np.array(
             [
                 aminoacid.residue_sequence[0] if (aminoacid is not None) else None
                 for aminoacid in peptide.get_side_chains()
@@ -160,11 +160,11 @@ class ProteinShapeFileGen:
             An array with the symbols of the atoms and their cartesian coordinates.
         """
         main_data = np.column_stack(
-            [self._main_chain_aminoacid_list, self.main_positions]
+            [self.main_chain_aminoacid_list, self.main_positions]
         )
 
         # We will discard the None values corresponding to empty side chains.
-        side_aminoacid = np.array(self._side_chain_aminoacid_list)
+        side_aminoacid = np.array(self.side_chain_aminoacid_list)
         side_aminoacid = side_aminoacid[side_aminoacid != np.array(None)]
         side_aminoacid = side_aminoacid.astype("<U32")
 

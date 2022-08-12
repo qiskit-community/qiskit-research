@@ -26,6 +26,8 @@ from qiskit_research.protein_folding.peptide.peptide import Peptide
 
 from qiskit_research.protein_folding.penalty_parameters import PenaltyParameters
 
+# pylint: disable=protected-access
+
 
 def create_protein_folding_result(
     main_chain: str, side_chains: List[str], turn_sequence: str

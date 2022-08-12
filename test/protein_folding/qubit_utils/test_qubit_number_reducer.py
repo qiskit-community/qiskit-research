@@ -14,7 +14,7 @@ from test.protein_folding.protein_folding_test_case import ProteinFoldingTestCas
 from qiskit.opflow import I, Z
 from qiskit_research.protein_folding.qubit_utils.qubit_number_reducer import (
     _find_unused_qubits,
-    _remove_unused_qubits,
+    remove_unused_qubits,
 )
 
 
@@ -81,7 +81,7 @@ class TestQubitNumberReducer(ProteinFoldingTestCase):
         """
         operator = (I ^ I ^ I ^ I ^ I) + (Z ^ I ^ I ^ I ^ I) + (I ^ I ^ I ^ I ^ Z)
 
-        reduced, unused = _remove_unused_qubits(operator)
+        reduced, unused = remove_unused_qubits(operator)
         expected_reduced = 1.0 * (I ^ I) + 1.0 * (Z ^ I) + 1.0 * (I ^ Z)
         expected_unused = [1, 2, 3]
         self.assertEqual(reduced, expected_reduced)
@@ -92,7 +92,7 @@ class TestQubitNumberReducer(ProteinFoldingTestCase):
         Tests that unused qubits are found correctly.
         """
         operator = (I ^ I ^ I ^ Z ^ I) + (I ^ I ^ Z ^ I ^ I)
-        reduced, unused = _remove_unused_qubits(operator)
+        reduced, unused = remove_unused_qubits(operator)
         expected_reduced = 1.0 * (I ^ Z) + 1.0 * (Z ^ I)
         expected_unused = [0, 3, 4]
         self.assertEqual(reduced, expected_reduced)
@@ -103,7 +103,7 @@ class TestQubitNumberReducer(ProteinFoldingTestCase):
         Tests that unused qubits are found correctly.
         """
         operator = (Z ^ I ^ Z) + (I ^ Z ^ I)
-        reduced, unused = _remove_unused_qubits(operator)
+        reduced, unused = remove_unused_qubits(operator)
         expected_reduced = 1.0 * (I ^ Z ^ I) + 1.0 * (Z ^ I ^ Z)
         expected_unused = []
         self.assertEqual(reduced, expected_reduced)
@@ -114,7 +114,7 @@ class TestQubitNumberReducer(ProteinFoldingTestCase):
         Tests that unused qubits are found correctly.
         """
         operator = I ^ I ^ I ^ Z ^ I
-        reduced, unused = _remove_unused_qubits(operator)
+        reduced, unused = remove_unused_qubits(operator)
         expected_reduced = 1.0 * (Z)
         expected_unused = [0, 2, 3, 4]
         self.assertEqual(reduced, expected_reduced)
@@ -125,7 +125,7 @@ class TestQubitNumberReducer(ProteinFoldingTestCase):
         Tests that unused qubits are found correctly.
         """
         operator = I ^ Z ^ I ^ Z ^ I
-        reduced, unused = _remove_unused_qubits(operator)
+        reduced, unused = remove_unused_qubits(operator)
         expected_reduced = 1.0 * (Z ^ Z)
         expected_unused = [0, 2, 4]
         self.assertEqual(reduced, expected_reduced)

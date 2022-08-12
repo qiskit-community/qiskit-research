@@ -16,6 +16,7 @@ from qiskit_research.protein_folding import Peptide, MiyazawaJerniganInteraction
 from qiskit_research.protein_folding.bead_distances.distance_map import DistanceMap
 
 PATH = "resources/test_distance_map"
+# pylint: disable=protected-access
 
 
 class TestDistanceMap(ProteinFoldingTestCase):
@@ -38,7 +39,7 @@ class TestDistanceMap(ProteinFoldingTestCase):
         side_chain_lower_main_bead = 0
         side_chain_upper_main_bead = 0
         distance_map = DistanceMap(peptide)
-        expr = distance_map._first_neighbor(
+        expr = distance_map.first_neighbor(
             peptide,
             lower_main_bead_index,
             side_chain_lower_main_bead,
@@ -72,7 +73,7 @@ class TestDistanceMap(ProteinFoldingTestCase):
         side_chain_lower_main_bead = 1
         side_chain_upper_main_bead = 1
         distance_map = DistanceMap(peptide)
-        expr = distance_map._first_neighbor(
+        expr = distance_map.first_neighbor(
             peptide,
             lower_main_bead_index,
             side_chain_lower_main_bead,
@@ -105,7 +106,7 @@ class TestDistanceMap(ProteinFoldingTestCase):
         side_chain_lower_main_bead = 0
         side_chain_upper_main_bead = 0
         distance_map = DistanceMap(peptide)
-        second_neighbor = distance_map._second_neighbor(
+        second_neighbor = distance_map.second_neighbor(
             peptide,
             lower_main_bead_index,
             side_chain_upper_main_bead,
@@ -137,7 +138,7 @@ class TestDistanceMap(ProteinFoldingTestCase):
         side_chain_lower_main_bead = 1
         side_chain_upper_main_bead = 1
         distance_map = DistanceMap(peptide)
-        second_neighbor = distance_map._second_neighbor(
+        second_neighbor = distance_map.second_neighbor(
             peptide,
             lower_main_bead_index,
             side_chain_upper_main_bead,

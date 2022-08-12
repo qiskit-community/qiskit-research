@@ -16,6 +16,7 @@ from qiskit_research.protein_folding import Peptide
 from qiskit_research.protein_folding.bead_contacts import contact_map_builder
 
 PATH = "resources/test_contact_map_builder"
+# pylint: disable=protected-access
 
 
 class TestContactMapBuilder(ProteinFoldingTestCase):

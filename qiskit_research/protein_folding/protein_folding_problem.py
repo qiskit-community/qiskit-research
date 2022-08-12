@@ -77,7 +77,7 @@ class ProteinFoldingProblem(SamplingProblem):
             A qubit operator for the Hamiltonian encoding a protein folding problem on an
             optimized number of qubits.
         """
-        qubit_operator, unused_qubits = qubit_number_reducer._remove_unused_qubits(
+        qubit_operator, unused_qubits = qubit_number_reducer.remove_unused_qubits(
             self._qubit_op_full()
         )
         self._unused_qubits = unused_qubits

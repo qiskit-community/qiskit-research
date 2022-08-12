@@ -16,6 +16,8 @@ from qiskit_research.protein_folding.utils.protein_shape_decoder import (
     ProteinShapeDecoder,
 )
 
+# pylint: disable=protected-access
+
 
 @ddt
 class TestProteinShapeDecoder(ProteinFoldingTestCase):

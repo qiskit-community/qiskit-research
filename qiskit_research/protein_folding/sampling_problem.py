@@ -25,9 +25,7 @@ class SamplingProblem(ABC):
     @abstractmethod
     def qubit_op(self) -> Union[PauliOp, PauliSumOp]:
         """Returns a qubit operator that represents a Hamiltonian encoding the sampling problem."""
-        pass
 
     @abstractmethod
     def interpret(self, raw_result: MinimumEigensolverResult) -> EigenstateResult:
         """Interprets results of an optimization."""
-        pass

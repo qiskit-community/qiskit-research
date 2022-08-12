@@ -17,7 +17,7 @@ from qiskit.opflow import PauliSumOp, PauliOp, OperatorBase
 from qiskit.quantum_info import PauliTable, SparsePauliOp, Pauli
 
 
-def _remove_unused_qubits(
+def remove_unused_qubits(
     total_hamiltonian: Union[PauliSumOp, PauliOp]
 ) -> Tuple[Union[PauliSumOp, PauliOp], List[int]]:
     """

@@ -19,6 +19,7 @@ from qiskit_research.protein_folding.bead_distances.distance_map_builder import 
 )
 
 PATH = "resources/test_distance_map_builder"
+# pylint: disable=protected-access
 
 
 class TestDistanceMapBuilder(ProteinFoldingTestCase):

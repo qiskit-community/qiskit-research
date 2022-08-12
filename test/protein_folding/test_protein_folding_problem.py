@@ -23,6 +23,7 @@ from qiskit_research.protein_folding.penalty_parameters import PenaltyParameters
 
 
 PATH = "resources/test_protein_folding_problem"
+# pylint: disable=protected-access
 
 
 class TestProteinFoldingProblem(ProteinFoldingTestCase):

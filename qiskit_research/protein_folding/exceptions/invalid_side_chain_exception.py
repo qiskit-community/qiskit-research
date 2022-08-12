@@ -14,5 +14,3 @@
 
 class InvalidSideChainException(Exception):
     """An exception for an invalid side chain in a peptide."""
-
-    pass

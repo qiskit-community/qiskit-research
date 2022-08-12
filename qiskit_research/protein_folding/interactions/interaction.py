@@ -32,4 +32,3 @@ class Interaction(ABC):
         Returns:
             Numpy array of pair energies for amino acids.
         """
-        pass

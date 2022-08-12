@@ -21,6 +21,7 @@ from qiskit_research.protein_folding.penalty_parameters import PenaltyParameters
 from qiskit_research.protein_folding.peptide.peptide import Peptide
 
 PATH = "resources/test_qubit_op_builder"
+# pylint: disable=protected-access
 
 
 class TestQubitOpBuilder(ProteinFoldingTestCase):
