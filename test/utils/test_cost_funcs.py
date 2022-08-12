@@ -1,0 +1,120 @@
+# This code is part of Qiskit.
+#
+# (C) Copyright IBM 2022.
+#
+# This code is licensed under the Apache License, Version 2.0. You may
+# obtain a copy of this license in the LICENSE.txt file in the root directory
+# of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Any modifications or derivative works of this code must retain this
+# copyright notice, and modified files need to carry a notice indicating
+# that they have been altered from the originals.
+
+"""Test pulse scaling."""
+
+import unittest
+
+from mapomatic import deflate_circuit, evaluate_layouts, matching_layouts
+import numpy as np
+
+from qiskit import transpile
+from qiskit.circuit import Parameter, QuantumCircuit
+from qiskit.providers.fake_provider import FakeWashington
+
+from qiskit_research.utils.gates import SECRGate
+from qiskit_research.utils.convenience import (
+    add_dynamical_decoupling,
+    attach_cr_pulses,
+)
+from qiskit_research.utils.cost_funcs import cost_func_scaled_cr
+
+
+class TestScaledCostFuncs(unittest.TestCase):
+    """Test cost functions for scaled pulses."""
+
+    def test_cost_func_rzx(self):
+        """Test cost function for RZX"""
+        backend = FakeWashington()
+        rng = np.random.default_rng()
+
+        phi = Parameter("$\\phi$")
+        theta = Parameter("$\\theta$")
+
+        qc = QuantumCircuit(3)
+        qc.rzx(theta, 0, 1)
+        qc.rzx(phi, 1, 2)
+
+        param_bind = {
+            phi: rng.uniform(0.2, 0.8),
+            theta: rng.uniform(0.2, 0.8),
+        }
+
+        qc_routed = transpile(qc, backend, optimization_level=3)
+        qc_bound = attach_cr_pulses(qc_routed, backend, param_bind=param_bind)
+        qc_sched = transpile(
+            qc_bound, backend, optimization_level=0, scheduling_method="alap"
+        )
+        layouts = matching_layouts(deflate_circuit(qc_sched), backend)
+        best_layout = evaluate_layouts(
+            deflate_circuit(qc_sched),
+            layouts,
+            backend,
+            cost_function=cost_func_scaled_cr,
+        )[0]
+
+        self.assertTrue(best_layout[1] < 1 and best_layout[1] > 0)
+
+    def test_cost_func_secr(self):
+        """Test cost function for RZX"""
+        backend = FakeWashington()
+        rng = np.random.default_rng()
+
+        phi = Parameter("$\\phi$")
+        theta = Parameter("$\\theta$")
+
+        qc = QuantumCircuit(3)
+        qc.append(SECRGate(theta), [0, 1])
+        qc.append(SECRGate(phi), [1, 2])
+
+        param_bind = {
+            phi: rng.uniform(0.2, 0.8),
+            theta: rng.uniform(0.2, 0.8),
+        }
+
+        qc_routed = transpile(qc, backend, optimization_level=3)
+        qc_bound = attach_cr_pulses(qc_routed, backend, param_bind=param_bind)
+        qc_sched = transpile(
+            qc_bound, backend, optimization_level=0, scheduling_method="alap"
+        )
+        layouts = matching_layouts(deflate_circuit(qc_sched), backend)
+        best_layout = evaluate_layouts(
+            deflate_circuit(qc_sched),
+            layouts,
+            backend,
+            cost_function=cost_func_scaled_cr,
+        )[0]
+
+        self.assertTrue(best_layout[1] < 1 and best_layout[1] > 0)
+
+    def test_cost_func_dd(self):
+        """Test cost function for RZX"""
+        backend = FakeWashington()
+
+        qc = QuantumCircuit(5)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.cx(1, 2)
+        qc.cx(2, 3)
+        qc.cx(3, 4)
+
+        layout = [0, 1, 2, 3, 4]
+        qc_t = transpile(qc, backend, initial_layout=layout)
+        qc_dd = add_dynamical_decoupling(qc_t, backend, "XY4pm", add_pulse_cals=True)
+        best_layout = evaluate_layouts(
+            qc_dd,
+            layout,
+            backend,
+            cost_function=cost_func_scaled_cr,
+        )[0]
+
+        self.assertTrue(best_layout[1] < 1 and best_layout[1] > 0)
