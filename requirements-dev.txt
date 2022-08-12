@@ -9,4 +9,3 @@ pytest==7.1
 reno
 sphinx-autodoc-typehints
 treon==0.1.3
-unittest
