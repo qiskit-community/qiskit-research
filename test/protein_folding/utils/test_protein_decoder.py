@@ -16,6 +16,7 @@ from qiskit_research.protein_folding.utils.protein_shape_decoder import (
     ProteinShapeDecoder,
 )
 
+
 @ddt
 class TestProteinShapeDecoder(ProteinFoldingTestCase):
     """Tests ProteinShapeDecoder."""
