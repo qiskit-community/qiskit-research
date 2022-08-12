@@ -156,7 +156,8 @@ class TestScaledCostFuncs(unittest.TestCase):
             cost_function=cost_func_scaled_cr,
         )[0]
 
-        self.assertTrue(best_layout[1] < 1 and best_layout[1] > 0)
+self.assertGreater(best_layout[1], 0)
+self.assertLess(best_layout[1], 1)
 
         qc2_t = transpile(qc2, backend, initial_layout=layout)
         qc2_dd = add_dynamical_decoupling(qc2_t, backend, "XY4pm", add_pulse_cals=True)
