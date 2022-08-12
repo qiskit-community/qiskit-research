@@ -14,7 +14,6 @@
 
 import unittest
 
-from copy import deepcopy
 from mapomatic import deflate_circuit, evaluate_layouts, matching_layouts
 import numpy as np
 
@@ -36,7 +35,7 @@ class TestScaledCostFuncs(unittest.TestCase):
     def test_cost_func_rzx(self):
         """Test cost function for RZX"""
         backend = FakeWashington()
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(12345)
 
         phi = Parameter("$\\phi$")
         theta = Parameter("$\\theta$")
@@ -45,7 +44,7 @@ class TestScaledCostFuncs(unittest.TestCase):
         qc.rzx(theta, 0, 1)
         qc.rzx(phi, 1, 2)
 
-        qc2 = deepcopy(qc)
+        qc2 = qc.copy()
         qc2.rzx(theta, 0, 1)
         qc2.rzx(phi, 1, 2)
 
@@ -67,8 +66,8 @@ class TestScaledCostFuncs(unittest.TestCase):
             cost_function=cost_func_scaled_cr,
         )[0]
 
-self.assertGreater(best_layout[1], 0)
-self.assertLess(best_layout[1], 1)
+        self.assertGreater(best_layout[1], 0)
+        self.assertLess(best_layout[1], 1)
 
         qc2_routed = transpile(qc2, backend, initial_layout=best_layout[0])
         qc2_bound = attach_cr_pulses(qc2_routed, backend, param_bind=param_bind)
@@ -82,12 +81,12 @@ self.assertLess(best_layout[1], 1)
             cost_function=cost_func_scaled_cr,
         )[0]
 
-        self.assertTrue(best_layout[1] < best_layout2[1])
+        self.assertLess(best_layout[1], best_layout2[1])
 
     def test_cost_func_secr(self):
         """Test cost function for RZX"""
         backend = FakeWashington()
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(12345)
 
         phi = Parameter("$\\phi$")
         theta = Parameter("$\\theta$")
@@ -96,7 +95,7 @@ self.assertLess(best_layout[1], 1)
         qc.append(SECRGate(theta), [0, 1])
         qc.append(SECRGate(phi), [1, 2])
 
-        qc2 = deepcopy(qc)
+        qc2 = qc.copy()
         qc2.append(SECRGate(theta), [0, 1])
         qc2.append(SECRGate(phi), [1, 2])
 
@@ -118,7 +117,8 @@ self.assertLess(best_layout[1], 1)
             cost_function=cost_func_scaled_cr,
         )[0]
 
-        self.assertTrue(best_layout[1] < 1 and best_layout[1] > 0)
+        self.assertGreater(best_layout[1], 0)
+        self.assertLess(best_layout[1], 1)
 
         qc2_routed = transpile(qc2, backend, initial_layout=best_layout[0])
         qc2_bound = attach_cr_pulses(qc2_routed, backend, param_bind=param_bind)
@@ -132,7 +132,7 @@ self.assertLess(best_layout[1], 1)
             cost_function=cost_func_scaled_cr,
         )[0]
 
-        self.assertTrue(best_layout[1] < best_layout2[1])
+        self.assertLess(best_layout[1], best_layout2[1])
 
     def test_cost_func_dd(self):
         """Test cost function for RZX"""
@@ -143,7 +143,7 @@ self.assertLess(best_layout[1], 1)
         qc.cx(0, 1)
         qc.cx(1, 2)
 
-        qc2 = deepcopy(qc)
+        qc2 = qc.copy()
         qc2.cx(2, 3)
         qc2.cx(3, 4)
 
@@ -157,8 +157,8 @@ self.assertLess(best_layout[1], 1)
             cost_function=cost_func_scaled_cr,
         )[0]
 
-self.assertGreater(best_layout[1], 0)
-self.assertLess(best_layout[1], 1)
+        self.assertGreater(best_layout[1], 0)
+        self.assertLess(best_layout[1], 1)
 
         qc2_t = transpile(qc2, backend, initial_layout=layout)
         qc2_dd = add_dynamical_decoupling(qc2_t, backend, "XY4pm", add_pulse_cals=True)
@@ -169,4 +169,4 @@ self.assertLess(best_layout[1], 1)
             cost_function=cost_func_scaled_cr,
         )[0]
 
-        self.assertTrue(best_layout[1] < best_layout2[1])
+        self.assertLess(best_layout[1], best_layout2[1])
