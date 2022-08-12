@@ -138,7 +138,8 @@ class TestProteinShapeFileGen(ProteinFoldingTestCase):
         xyz,
         name_file,
     ):
-        """Tests if ProteinShapeFileGen is properly initialized and its attributes are properly set."""
+        """Tests if ProteinShapeFileGen is properly initialized and its attributes are properly
+        set."""
         peptide = Peptide(
             main_chain_residue_sequence=main_chain_residue_sequence,
             side_chain_residue_sequences=side_chain_residue_sequences,

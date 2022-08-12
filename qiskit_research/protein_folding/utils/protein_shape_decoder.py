@@ -84,7 +84,9 @@ class ProteinShapeDecoder:
     def _get_main_turns(self) -> List[int]:
         """
         Returns the list of turns for the molecule corresponding to its turn sequence.
-        The first element of the list corresponds to the turn of the second aminoacid in the peptide.
+        The first element of the list corresponds to the turn of the second aminoacid in the
+        peptide.
+
         Returns:
                 A list of integers representing the sequence of turns of the molecule.
 

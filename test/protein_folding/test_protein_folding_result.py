@@ -108,7 +108,8 @@ class TestProteinFoldingResult(ProteinFoldingTestCase):
         unused_qubits_compact,
         main_chain_length,
     ):
-        """Tests if ProteinFoldingResult is initialized properly and its attributes are properly set."""
+        """Tests if ProteinFoldingResult is initialized properly and its attributes are properly
+        set."""
         result = create_protein_folding_result(
             main_chain=main_chain, side_chains=side_chain, turn_sequence=turn_sequence
         )

@@ -37,7 +37,7 @@ class ProteinPlotter:
             shape_gen: :class:`~qiskit_research.protein_folding.utils.ProteinShapeFileGen`
             with the shape to be plotted.
         """
-        # pylint: disable=import-error
+        # pylint: disable=import-outside-toplevel
         import matplotlib.pyplot as plt
 
         self._shape_gen = shape_gen

@@ -49,8 +49,8 @@ class ProteinFoldingResult:
         """
         Args:
             peptide: The peptide defining the protein subject to the folding problem.
-            unused_qubits: The list of indices for qubits in the original problem formulation that were
-                removed during compression.
+            unused_qubits: The list of indices for qubits in the original problem formulation that
+                were removed during compression.
             turn_sequence: The bit sequence encoding the turns of the shape of the protein.
 
         """
@@ -107,20 +107,20 @@ class ProteinFoldingResult:
           be set to any value due to rotation symmetry. Therefore the first 4 bits will be unused.
 
         * If there is no secondary chain going out from the 2nd bead in the main chain, another
-          symmetry argument makes it such that the 3rd turn has effectively only 2 options. Therefore
-          the 5th qubit can sometimes be unused as well.
+          symmetry argument makes it such that the 3rd turn has effectively only 2 options.
+          Therefore the 5th qubit can sometimes be unused as well.
 
-        * The remaining pairs of qubits will encode the remaining turns of the main bead and then the
-          turns of the secondary chains in that order.
+        * The remaining pairs of qubits will encode the remaining turns of the main bead and then
+          the turns of the secondary chains in that order.
 
         Example: In the context of a protein of length 5 with secondary chains in the 2nd and 4th
         position ``10110110`` encodes the most efficient configuration. We start by flipping the
-        string and pairing up the bits ``01-10-11-01``. Note that in this case we have an even number
-        of bits. This is only due to the fact that we have a secondary chain in the second position.
-        Since the first 2 turns on the main chain were arbitrarily set (In qiskit we chose to set
-        them to ``[1,0]`` respectively) the sequence of turns in the main chain is ``[0,1,1,2]``.
-        The remaining pairs of bits indicate that the turns from the secondary chains in the 2nd
-        and 4th position are ``3`` and ``1`` respectively.
+        string and pairing up the bits ``01-10-11-01``. Note that in this case we have an even
+        number of bits. This is only due to the fact that we have a secondary chain in the second
+        position. Since the first 2 turns on the main chain were arbitrarily set (In qiskit we
+        chose to set them to ``[1,0]`` respectively) the sequence of turns in the main chain is
+        ``[0,1,1,2]``. The remaining pairs of bits indicate that the turns from the secondary
+        chains in the 2nd and 4th position are ``3`` and ``1`` respectively.
         For more information see: `<https://doi.org/10.1038/s41534-021-00368-4>`__.
 
         """
