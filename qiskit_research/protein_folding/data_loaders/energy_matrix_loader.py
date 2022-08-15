@@ -11,7 +11,6 @@
 # that they have been altered from the originals.
 """Loads the energy matrix from the Miyazawa-Jernigan potential file."""
 import os
-from pathlib import Path
 from typing import Tuple, List
 
 import numpy as np
