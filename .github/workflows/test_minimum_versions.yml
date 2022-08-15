@@ -27,6 +27,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           sed -i 's/[>~]=/==/g' requirements-dev.txt requirements.txt
+          echo "recursive-include qiskit_research *.txt" >> MANIFEST.in
           cat <<- EOF > get_tox_minversion.py
           import configparser
           config = configparser.ConfigParser()
