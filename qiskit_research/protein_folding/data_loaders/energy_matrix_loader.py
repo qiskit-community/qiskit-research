@@ -28,12 +28,10 @@ def _load_energy_matrix_file() -> Tuple[np.ndarray, List[str]]:
 
 
 def _construct_resource_path():
-    current_path_parent = Path(__file__).resolve().parent.parent
-    resource_relative_path = Path("interactions/resources")
-    current_path_parent = os.path.join(current_path_parent, resource_relative_path)
-    filename = "mj_matrix.txt"
-    path = os.path.normpath(os.path.join(current_path_parent, filename))
-    return path
+    resource_path = Path(
+        "qiskit_research/protein_folding/interactions/resources/mj_matrix.txt"
+    )
+    return os.path.normpath(resource_path)
 
 
 def _parse_energy_matrix(matrix: np.ndarray) -> np.ndarray:
