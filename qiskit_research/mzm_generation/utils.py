@@ -65,25 +65,13 @@ from qiskit_research.utils import (
     SECRCalibrationBuilder,
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
-    dynamical_decoupling_passes,
     add_pulse_calibrations,
+    dynamical_decoupling_passes,
+    get_backend,
 )
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
-
-
-def get_backend(
-    name: str, provider: Optional[Provider], seed_simulator: Optional[int] = None
-) -> Backend:
-    """Retrieve a backend."""
-    if provider is not None:
-        return provider.get_backend(name)
-    if name == "aer_simulator":
-        return AerSimulator(seed_simulator=seed_simulator)
-    if name == "statevector_simulator":
-        return BasicAer.get_backend("statevector_simulator")
-    raise ValueError("The given name does not match any supported backends.")
 
 
 def orbital_combinations(
