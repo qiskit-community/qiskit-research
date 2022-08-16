@@ -38,6 +38,7 @@ from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.passes import (
     CXCancellation,
     Optimize1qGatesDecomposition,
+    RZXCalibrationBuilder,
     TemplateOptimization,
 )
 from qiskit.transpiler.passes.calibration.builders import CalibrationBuilder
@@ -347,3 +348,4 @@ def pulse_attaching_passes(
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()
     yield SECRCalibrationBuilder(inst_sched_map, channel_map)
+    yield RZXCalibrationBuilder(inst_sched_map, channel_map)
