@@ -33,11 +33,10 @@ from typing import (
 import mapomatic
 import mthree
 import numpy as np
-from qiskit import BasicAer, QuantumCircuit
+from qiskit import QuantumCircuit
 from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary
 from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.providers import Backend, Provider
-from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler import CouplingMap, Layout, PassManager
 from qiskit.transpiler.basepasses import BasePass
