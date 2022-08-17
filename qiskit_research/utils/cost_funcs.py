@@ -23,19 +23,19 @@ import numpy as np
 
 def cost_func_scaled_cr(
     circ: QuantumCircuit,
-    layouts: List[List[int]],
+    layouts: List[List],
     backend: Backend,
 ):
     """
-    A custom cost function that includes T1 and T2 computed during idle periods
+    A custom cost function that includes T1 and T2 computed during idle periods,
+    for an already transpiled and scheduled circuit circ
 
     Parameters:
         circ (QuantumCircuit): scheduled circuit of interest
-        layouts (list of lists): List of specified layouts
         backend (IBMQBackend): An IBM Quantum backend instance
 
     Returns:
-        list: Tuples of layout and cost
+        float: error
     """
     out = []
     props = backend.properties()
@@ -43,11 +43,14 @@ def cost_func_scaled_cr(
     num_qubits = backend.configuration().num_qubits
     t1s = [props.qubit_property(qq, "T1")[0] for qq in range(num_qubits)]
     t2s = [props.qubit_property(qq, "T2")[0] for qq in range(num_qubits)]
+
+    error = 0
+    fid = 1
+    touched = set()
     for layout in layouts:
-        error = 0
-        fid = 1
-        touched = set()
         for item in circ.data:
+            # if item[0].name != "delay":
+            #     import pdb; pdb.set_trace()
             if item[0].name == "cx":
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
@@ -61,24 +64,23 @@ def cost_func_scaled_cr(
                 q1 = circ.find_bit(item[1][1]).index
 
                 cr_error = (float(item[0].params[0]) / (pi / 2)) * props.gate_error(
-                    "cx", [layout[q0], layout[q1]]
+                    "cx", [q0, q1]
                 )
 
                 # assumes control qubit is actually control for cr
-                echo_error = props.gate_error("x", layout[q0])
+                echo_error = props.gate_error("x", q0)
 
                 fid *= 1 - max(cr_error, 2 * echo_error)
-
             elif item[0].name == "secr":
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
 
                 cr_error = (float(item[0].params[0]) / (pi / 2)) * props.gate_error(
-                    "cx", [layout[q0], layout[q1]]
+                    "cx", [q0, q1]
                 )
 
                 # assumes control qubit is actually control for cr
-                echo_error = props.gate_error("x", layout[q0])
+                echo_error = props.gate_error("x", q0)
 
                 fid *= 1 - max(cr_error, echo_error)
 
