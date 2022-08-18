@@ -17,9 +17,10 @@ from typing import Iterable, List, Optional, Union
 
 import numpy as np
 from qiskit.circuit import Instruction as CircuitInst
-from qiskit.circuit import QuantumCircuit
+from qiskit.circuit import QuantumCircuit, QuantumRegister
+from qiskit.circuit.library import CXGate, RZGate
 from qiskit.converters import circuit_to_dag, dag_to_circuit
-from qiskit.dagcircuit import DAGCircuit
+from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGOpNode
 from qiskit.exceptions import QiskitError
 from qiskit.providers.backend import Backend
 from qiskit.pulse import (
@@ -41,6 +42,7 @@ from qiskit.transpiler.passes import (
     RZXCalibrationBuilder,
     TemplateOptimization,
 )
+from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
 from qiskit.transpiler.passes.calibration.builders import CalibrationBuilder
 from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
 from qiskit_research.utils.gates import SECRGate
@@ -111,6 +113,76 @@ class BindParameters(TransformationPass):
         circuit = dag_to_circuit(dag)
         circuit.assign_parameters(self._param_bind, inplace=True)
         return circuit_to_dag(circuit)
+
+
+class ForceZZTemplateSubstitution(TransformationPass):
+    """
+    Force sequences of the form CX-RZ(1)-CX to match to ZZ(theta) template. This 
+    is a workaround for known Qiskit Terra Issue TODO
+    """
+
+    def __init__(
+        self,
+        template: Optional[QuantumCircuit] = None,
+    ):
+        super().__init__()
+        if template is None:
+            self._template = rzx_templates(['zz3'])['template_list'][0].copy()
+
+    def get_zz_temp_sub(self) -> QuantumCircuit:
+        rzx_dag = circuit_to_dag(self._template)
+        temp_cx1_node = rzx_dag.front_layer()[0]
+        for gp in rzx_dag.bfs_successors(temp_cx1_node):
+            if gp[0] == temp_cx1_node:
+                if isinstance(gp[1][0].op, CXGate) and isinstance(gp[1][1].op, RZGate):
+                    temp_rz_node = gp[1][1]
+                    temp_cx2_node = gp[1][0]
+
+                    rzx_dag.remove_op_node(temp_cx1_node)
+                    rzx_dag.remove_op_node(temp_rz_node)
+                    rzx_dag.remove_op_node(temp_cx2_node)
+
+        return dag_to_circuit(rzx_dag).inverse()
+
+    def sub_zz_in_dag(
+        self,
+        dag: DAGCircuit,
+        cx1_node: DAGNode, 
+        rz_node: DAGNode, 
+        cx2_node: DAGNode
+    ) -> DAGCircuit:
+        zz_temp_sub = self.get_zz_temp_sub().assign_parameters({self.get_zz_temp_sub().parameters[0]: rz_node.op.params[0]})
+        dag.remove_op_node(rz_node)
+        dag.remove_op_node(cx2_node)
+
+        qr = QuantumRegister(2, 'q')
+        mini_dag = DAGCircuit()
+        mini_dag.add_qreg(qr)
+        for idx, (instr, qargs, cargs) in enumerate(zz_temp_sub.data):
+            mini_dag.apply_operation_back(instr, qargs=qargs)
+
+        dag.substitute_node_with_dag(node=cx1_node, input_dag=mini_dag, wires=[qr[0], qr[1]])
+        return dag
+
+    def run(self, dag: DAGCircuit) -> DAGCircuit:
+        cx_runs = dag.collect_runs('cx')
+        for run in cx_runs:
+            cx1_node = run[0]
+            gp = next(dag.bfs_successors(cx1_node))
+            if isinstance(gp[0].op, CXGate): # dunno why this is needed
+                if isinstance(gp[1][0], DAGOpNode) and isinstance(gp[1][1], DAGOpNode):
+                    if isinstance(gp[1][0].op, CXGate) and isinstance(gp[1][1].op, RZGate):
+                        rz_node = gp[1][1]
+                        cx2_node = gp[1][0]
+                        gp1 = next(dag.bfs_successors(rz_node))
+                        if cx2_node in gp1[1]:
+                            if ((cx1_node.qargs[0].index == cx2_node.qargs[0].index) and
+                                (cx1_node.qargs[1].index == cx2_node.qargs[1].index) and
+                                (cx2_node.qargs[1].index == rz_node.qargs[0].index)):
+
+                                dag = self.sub_zz_in_dag(dag, cx1_node, rz_node, cx2_node)
+
+        return dag
 
 
 class SECRCalibrationBuilder(CalibrationBuilder):
@@ -321,12 +393,15 @@ def cr_scaling_passes(
     backend: Backend,
     templates: List[QuantumCircuit],
     unroll_rzx_to_ecr: bool = True,
+    force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for CR pulse scaling."""
 
     yield TemplateOptimization(**templates)
     yield CombineRuns(["rzx"])
+    if force_zz_matches:
+        yield ForceZZTemplateSubstitution() # workaround for Terra Issue 
     if unroll_rzx_to_ecr:
         yield RZXtoEchoedCR(backend)
     yield Optimize1qGatesDecomposition(BASIS_GATES)

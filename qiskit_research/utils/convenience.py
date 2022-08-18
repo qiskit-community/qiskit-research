@@ -144,6 +144,7 @@ def scale_cr_pulses(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Backend,
     unroll_rzx_to_ecr: Optional[bool] = True,
+    force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
