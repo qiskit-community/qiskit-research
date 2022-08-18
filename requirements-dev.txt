@@ -1,5 +1,6 @@
 black[jupyter]
 coverage
+ddt>=1.2.0,!=1.4.0,!=1.4.3
 mypy==0.961
 jupyter-sphinx
 nbsphinx
