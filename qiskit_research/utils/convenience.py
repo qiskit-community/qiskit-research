@@ -161,6 +161,7 @@ def scale_cr_pulses(
                 backend,
                 templates,
                 unroll_rzx_to_ecr=unroll_rzx_to_ecr,
+                force_zz_matches=force_zz_matches,
                 param_bind=param_bind,
             )
         )

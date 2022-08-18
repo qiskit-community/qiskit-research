@@ -114,18 +114,27 @@ class TestPulseScaling(unittest.TestCase):
         qc.cx(0, 1)
         qc.rz(theta, 1)
         qc.cx(0, 1)
-        qc.rz(np.pi/4, 1)
+        qc.rz(np.pi / 4, 1)
 
-        scale_qc_no_match = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=False, force_zz_matches=False, param_bind=None)
+        scale_qc_no_match = scale_cr_pulses(
+            qc,
+            backend,
+            unroll_rzx_to_ecr=False,
+            force_zz_matches=False,
+            param_bind=None,
+        )
         dag_no_match = circuit_to_dag(scale_qc_no_match)
-        self.assertTrue(dag_no_match.collect_runs(['rzx']), set())
+        self.assertFalse(dag_no_match.collect_runs(["rzx"]))
 
-        scale_qc_match = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=False, force_zz_matches=True, param_bind=None)
-        import pdb; pdb.set_trace()
+        scale_qc_match = scale_cr_pulses(
+            qc, backend, unroll_rzx_to_ecr=False, force_zz_matches=True, param_bind=None
+        )
         dag_match = circuit_to_dag(scale_qc_match)
-        self.assertFalse(dag_match.collect_runs(['rzx']), set()) # TODO: better way to show this is empty
+        self.assertTrue(dag_match.collect_runs(["rzx"]))
 
         theta_set = rng.uniform(-np.pi, np.pi)
-        self.assertTrue(Operator(qc.bind_parameters({theta: theta_set})
-            ).equiv(Operator(scale_qc_match.bind_parameters({theta: theta_set}))))
-
+        self.assertTrue(
+            Operator(qc.bind_parameters({theta: theta_set})).equiv(
+                Operator(scale_qc_match.bind_parameters({theta: theta_set}))
+            )
+        )
