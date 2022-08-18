@@ -33,10 +33,11 @@ from typing import (
 import mapomatic
 import mthree
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import BasicAer, QuantumCircuit
 from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary
 from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.providers import Backend, Provider
+from qiskit.providers.aer import AerSimulator
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.transpiler import CouplingMap, Layout, PassManager
 from qiskit.transpiler.basepasses import BasePass
@@ -64,13 +65,25 @@ from qiskit_research.utils import (
     SECRCalibrationBuilder,
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
-    add_pulse_calibrations,
     dynamical_decoupling_passes,
-    get_backend,
+    add_pulse_calibrations,
 )
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 _CovarianceDict = Dict[FrozenSet[Tuple[int, int]], float]
+
+
+def get_backend(
+    name: str, provider: Optional[Provider], seed_simulator: Optional[int] = None
+) -> Backend:
+    """Retrieve a backend."""
+    if provider is not None:
+        return provider.get_backend(name)
+    if name == "aer_simulator":
+        return AerSimulator(seed_simulator=seed_simulator)
+    if name == "statevector_simulator":
+        return BasicAer.get_backend("statevector_simulator")
+    raise ValueError("The given name does not match any supported backends.")
 
 
 def orbital_combinations(

@@ -22,5 +22,4 @@ setup(
     packages=find_packages(),
     setup_requires=["setuptools_scm"],
     use_scm_version=True,
-    include_package_data=True,
 )

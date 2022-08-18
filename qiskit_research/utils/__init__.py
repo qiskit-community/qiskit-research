@@ -16,7 +16,6 @@ Utilities for running research experiments with Qiskit
 ======================================================
 """
 
-from qiskit_research.utils.backend import get_backend
 from qiskit_research.utils.dynamical_decoupling import (
     add_pulse_calibrations,
     dynamical_decoupling_passes,
@@ -42,7 +41,6 @@ from qiskit_research.utils.periodic_dynamical_decoupling import (
 )
 
 __all__ = [
-    "get_backend",
     "add_pulse_calibrations",
     "dynamical_decoupling_passes",
     "RZXtoEchoedCR",
@@ -52,8 +50,6 @@ __all__ = [
     "CombineRuns",
     "SECRCalibrationBuilder",
     "cr_scaling_passes",
-    "pulse_attaching_passes",
     "PauliTwirl",
-    "pauli_transpilation_passes",
     "PeriodicDynamicalDecoupling",
 ]

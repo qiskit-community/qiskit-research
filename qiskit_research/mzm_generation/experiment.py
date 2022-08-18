@@ -27,12 +27,12 @@ from qiskit.providers import Provider
 from qiskit_experiments.framework import BaseExperiment
 from qiskit_nature.circuit.library import FermionicGaussianState
 from qiskit_research.mzm_generation.utils import (
+    get_backend,
     kitaev_hamiltonian,
     measure_interaction_op,
     measurement_labels,
     transpile_circuit,
 )
-from qiskit_research.utils import get_backend
 
 # TODO make this a JSON serializable dataclass when Aer supports it
 # See https://github.com/Qiskit/qiskit-aer/issues/1435
