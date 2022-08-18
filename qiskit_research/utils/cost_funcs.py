@@ -23,9 +23,9 @@ import numpy as np
 
 def cost_func_scaled_cr(
     circ: QuantumCircuit,
-    layouts: List[List],
+    layouts: List[List[int]],
     backend: Backend,
-):
+) -> List[tuple[List[int]]]:
     """
     A custom cost function that includes T1 and T2 computed during idle periods,
     for an already transpiled and scheduled circuit circ
@@ -49,8 +49,6 @@ def cost_func_scaled_cr(
     touched = set()
     for layout in layouts:
         for item in circ.data:
-            # if item[0].name != "delay":
-            #     import pdb; pdb.set_trace()
             if item[0].name == "cx":
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
