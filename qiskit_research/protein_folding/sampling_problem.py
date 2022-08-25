@@ -13,10 +13,10 @@
 from abc import ABC, abstractmethod
 from typing import Union
 
-from qiskit.opflow import PauliSumOp, PauliOp
 from qiskit.algorithms import MinimumEigensolverResult
+from qiskit.opflow import PauliOp, PauliSumOp
 
-from qiskit_nature.results import EigenstateResult
+from .protein_folding_result import ProteinFoldingResult
 
 
 class SamplingProblem(ABC):
@@ -27,5 +27,5 @@ class SamplingProblem(ABC):
         """Returns a qubit operator that represents a Hamiltonian encoding the sampling problem."""
 
     @abstractmethod
-    def interpret(self, raw_result: MinimumEigensolverResult) -> EigenstateResult:
+    def interpret(self, raw_result: MinimumEigensolverResult) -> ProteinFoldingResult:
         """Interprets results of an optimization."""
