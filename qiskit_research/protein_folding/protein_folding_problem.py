@@ -12,21 +12,20 @@
 """Defines a protein folding problem that can be passed to algorithms."""
 from __future__ import annotations
 
-from typing import Union, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Union
 
-from qiskit.opflow import PauliSumOp, PauliOp
 from qiskit.algorithms import MinimumEigensolverResult
-from .peptide.peptide import Peptide
+from qiskit.opflow import PauliOp, PauliSumOp
+
 from .interactions.interaction import Interaction
 from .penalty_parameters import PenaltyParameters
+from .peptide.peptide import Peptide
 from .qubit_op_builder import QubitOpBuilder
 from .qubit_utils import qubit_number_reducer
 from .sampling_problem import SamplingProblem
 
 if TYPE_CHECKING:
-    from .protein_folding_result import (
-        ProteinFoldingResult,
-    )
+    from .protein_folding_result import ProteinFoldingResult
 
 
 class ProteinFoldingProblem(SamplingProblem):

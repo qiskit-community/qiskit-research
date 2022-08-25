@@ -11,12 +11,13 @@
 # that they have been altered from the originals.
 """An interface for sampling problems."""
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from qiskit.algorithms import MinimumEigensolverResult
 from qiskit.opflow import PauliOp, PauliSumOp
 
-from .protein_folding_result import ProteinFoldingResult
+if TYPE_CHECKING:
+    from .protein_folding_result import ProteinFoldingResult
 
 
 class SamplingProblem(ABC):
@@ -27,5 +28,5 @@ class SamplingProblem(ABC):
         """Returns a qubit operator that represents a Hamiltonian encoding the sampling problem."""
 
     @abstractmethod
-    def interpret(self, raw_result: MinimumEigensolverResult) -> ProteinFoldingResult:
+    def interpret(self, raw_result: MinimumEigensolverResult) -> "ProteinFoldingResult":
         """Interprets results of an optimization."""
