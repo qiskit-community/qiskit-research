@@ -1,0 +1,527 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>qiskit_research.utils.periodic_dynamical_decoupling &#8212; Qiskit Research 0.1.dev1+g2c153bb documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for qiskit_research.utils.periodic_dynamical_decoupling</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This code is part of Qiskit.</span>
+<span class="c1">#</span>
+<span class="c1"># (C) Copyright IBM 2021.</span>
+<span class="c1">#</span>
+<span class="c1"># This code is licensed under the Apache License, Version 2.0. You may</span>
+<span class="c1"># obtain a copy of this license in the LICENSE.txt file in the root directory</span>
+<span class="c1"># of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.</span>
+<span class="c1">#</span>
+<span class="c1"># Any modifications or derivative works of this code must retain this</span>
+<span class="c1"># copyright notice, and modified files need to carry a notice indicating</span>
+<span class="c1"># that they have been altered from the originals.</span>
+<span class="c1">#</span>
+<span class="c1"># Modified from qiskit.transpiler.passes.scheduling.padding.dynamical_decoupling</span>
+<span class="c1"># https://github.com/Qiskit/qiskit-terra/blob/main/qiskit/transpiler/passes/scheduling/padding/dynamical_decoupling.py</span>
+
+<span class="sd">&quot;&quot;&quot;Dynamical Decoupling insertion pass.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">Qubit</span><span class="p">,</span> <span class="n">Gate</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.delay</span> <span class="kn">import</span> <span class="n">Delay</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.library.standard_gates</span> <span class="kn">import</span> <span class="n">IGate</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.reset</span> <span class="kn">import</span> <span class="n">Reset</span>
+<span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span><span class="p">,</span> <span class="n">DAGNode</span><span class="p">,</span> <span class="n">DAGInNode</span>
+<span class="kn">from</span> <span class="nn">qiskit.quantum_info.operators.predicates</span> <span class="kn">import</span> <span class="n">matrix_equal</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.exceptions</span> <span class="kn">import</span> <span class="n">TranspilerError</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.instruction_durations</span> <span class="kn">import</span> <span class="n">InstructionDurations</span>
+
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.scheduling.padding.base_padding</span> <span class="kn">import</span> <span class="n">BasePadding</span>
+
+
+<div class="viewcode-block" id="PeriodicDynamicalDecoupling"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.PeriodicDynamicalDecoupling">[docs]</a><span class="k">class</span> <span class="nc">PeriodicDynamicalDecoupling</span><span class="p">(</span><span class="n">BasePadding</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Dynamical decoupling insertion pass.</span>
+
+<span class="sd">    This pass works on a scheduled, physical circuit. It scans the circuit for</span>
+<span class="sd">    idle periods of time (i.e. those containing delay instructions) and inserts</span>
+<span class="sd">    a DD sequence of gates in those spots. These gates amount to the identity,</span>
+<span class="sd">    so do not alter the logical action of the circuit, but have the effect of</span>
+<span class="sd">    mitigating decoherence in those idle periods.</span>
+
+<span class="sd">    This pass will attempt to repeat the DD sequence as many times as possible</span>
+<span class="sd">    up until ``max_repeats`` repetitions has been met, subject to the constraint</span>
+<span class="sd">    that the average delay between each gate in a DD sequence is greater than</span>
+<span class="sd">    ``avg_min_delay``. The average delay is calculated by dividing the delay</span>
+<span class="sd">    time by the total number of gates in a sequence.</span>
+
+<span class="sd">    As a special case, the pass allows a length-1 sequence (e.g. [XGate()]).</span>
+<span class="sd">    In this case the DD insertion happens only when the gate inverse can be</span>
+<span class="sd">    absorbed into a neighboring gate in the circuit (so we would still be</span>
+<span class="sd">    replacing Delay with something that is equivalent to the identity).</span>
+<span class="sd">    This can be used, for instance, as a Hahn echo.</span>
+
+<span class="sd">    This pass ensures that the inserted sequence preserves the circuit exactly</span>
+<span class="sd">    (including global phase).</span>
+
+<span class="sd">    .. jupyter-execute::</span>
+
+<span class="sd">        import numpy as np</span>
+<span class="sd">        from qiskit.circuit import QuantumCircuit</span>
+<span class="sd">        from qiskit.circuit.library import XGate</span>
+<span class="sd">        from qiskit.transpiler import PassManager, InstructionDurations</span>
+<span class="sd">        from qiskit.transpiler.passes import ALAPScheduleAnalysis, PadDynamicalDecoupling</span>
+<span class="sd">        from qiskit.visualization import timeline_drawer</span>
+<span class="sd">        circ = QuantumCircuit(4)</span>
+<span class="sd">        circ.h(0)</span>
+<span class="sd">        circ.cx(0, 1)</span>
+<span class="sd">        circ.cx(1, 2)</span>
+<span class="sd">        circ.cx(2, 3)</span>
+<span class="sd">        circ.measure_all()</span>
+<span class="sd">        durations = InstructionDurations(</span>
+<span class="sd">            [(&quot;h&quot;, 0, 50), (&quot;cx&quot;, [0, 1], 700), (&quot;reset&quot;, None, 10),</span>
+<span class="sd">             (&quot;cx&quot;, [1, 2], 200), (&quot;cx&quot;, [2, 3], 300),</span>
+<span class="sd">             (&quot;x&quot;, None, 50), (&quot;measure&quot;, None, 1000)]</span>
+<span class="sd">        )</span>
+
+<span class="sd">    .. jupyter-execute::</span>
+
+<span class="sd">        # balanced X-X sequence on all qubits</span>
+<span class="sd">        dd_sequence = [XGate(), XGate()]</span>
+<span class="sd">        pm = PassManager([ALAPScheduleAnalysis(durations),</span>
+<span class="sd">                          PadDynamicalDecoupling(durations, dd_sequence)])</span>
+<span class="sd">        circ_dd = pm.run(circ)</span>
+<span class="sd">        timeline_drawer(circ_dd)</span>
+
+<span class="sd">    .. jupyter-execute::</span>
+
+<span class="sd">        # Uhrig sequence on qubit 0</span>
+<span class="sd">        n = 8</span>
+<span class="sd">        dd_sequence = [XGate()] * n</span>
+<span class="sd">        def uhrig_pulse_location(k):</span>
+<span class="sd">            return np.sin(np.pi * (k + 1) / (2 * n + 2)) ** 2</span>
+<span class="sd">        spacing = []</span>
+<span class="sd">        for k in range(n):</span>
+<span class="sd">            spacing.append(uhrig_pulse_location(k) - sum(spacing))</span>
+<span class="sd">        spacing.append(1 - sum(spacing))</span>
+<span class="sd">        pm = PassManager(</span>
+<span class="sd">            [</span>
+<span class="sd">                ALAPScheduleAnalysis(durations),</span>
+<span class="sd">                PadDynamicalDecoupling(durations, dd_sequence, qubits=[0], spacing=spacing),</span>
+<span class="sd">            ]</span>
+<span class="sd">        )</span>
+<span class="sd">        circ_dd = pm.run(circ)</span>
+<span class="sd">        timeline_drawer(circ_dd)</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        You may need to call alignment pass before running dynamical decoupling to guarantee</span>
+<span class="sd">        your circuit satisfies acquisition alignment constraints.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">durations</span><span class="p">:</span> <span class="n">InstructionDurations</span><span class="p">,</span>
+        <span class="n">base_dd_sequence</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Gate</span><span class="p">],</span>
+        <span class="n">qubits</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">base_spacing</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">avg_min_delay</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_repeats</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">skip_reset_qubits</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">pulse_alignment</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">extra_slack_distribution</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;middle&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dynamical decoupling initializer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            durations: Durations of instructions to be used in scheduling.</span>
+<span class="sd">            base_dd_sequence: Base sequence of gates to apply repeatedly in idle spots.</span>
+<span class="sd">            qubits: Physical qubits on which to apply DD.</span>
+<span class="sd">                If None, all qubits will undergo DD (when possible).</span>
+<span class="sd">            base_spacing: A list of spacings between the DD gates.</span>
+<span class="sd">                The available slack will be divided according to this.</span>
+<span class="sd">                The list length must be one more than the length of base_dd_sequence,</span>
+<span class="sd">                and the elements must sum to 1. If None, a balanced spacing</span>
+<span class="sd">                will be used [d/2, d, d, ..., d, d, d/2].</span>
+<span class="sd">            avg_min_delay: A duration such that delay time between gates will not be lower than</span>
+<span class="sd">                this. If None, then this is set equal to ``pulse_alignment``</span>
+<span class="sd">            max_repeats: Will attempt to repeat the DD sequence this number of times, provided that</span>
+<span class="sd">                the ``avg_min_delay`` condition is met</span>
+<span class="sd">            skip_reset_qubits: If True, does not insert DD on idle periods that</span>
+<span class="sd">                immediately follow initialized/reset qubits</span>
+<span class="sd">                (as qubits in the ground state are less susceptile to decoherence).</span>
+<span class="sd">            pulse_alignment: The hardware constraints for gate timing allocation.</span>
+<span class="sd">                This is usually provided from ``backend.configuration().timing_constraints``.</span>
+<span class="sd">                If provided, the delay length, i.e. ``spacing``, is implicitly adjusted to</span>
+<span class="sd">                satisfy this constraint.</span>
+<span class="sd">            extra_slack_distribution: The option to control the behavior of DD sequence generation.</span>
+<span class="sd">                The duration of the DD sequence should be identical to an idle time in the</span>
+<span class="sd">                scheduled quantum circuit, however, the delay in between gates comprising the</span>
+<span class="sd">                sequence should be integer number in units of dt, and it might be further truncated</span>
+<span class="sd">                when ``pulse_alignment`` is specified. This sometimes results in the duration of</span>
+<span class="sd">                the created sequence being shorter than the idle time</span>
+<span class="sd">                that you want to fill with the sequence, i.e. `extra slack`.</span>
+<span class="sd">                This option takes following values.</span>
+
+<span class="sd">                    - &quot;middle&quot;: Put the extra slack to the interval at the middle of the sequence.</span>
+<span class="sd">                    - &quot;edges&quot;: Divide the extra slack as evenly as possible into</span>
+<span class="sd">                      intervals at beginning and end of the sequence.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TranspilerError: When invalid DD sequence is specified.</span>
+<span class="sd">            TranspilerError: When pulse gate with the duration which is</span>
+<span class="sd">                non-multiple of the alignment constraint value is found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_durations</span> <span class="o">=</span> <span class="n">durations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence</span> <span class="o">=</span> <span class="n">base_dd_sequence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qubits</span> <span class="o">=</span> <span class="n">qubits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_skip_reset_qubits</span> <span class="o">=</span> <span class="n">skip_reset_qubits</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_alignment</span> <span class="o">=</span> <span class="n">pulse_alignment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_spacing</span> <span class="o">=</span> <span class="n">base_spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">avg_min_delay</span> <span class="o">=</span> <span class="n">avg_min_delay</span>
+        <span class="k">if</span> <span class="n">avg_min_delay</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">avg_min_delay</span> <span class="o">=</span> <span class="n">pulse_alignment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_repeats</span> <span class="o">=</span> <span class="n">max_repeats</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extra_slack_distribution</span> <span class="o">=</span> <span class="n">extra_slack_distribution</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence_lengths</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Qubit</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_phase</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">_pre_runhook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_pre_runhook</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span>
+
+        <span class="n">num_pulses</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence</span><span class="p">)</span>
+
+        <span class="c1"># Check if physical circuit is given</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dag</span><span class="o">.</span><span class="n">qregs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">dag</span><span class="o">.</span><span class="n">qregs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;q&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span><span class="s2">&quot;DD runs on physical circuits only.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Set default spacing otherwise validate user input</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_spacing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mid</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">num_pulses</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">mid</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_base_spacing</span> <span class="o">=</span> <span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">mid</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_pulses</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="n">end</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_spacing</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">a</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_spacing</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span>
+                    <span class="s2">&quot;The spacings must be given in terms of fractions &quot;</span>
+                    <span class="s2">&quot;of the slack period and sum to 1.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_spacing</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span>
+                    <span class="s2">&quot;The number of spacings must be 1 more than the &quot;</span>
+                    <span class="s2">&quot;number of gates in the sequence&quot;</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Check if DD sequence is identity</span>
+        <span class="k">if</span> <span class="n">num_pulses</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span>
+                <span class="s2">&quot;DD sequence must contain an even number of gates (or 1).&quot;</span>
+            <span class="p">)</span>
+        <span class="n">noop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence</span><span class="p">:</span>
+            <span class="n">noop</span> <span class="o">=</span> <span class="n">noop</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">())</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">matrix_equal</span><span class="p">(</span><span class="n">noop</span><span class="p">,</span> <span class="n">IGate</span><span class="p">()</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">(),</span> <span class="n">ignore_phase</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span>
+                <span class="s2">&quot;The DD sequence does not make an identity operation.&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">noop</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># Precompute qubit-wise DD sequence length for performance</span>
+        <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">qubits</span><span class="p">:</span>
+            <span class="n">physical_index</span> <span class="o">=</span> <span class="n">dag</span><span class="o">.</span><span class="n">qubits</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubits</span> <span class="ow">and</span> <span class="n">physical_index</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubits</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">sequence_lengths</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Check calibration.</span>
+                    <span class="n">gate_length</span> <span class="o">=</span> <span class="n">dag</span><span class="o">.</span><span class="n">calibrations</span><span class="p">[</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="p">][</span>
+                        <span class="p">(</span><span class="n">physical_index</span><span class="p">,</span> <span class="n">gate</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+                    <span class="p">]</span>
+                    <span class="k">if</span> <span class="n">gate_length</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alignment</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># This is necessary to implement lightweight scheduling logic for this pass.</span>
+                        <span class="c1"># Usually the pulse alignment constraint and pulse data chunk size take</span>
+                        <span class="c1"># the same value, however, we can intentionally violate this pattern</span>
+                        <span class="c1"># at the gate level. For example, we can create a schedule consisting of</span>
+                        <span class="c1"># a pi-pulse of 32 dt followed by a post buffer, i.e. delay, of 4 dt</span>
+                        <span class="c1"># on the device with 16 dt constraint. Note that the pi-pulse length</span>
+                        <span class="c1"># is multiple of 16 dt but the gate length of 36 is not multiple of it.</span>
+                        <span class="c1"># Such pulse gate should be excluded.</span>
+                        <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;Pulse gate </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> with length non-multiple of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_alignment</span><span class="si">}</span><span class="s2"> &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;is not acceptable in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> pass.&quot;</span>
+                        <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="n">gate_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_durations</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">physical_index</span><span class="p">)</span>
+                <span class="n">sequence_lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gate_length</span><span class="p">)</span>
+                <span class="c1"># Update gate duration. This is necessary for current timeline drawer,</span>
+                <span class="c1"># i.e. scheduled.</span>
+                <span class="n">gate</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">gate_length</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence_lengths</span><span class="p">[</span><span class="n">qubit</span><span class="p">]</span> <span class="o">=</span> <span class="n">sequence_lengths</span>
+
+    <span class="k">def</span> <span class="nf">_pad</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">,</span>
+        <span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">,</span>
+        <span class="n">t_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">t_end</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">next_node</span><span class="p">:</span> <span class="n">DAGNode</span><span class="p">,</span>
+        <span class="n">prev_node</span><span class="p">:</span> <span class="n">DAGNode</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># This routine takes care of the pulse alignment constraint for the DD sequence.</span>
+        <span class="c1"># Note that the alignment constraint acts on the t0 of the DAGOpNode.</span>
+        <span class="c1"># Now this constrained scheduling problem is simplified to the problem of</span>
+        <span class="c1"># finding a delay amount which is a multiple of the constraint value by assuming</span>
+        <span class="c1"># that the duration of every DAGOpNode is also a multiple of the constraint value.</span>
+        <span class="c1">#</span>
+        <span class="c1"># For example, given the constraint value of 16 and XY4 with 160 dt gates.</span>
+        <span class="c1"># Here we assume current interval is 992 dt.</span>
+        <span class="c1">#</span>
+        <span class="c1"># relative spacing := [0.125, 0.25, 0.25, 0.25, 0.125]</span>
+        <span class="c1"># slack = 992 dt - 4 x 160 dt = 352 dt</span>
+        <span class="c1">#</span>
+        <span class="c1"># unconstraind sequence: 44dt-X1-88dt-Y2-88dt-X3-88dt-Y4-44dt</span>
+        <span class="c1"># constraind sequence  : 32dt-X1-80dt-Y2-80dt-X3-80dt-Y4-32dt + extra slack 48 dt</span>
+        <span class="c1">#</span>
+        <span class="c1"># Now we evenly split extra slack into start and end of the sequence.</span>
+        <span class="c1"># The distributed slack should be multiple of 16.</span>
+        <span class="c1"># Start = +16, End += 32</span>
+        <span class="c1">#</span>
+        <span class="c1"># final sequence       : 48dt-X1-80dt-Y2-80dt-X3-80dt-Y4-64dt / in total 992 dt</span>
+        <span class="c1">#</span>
+        <span class="c1"># Now we verify t0 of every node starts from multiple of 16 dt.</span>
+        <span class="c1">#</span>
+        <span class="c1"># X1:  48 dt (3 x 16 dt)</span>
+        <span class="c1"># Y2:  48 dt + 160 dt + 80 dt = 288 dt (18 x 16 dt)</span>
+        <span class="c1"># Y3: 288 dt + 160 dt + 80 dt = 528 dt (33 x 16 dt)</span>
+        <span class="c1"># Y4: 368 dt + 160 dt + 80 dt = 768 dt (48 x 16 dt)</span>
+        <span class="c1">#</span>
+        <span class="c1"># As you can see, constraints on t0 are all satified without explicit scheduling.</span>
+        <span class="n">time_interval</span> <span class="o">=</span> <span class="n">t_end</span> <span class="o">-</span> <span class="n">t_start</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubits</span> <span class="ow">and</span> <span class="n">dag</span><span class="o">.</span><span class="n">qubits</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubits</span><span class="p">:</span>
+            <span class="c1"># Target physical qubit is not the target of this DD sequence.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_scheduled_op</span><span class="p">(</span>
+                <span class="n">dag</span><span class="p">,</span> <span class="n">t_start</span><span class="p">,</span> <span class="n">Delay</span><span class="p">(</span><span class="n">time_interval</span><span class="p">,</span> <span class="n">dag</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span> <span class="n">qubit</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_skip_reset_qubits</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="n">DAGInNode</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prev_node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">Reset</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="c1"># Previous node is the start edge or reset, i.e. qubit is ground state.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_scheduled_op</span><span class="p">(</span>
+                <span class="n">dag</span><span class="p">,</span> <span class="n">t_start</span><span class="p">,</span> <span class="n">Delay</span><span class="p">(</span><span class="n">time_interval</span><span class="p">,</span> <span class="n">dag</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span> <span class="n">qubit</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">slack</span> <span class="o">=</span> <span class="n">time_interval</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence_lengths</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+        <span class="n">sequence_gphase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_phase</span>
+
+        <span class="k">if</span> <span class="n">slack</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Interval too short.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_scheduled_op</span><span class="p">(</span>
+                <span class="n">dag</span><span class="p">,</span> <span class="n">t_start</span><span class="p">,</span> <span class="n">Delay</span><span class="p">(</span><span class="n">time_interval</span><span class="p">,</span> <span class="n">dag</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span> <span class="n">qubit</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">def</span> <span class="nf">_constrained_length</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alignment</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">values</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alignment</span><span class="p">)</span>
+
+        <span class="c1"># Calculates the number of repeats based on inequality:</span>
+        <span class="c1"># avg_min_delay &lt; (time_interval - repeats * _base_dd_sequence_lengths[qubit]) /</span>
+        <span class="c1"># (repeats * len(_base_dd_sequence))</span>
+        <span class="c1"># The actual number of repeats is the smaller of this value and max_repeats</span>
+        <span class="n">actual_repeats</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="nb">min</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span>
+                        <span class="n">time_interval</span>
+                        <span class="o">/</span> <span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">avg_min_delay</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence</span><span class="p">)</span>
+                            <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence_lengths</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+                        <span class="p">)</span>
+                    <span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">max_repeats</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">actual_repeats</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Interval too short</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_scheduled_op</span><span class="p">(</span>
+                <span class="n">dag</span><span class="p">,</span> <span class="n">t_start</span><span class="p">,</span> <span class="n">Delay</span><span class="p">(</span><span class="n">time_interval</span><span class="p">,</span> <span class="n">dag</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span> <span class="n">qubit</span>
+            <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="n">actual_dd_sequence_length</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence_lengths</span><span class="p">[</span><span class="n">qubit</span><span class="p">]</span> <span class="o">*</span> <span class="n">actual_repeats</span>
+        <span class="p">)</span>
+        <span class="n">actual_slack</span> <span class="o">=</span> <span class="n">time_interval</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">actual_dd_sequence_length</span><span class="p">)</span>
+        <span class="n">actual_sequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_dd_sequence</span> <span class="o">*</span> <span class="n">actual_repeats</span>
+        <span class="n">sequence_gphase</span> <span class="o">*=</span> <span class="n">actual_repeats</span>
+
+        <span class="c1"># Calculate spacings after repeating actual_repeats times</span>
+        <span class="c1"># For each repetition, the last spacing of the original sequence and the first</span>
+        <span class="c1"># spacing of the the next sequence to be appended are added together.</span>
+        <span class="c1"># Then each spacing is divided by the number of actual repeats to ensure</span>
+        <span class="c1"># the sum of the fractions add to 1</span>
+        <span class="n">actual_spacing</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_spacing</span><span class="p">)</span>
+        <span class="n">last_spacing</span> <span class="o">=</span> <span class="n">actual_spacing</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">extending_spacing</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">actual_spacing</span><span class="p">)</span>
+        <span class="n">extending_spacing</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">last_spacing</span>
+        <span class="n">actual_spacing</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">extending_spacing</span> <span class="o">*</span> <span class="p">(</span><span class="n">actual_repeats</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">actual_spacing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last_spacing</span><span class="p">)</span>
+        <span class="n">actual_spacing</span> <span class="o">=</span> <span class="p">[</span><span class="n">spacing</span> <span class="o">/</span> <span class="n">actual_repeats</span> <span class="k">for</span> <span class="n">spacing</span> <span class="ow">in</span> <span class="n">actual_spacing</span><span class="p">]</span>
+
+        <span class="c1"># (1) Compute DD intervals satisfying the constraint</span>
+        <span class="n">taus</span> <span class="o">=</span> <span class="n">_constrained_length</span><span class="p">(</span><span class="n">actual_slack</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">actual_spacing</span><span class="p">))</span>
+        <span class="n">extra_slack</span> <span class="o">=</span> <span class="n">actual_slack</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">taus</span><span class="p">)</span>
+
+        <span class="c1"># (2) Distribute extra slack</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra_slack_distribution</span> <span class="o">==</span> <span class="s2">&quot;middle&quot;</span><span class="p">:</span>
+            <span class="n">mid_ind</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">taus</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">to_middle</span> <span class="o">=</span> <span class="n">_constrained_length</span><span class="p">(</span><span class="n">extra_slack</span><span class="p">)</span>
+            <span class="n">taus</span><span class="p">[</span><span class="n">mid_ind</span><span class="p">]</span> <span class="o">+=</span> <span class="n">to_middle</span>
+            <span class="k">if</span> <span class="n">extra_slack</span> <span class="o">-</span> <span class="n">to_middle</span><span class="p">:</span>
+                <span class="c1"># If to_middle is not a multiple value of the pulse alignment,</span>
+                <span class="c1"># it is truncated to the nearlest multiple value and</span>
+                <span class="c1"># the rest of slack is added to the end.</span>
+                <span class="n">taus</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">extra_slack</span> <span class="o">-</span> <span class="n">to_middle</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extra_slack_distribution</span> <span class="o">==</span> <span class="s2">&quot;edges&quot;</span><span class="p">:</span>
+            <span class="n">to_begin_edge</span> <span class="o">=</span> <span class="n">_constrained_length</span><span class="p">(</span><span class="n">extra_slack</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">taus</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">to_begin_edge</span>
+            <span class="n">taus</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">extra_slack</span> <span class="o">-</span> <span class="n">to_begin_edge</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TranspilerError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Option extra_slack_distribution = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_extra_slack_distribution</span><span class="si">}</span><span class="s2"> is invalid.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># (3) Construct DD sequence with delays</span>
+        <span class="n">num_elements</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">actual_sequence</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">taus</span><span class="p">))</span>
+        <span class="n">idle_after</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">t_start</span>
+        <span class="k">for</span> <span class="n">dd_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_elements</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dd_ind</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">taus</span><span class="p">):</span>
+                <span class="n">tau</span> <span class="o">=</span> <span class="n">taus</span><span class="p">[</span><span class="n">dd_ind</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">tau</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># hallo george</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_apply_scheduled_op</span><span class="p">(</span>
+                        <span class="n">dag</span><span class="p">,</span> <span class="n">idle_after</span><span class="p">,</span> <span class="n">Delay</span><span class="p">(</span><span class="n">tau</span><span class="p">,</span> <span class="n">dag</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span> <span class="n">qubit</span>
+                    <span class="p">)</span>
+                    <span class="n">idle_after</span> <span class="o">+=</span> <span class="n">tau</span>
+            <span class="k">if</span> <span class="n">dd_ind</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">actual_sequence</span><span class="p">):</span>
+                <span class="n">gate</span> <span class="o">=</span> <span class="n">actual_sequence</span><span class="p">[</span><span class="n">dd_ind</span><span class="p">]</span>
+                <span class="n">gate_length</span> <span class="o">=</span> <span class="n">actual_dd_sequence_length</span><span class="p">[</span><span class="n">dd_ind</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_apply_scheduled_op</span><span class="p">(</span><span class="n">dag</span><span class="p">,</span> <span class="n">idle_after</span><span class="p">,</span> <span class="n">gate</span><span class="p">,</span> <span class="n">qubit</span><span class="p">)</span>
+                <span class="n">idle_after</span> <span class="o">+=</span> <span class="n">gate_length</span>
+
+        <span class="n">dag</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mod_2pi</span><span class="p">(</span><span class="n">dag</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">+</span> <span class="n">sequence_gphase</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_mod_2pi</span><span class="p">(</span><span class="n">angle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Wrap angle into interval [-π,π). If within atol of the endpoint, clamp to -π&quot;&quot;&quot;</span>
+        <span class="n">wrapped</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wrapped</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">atol</span><span class="p">:</span>
+            <span class="n">wrapped</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="k">return</span> <span class="n">wrapped</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../mzm_generation/index.html">Majorana zero mode generation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../protein_folding/index.html">Protein folding</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../apidocs/index.html">Qiskit Research API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

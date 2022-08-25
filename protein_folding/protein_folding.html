@@ -1,0 +1,1178 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Protein Folding &#8212; Qiskit Research 0.1.dev1+g2c153bb documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Qiskit Research API Reference" href="../apidocs/index.html" />
+    <link rel="prev" title="Protein folding" href="index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+</style>
+<section id="Protein-Folding">
+<h1>Protein Folding<a class="headerlink" href="#Protein-Folding" title="Permalink to this heading">¶</a></h1>
+<section id="Introduction">
+<h2>Introduction<a class="headerlink" href="#Introduction" title="Permalink to this heading">¶</a></h2>
+<p>The structure and function of many natural and human-engineered proteins is still only poorly understood. As a result, our understanding of processes connected with protein folding, such as those encountered in Alzheimer’s disease, vaccine development, and crop improvement research, has remained limited.</p>
+<p>Unfolded polypeptides have a very large number of degrees of freedom and thus an enormous number of potential conformations. For example, a chain with <span class="math notranslate nohighlight">\(100\)</span> aminoacids has on the order of <span class="math notranslate nohighlight">\(10^{47}\)</span> conformations. In reality, however, many proteins fold to their native structure within seconds. This is known as Levinthal’s paradox [1].</p>
+<p>The exponential growth of potential conformations with chain length makes the problem intractable for classical computers. In the quantum framework, our resource-efficient algorithm scales linearly with the number of aminoacids N.</p>
+<p>The goal of this work is to determine the minimum energy conformation of a protein. Starting from a random configuration, the protein’s structure is optimized to lower the energy. This can be achieved by encoding the protein folding problem into a qubit operator and ensuring that all physical constraints are satisfied.</p>
+<p>For the problem encoding we use:</p>
+<ul class="simple">
+<li><p>Configuration qubits: qubits that are used to describe the configurations and the relative position of the different beads</p></li>
+<li><p>Interaction qubits: qubits that encode interactions between the different aminoacids</p></li>
+</ul>
+<p>For our case we use a tetrahedral lattice (diamond shape lattice) where we encode the movement through the configuration qubits (see image below).</p>
+<p><img alt="2be420ee631e42bfaf661b68faa0b59d" class="no-scaled-link" src="../_images/lattice_protein.png" style="width: 300px;" /></p>
+<p>The Hamiltonian of the system for a set of qubits <span class="math notranslate nohighlight">\(\mathbf{q}=\{\mathbf{q}_{cf}, \mathbf{q}_{in}\}\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[H(\mathbf{q}) = H_{gc}(\mathbf{q}_{cf}) + H_{ch}(\mathbf{q}_{cf}) + H_{in}(\mathbf{q}_{cf}, \mathbf{q}_{in})\]</div>
+<p>where</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(H_{gc}\)</span> is the geometrical constraint term (governing the growth of the primary sequence of aminoacids without bifurcations)</p></li>
+<li><p><span class="math notranslate nohighlight">\(H_{ch}\)</span> is the chirality constraint (enforcing the right stereochemistry for the system)</p></li>
+<li><p><span class="math notranslate nohighlight">\(H_{in}\)</span> is the interaction energy terms of the system. In our case we consider only nearest neighbor interactions.</p></li>
+</ul>
+<p>Further details about the used model and the encoding of the problem can be found in [2].</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit_research.protein_folding.interactions.random_interaction</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RandomInteraction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.protein_folding.interactions.miyazawa_jernigan_interaction</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MiyazawaJerniganInteraction</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.protein_folding.peptide.peptide</span> <span class="kn">import</span> <span class="n">Peptide</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.protein_folding.protein_folding_problem</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProteinFoldingProblem</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">qiskit_research.protein_folding.penalty_parameters</span> <span class="kn">import</span> <span class="n">PenaltyParameters</span>
+
+<span class="kn">from</span> <span class="nn">qiskit.utils</span> <span class="kn">import</span> <span class="n">algorithm_globals</span><span class="p">,</span> <span class="n">QuantumInstance</span>
+
+<span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span> <span class="o">=</span> <span class="mi">23</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Protein-Main-Chain">
+<h2>Protein Main Chain<a class="headerlink" href="#Protein-Main-Chain" title="Permalink to this heading">¶</a></h2>
+<p>The Protein consists of a main chain that is a linear chain of aminoacids. For the naming of different residues we use the one-letter code as defined in Ref. [3]. Further details about the naming and the type of aminoacids can also be found in [4].</p>
+<p>For this particular case we demonstrate the generation of the qubit operator in a neuropeptide with the main chain consisting of 7 aminoacids with letter codes APRLRFY (see also [2]).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">main_chain</span> <span class="o">=</span> <span class="s2">&quot;APRLRFY&quot;</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Side-Chains">
+<h2>Side Chains<a class="headerlink" href="#Side-Chains" title="Permalink to this heading">¶</a></h2>
+<p>Beyond the main chain of the protein there may be aminoacids attached to the residues of the main chain. Our model allows for side chains of the maximum length of one. Elongated side chains would require the introduction of additional penalty terms which are still under development. In this example we do not consider any side chains to keep the real structure of the neuropeptide.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">side_chains</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">7</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Interaction-between-Aminoacids">
+<h2>Interaction between Aminoacids<a class="headerlink" href="#Interaction-between-Aminoacids" title="Permalink to this heading">¶</a></h2>
+<p>For the description of inter-residue contacts for proteins we use knowledge-based (statistical) potentials derived using quasi-chemical approximation. The potentials used here are introduced by Miyazawa, S. and Jernigan, R. L. in [5].</p>
+<p>Beyond this model we also allow for random contact maps (interactions) that provide a random interaction map. One can also introduce a custom interaction map that enhances certain configurations of the protein (e.g. alpha helix, beta sheet etc).</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">random_interaction</span> <span class="o">=</span> <span class="n">RandomInteraction</span><span class="p">()</span>
+<span class="n">mj_interaction</span> <span class="o">=</span> <span class="n">MiyazawaJerniganInteraction</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Physical-Constraints">
+<h2>Physical Constraints<a class="headerlink" href="#Physical-Constraints" title="Permalink to this heading">¶</a></h2>
+<p>To ensure that all physical constraints are respected we introduce penalty functions. The different penalty terms used are:</p>
+<ul class="simple">
+<li><p>penalty_chiral: A penalty parameter used to impose the right chirality.</p></li>
+<li><p>penalty_back: A penalty parameter used to penalize turns along the same axis. This term is used to eliminate sequences where the same axis is chosen twice in a row. In this way we do not allow for a chain to fold back into itself.</p></li>
+<li><p>penalty_1: A penalty parameter used to penalize local overlap between beads within a nearest neighbor contact.</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">penalty_back</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">penalty_chiral</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">penalty_1</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">penalty_terms</span> <span class="o">=</span> <span class="n">PenaltyParameters</span><span class="p">(</span><span class="n">penalty_chiral</span><span class="p">,</span> <span class="n">penalty_back</span><span class="p">,</span> <span class="n">penalty_1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Peptide-Definition">
+<h2>Peptide Definition<a class="headerlink" href="#Peptide-Definition" title="Permalink to this heading">¶</a></h2>
+<p>Based on the main chain and possible side chains we define the peptide object that includes all the structural information of the modeled system.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">peptide</span> <span class="o">=</span> <span class="n">Peptide</span><span class="p">(</span><span class="n">main_chain</span><span class="p">,</span> <span class="n">side_chains</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Protein-Folding-Problem">
+<h2>Protein Folding Problem<a class="headerlink" href="#Protein-Folding-Problem" title="Permalink to this heading">¶</a></h2>
+<p>Based on the defined peptide, the interaction (contact map) and the penalty terms we defined for our model we define the protein folding problem that returns qubit operators.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">protein_folding_problem</span> <span class="o">=</span> <span class="n">ProteinFoldingProblem</span><span class="p">(</span><span class="n">peptide</span><span class="p">,</span> <span class="n">mj_interaction</span><span class="p">,</span> <span class="n">penalty_terms</span><span class="p">)</span>
+<span class="n">qubit_op</span> <span class="o">=</span> <span class="n">protein_folding_problem</span><span class="o">.</span><span class="n">qubit_op</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">qubit_op</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+1613.5895000000003 * IIIIIIIII
++ 487.5 * IIIIIIZII
+- 192.5 * IIIIIIIZZ
++ 192.5 * IIIIIIZZZ
+- 195.0 * IIIIZIZII
+- 195.0 * IIIIIZIZI
+- 195.0 * IIIIZZZZI
+- 95.0 * IIZIZIIII
+- 95.0 * IIIZIZIII
+- 95.0 * IIZZZZIII
++ 295.0 * IIIIIIZZI
+- 497.5 * IIIIZIIII
+- 300.0 * IIIIZZIII
++ 195.0 * IIIIIIIIZ
++ 197.5 * IIIIIZIIZ
+- 197.5 * IIIIZZIIZ
+- 904.2875 * IZIIIIIII
+- 295.0 * IZIIIIZII
+- 197.5 * IZIIIIZZI
++ 302.5 * IZIIZIIII
++ 202.5 * IZIIZZIII
++ 100.0 * IZIIZIZII
++ 100.0 * IZIIIZIZI
++ 100.0 * IZIIZZZZI
+- 200.0 * IZIIIIIIZ
++ 97.5 * IZIIIIIZZ
+- 97.5 * IZIIIIZZZ
+- 100.0 * IZIIIZIIZ
++ 100.0 * IZIIZZIIZ
++ 100.0 * IIIIIIIZI
+- 100.0 * IIIIIZIII
++ 2.5 * IZIIIIIZI
+- 2.5 * IZIIIZIII
++ 192.5 * IIZIIIIII
++ 95.0 * IIZZIIIII
++ 97.5 * IIZIIIZII
++ 97.5 * IIIZIIIZI
++ 97.5 * IIZZIIZZI
+- 97.5 * IIIZIIIIZ
++ 97.5 * IIZZIIIIZ
++ 7.5 * IZZIIIIII
++ 5.0 * IZZZIIIII
++ 2.5 * IZZIIIZII
++ 2.5 * IZIZIIIZI
++ 2.5 * IZZZIIZZI
+- 2.5 * IZZIZIIII
+- 2.5 * IZIZIZIII
+- 2.5 * IZZZZZIII
+- 2.5 * IZIZIIIIZ
++ 2.5 * IZZZIIIIZ
++ 105.0 * IIIZIIIII
+- 701.802 * ZIIIIIIII
+- 195.0 * ZIIIIIZII
+- 102.5 * ZIIIIIIZI
+- 97.5 * ZIIIIIZZI
++ 195.0 * ZIIIZIIII
++ 102.5 * ZIIIIZIII
++ 97.5 * ZIIIZZIII
+- 200.0 * ZIZIIIIII
+- 105.0 * ZIIZIIIII
+- 100.0 * ZIZZIIIII
++ 97.5 * ZIIIZIZII
+- 100.0 * ZIZIIIZII
++ 97.5 * ZIIIIZIZI
+- 100.0 * ZIIZIIIZI
++ 97.5 * ZIIIZZZZI
+- 100.0 * ZIZZIIZZI
++ 100.0 * ZIZIZIIII
++ 100.0 * ZIIZIZIII
++ 100.0 * ZIZZZZIII
++ 97.5 * ZIIIIIIZZ
+- 97.5 * ZIIIIIZZZ
+- 97.5 * ZIIIIZIIZ
++ 97.5 * ZIIIZZIIZ
++ 100.0 * ZIIZIIIIZ
+- 100.0 * ZIZZIIIIZ
++ 5.0 * ZIIIIIIIZ
+</pre></div></div>
+</div>
+</section>
+<section id="Using-VQE-with-CVaR-expectation-value-for-the-solution-of-the-problem">
+<h2>Using VQE with CVaR expectation value for the solution of the problem<a class="headerlink" href="#Using-VQE-with-CVaR-expectation-value-for-the-solution-of-the-problem" title="Permalink to this heading">¶</a></h2>
+<p>The problem that we are tackling has now implemented all the physical constraints and has a diagonal Hamiltonian. For the particular case we are targeting the single bitstring that gives us the minimum energy (corresponding to the folded structure of the protein). Thus, we can use the Variational Quantum Eigensolver with Conditional Value at Risk (CVaR) expectation values for the solution of the problem and for finding the minimum configuration energy [6] . We follow the same approach as in Ref.
+[2] but here we use COBYLA for the classical optimization part. One can also use the standard VQE or QAOA algorithm for the solution of the problem, though as discussed in Ref. [2] CVaR is more suitable.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">RealAmplitudes</span>
+<span class="kn">from</span> <span class="nn">qiskit.algorithms.optimizers</span> <span class="kn">import</span> <span class="n">COBYLA</span>
+<span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">NumPyMinimumEigensolver</span><span class="p">,</span> <span class="n">VQE</span>
+<span class="kn">from</span> <span class="nn">qiskit.opflow</span> <span class="kn">import</span> <span class="n">PauliExpectation</span><span class="p">,</span> <span class="n">CVaRExpectation</span>
+<span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">execute</span><span class="p">,</span> <span class="n">Aer</span>
+
+<span class="c1"># set classical optimizer</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">COBYLA</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="c1"># set variational ansatz</span>
+<span class="n">ansatz</span> <span class="o">=</span> <span class="n">RealAmplitudes</span><span class="p">(</span><span class="n">reps</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># set the backend</span>
+<span class="n">backend_name</span> <span class="o">=</span> <span class="s2">&quot;aer_simulator&quot;</span>
+<span class="n">backend</span> <span class="o">=</span> <span class="n">QuantumInstance</span><span class="p">(</span>
+    <span class="n">Aer</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="n">backend_name</span><span class="p">),</span>
+    <span class="n">shots</span><span class="o">=</span><span class="mi">8192</span><span class="p">,</span>
+    <span class="n">seed_transpiler</span><span class="o">=</span><span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span><span class="p">,</span>
+    <span class="n">seed_simulator</span><span class="o">=</span><span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">def</span> <span class="nf">store_intermediate_result</span><span class="p">(</span><span class="n">eval_count</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">):</span>
+    <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eval_count</span><span class="p">)</span>
+    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
+
+
+<span class="c1"># initialize CVaR_alpha objective with alpha = 0.1</span>
+<span class="n">cvar_exp</span> <span class="o">=</span> <span class="n">CVaRExpectation</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">PauliExpectation</span><span class="p">())</span>
+
+<span class="c1"># initialize VQE using CVaR</span>
+<span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span>
+    <span class="n">expectation</span><span class="o">=</span><span class="n">cvar_exp</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+    <span class="n">ansatz</span><span class="o">=</span><span class="n">ansatz</span><span class="p">,</span>
+    <span class="n">quantum_instance</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span>
+    <span class="n">callback</span><span class="o">=</span><span class="n">store_intermediate_result</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">raw_result</span> <span class="o">=</span> <span class="n">vqe</span><span class="o">.</span><span class="n">compute_minimum_eigenvalue</span><span class="p">(</span><span class="n">qubit_op</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">raw_result</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{   &#39;aux_operator_eigenvalues&#39;: None,
+    &#39;cost_function_evals&#39;: 50,
+    &#39;eigenstate&#39;: {   &#39;000000000&#39;: 0.015625,
+                      &#39;000000001&#39;: 0.046875,
+                      &#39;000000010&#39;: 0.03314563036811941,
+                      &#39;000000011&#39;: 0.06346905003621844,
+                      &#39;000000101&#39;: 0.04941058844013093,
+                      &#39;000000110&#39;: 0.015625,
+                      &#39;000000111&#39;: 0.02209708691207961,
+                      &#39;000001001&#39;: 0.029231698334171417,
+                      &#39;000001010&#39;: 0.019136638615493577,
+                      &#39;000001011&#39;: 0.04555431167847891,
+                      &#39;000001101&#39;: 0.029231698334171417,
+                      &#39;000010001&#39;: 0.015625,
+                      &#39;000010011&#39;: 0.027063293868263706,
+                      &#39;000010101&#39;: 0.02209708691207961,
+                      &#39;000010111&#39;: 0.011048543456039806,
+                      &#39;000011000&#39;: 0.02209708691207961,
+                      &#39;000011001&#39;: 0.06051536478449089,
+                      &#39;000011010&#39;: 0.03983608994994363,
+                      &#39;000011011&#39;: 0.09631896879639025,
+                      &#39;000011100&#39;: 0.011048543456039806,
+                      &#39;000011101&#39;: 0.06810779599282303,
+                      &#39;000011110&#39;: 0.02209708691207961,
+                      &#39;000011111&#39;: 0.019136638615493577,
+                      &#39;000100000&#39;: 0.015625,
+                      &#39;000100001&#39;: 0.03125,
+                      &#39;000100010&#39;: 0.019136638615493577,
+                      &#39;000100011&#39;: 0.05063078670631141,
+                      &#39;000100101&#39;: 0.03983608994994363,
+                      &#39;000100110&#39;: 0.015625,
+                      &#39;000100111&#39;: 0.015625,
+                      &#39;000101001&#39;: 0.03314563036811941,
+                      &#39;000101010&#39;: 0.011048543456039806,
+                      &#39;000101011&#39;: 0.036643873123620545,
+                      &#39;000101101&#39;: 0.019136638615493577,
+                      &#39;000110000&#39;: 0.011048543456039806,
+                      &#39;000110010&#39;: 0.011048543456039806,
+                      &#39;000110011&#39;: 0.019136638615493577,
+                      &#39;000110101&#39;: 0.029231698334171417,
+                      &#39;000111000&#39;: 0.015625,
+                      &#39;000111001&#39;: 0.04555431167847891,
+                      &#39;000111010&#39;: 0.024705294220065465,
+                      &#39;000111011&#39;: 0.09110862335695782,
+                      &#39;000111101&#39;: 0.05412658773652741,
+                      &#39;000111110&#39;: 0.015625,
+                      &#39;000111111&#39;: 0.011048543456039806,
+                      &#39;001000000&#39;: 0.024705294220065465,
+                      &#39;001000001&#39;: 0.04941058844013093,
+                      &#39;001000010&#39;: 0.036643873123620545,
+                      &#39;001000011&#39;: 0.09820160226544168,
+                      &#39;001000101&#39;: 0.061515686515717274,
+                      &#39;001000110&#39;: 0.024705294220065465,
+                      &#39;001000111&#39;: 0.02209708691207961,
+                      &#39;001001001&#39;: 0.011048543456039806,
+                      &#39;001001010&#39;: 0.011048543456039806,
+                      &#39;001001011&#39;: 0.04133986423538423,
+                      &#39;001001101&#39;: 0.019136638615493577,
+                      &#39;001010001&#39;: 0.019136638615493577,
+                      &#39;001010010&#39;: 0.019136638615493577,
+                      &#39;001010011&#39;: 0.034938562148434216,
+                      &#39;001010101&#39;: 0.034938562148434216,
+                      &#39;001011001&#39;: 0.019136638615493577,
+                      &#39;001011011&#39;: 0.034938562148434216,
+                      &#39;001011101&#39;: 0.027063293868263706,
+                      &#39;001100000&#39;: 0.04419417382415922,
+                      &#39;001100001&#39;: 0.13799626353637262,
+                      &#39;001100010&#39;: 0.10065702130254005,
+                      &#39;001100011&#39;: 0.27085837223999554,
+                      &#39;001100100&#39;: 0.019136638615493577,
+                      &#39;001100101&#39;: 0.15428451295415233,
+                      &#39;001100110&#39;: 0.05412658773652741,
+                      &#39;001100111&#39;: 0.06442352540027595,
+                      &#39;001101000&#39;: 0.015625,
+                      &#39;001101001&#39;: 0.07574499777213015,
+                      &#39;001101010&#39;: 0.03983608994994363,
+                      &#39;001101011&#39;: 0.11267347735824966,
+                      &#39;001101100&#39;: 0.015625,
+                      &#39;001101101&#39;: 0.0855816496101822,
+                      &#39;001101111&#39;: 0.015625,
+                      &#39;001110001&#39;: 0.011048543456039806,
+                      &#39;001110011&#39;: 0.029231698334171417,
+                      &#39;001110101&#39;: 0.02209708691207961,
+                      &#39;001111000&#39;: 0.038273277230987154,
+                      &#39;001111001&#39;: 0.10825317547305482,
+                      &#39;001111010&#39;: 0.05740991584648074,
+                      &#39;001111011&#39;: 0.18087245160609727,
+                      &#39;001111100&#39;: 0.015625,
+                      &#39;001111101&#39;: 0.11744762795603834,
+                      &#39;001111110&#39;: 0.024705294220065465,
+                      &#39;001111111&#39;: 0.019136638615493577,
+                      &#39;010001011&#39;: 0.011048543456039806,
+                      &#39;010001101&#39;: 0.011048543456039806,
+                      &#39;010010000&#39;: 0.011048543456039806,
+                      &#39;010010001&#39;: 0.015625,
+                      &#39;010010010&#39;: 0.02209708691207961,
+                      &#39;010010011&#39;: 0.029231698334171417,
+                      &#39;010010101&#39;: 0.011048543456039806,
+                      &#39;010010111&#39;: 0.011048543456039806,
+                      &#39;010011000&#39;: 0.011048543456039806,
+                      &#39;010011001&#39;: 0.036643873123620545,
+                      &#39;010011010&#39;: 0.03125,
+                      &#39;010011011&#39;: 0.05298695299316616,
+                      &#39;010011101&#39;: 0.038273277230987154,
+                      &#39;010100000&#39;: 0.03314563036811941,
+                      &#39;010100001&#39;: 0.07967217989988726,
+                      &#39;010100010&#39;: 0.046875,
+                      &#39;010100011&#39;: 0.12979099785809492,
+                      &#39;010100100&#39;: 0.011048543456039806,
+                      &#39;010100101&#39;: 0.07493486755176124,
+                      &#39;010100110&#39;: 0.024705294220065465,
+                      &#39;010100111&#39;: 0.036643873123620545,
+                      &#39;010101001&#39;: 0.04133986423538423,
+                      &#39;010101010&#39;: 0.024705294220065465,
+                      &#39;010101011&#39;: 0.06536406457297465,
+                      &#39;010101101&#39;: 0.04419417382415922,
+                      &#39;010101110&#39;: 0.011048543456039806,
+                      &#39;010110001&#39;: 0.015625,
+                      &#39;010110011&#39;: 0.03125,
+                      &#39;010110110&#39;: 0.011048543456039806,
+                      &#39;010111000&#39;: 0.024705294220065465,
+                      &#39;010111001&#39;: 0.07328774624724109,
+                      &#39;010111010&#39;: 0.03983608994994363,
+                      &#39;010111011&#39;: 0.10768788087570486,
+                      &#39;010111101&#39;: 0.08193819126329309,
+                      &#39;010111110&#39;: 0.011048543456039806,
+                      &#39;010111111&#39;: 0.019136638615493577,
+                      &#39;011000001&#39;: 0.03983608994994363,
+                      &#39;011000011&#39;: 0.05524271728019903,
+                      &#39;011000101&#39;: 0.036643873123620545,
+                      &#39;011001001&#39;: 0.024705294220065465,
+                      &#39;011001010&#39;: 0.011048543456039806,
+                      &#39;011001011&#39;: 0.03125,
+                      &#39;011001101&#39;: 0.019136638615493577,
+                      &#39;011011001&#39;: 0.024705294220065465,
+                      &#39;011011010&#39;: 0.011048543456039806,
+                      &#39;011011011&#39;: 0.029231698334171417,
+                      &#39;011011101&#39;: 0.015625,
+                      &#39;011100001&#39;: 0.024705294220065465,
+                      &#39;011100010&#39;: 0.019136638615493577,
+                      &#39;011100011&#39;: 0.03983608994994363,
+                      &#39;011100101&#39;: 0.034938562148434216,
+                      &#39;011101011&#39;: 0.019136638615493577,
+                      &#39;011101101&#39;: 0.02209708691207961,
+                      &#39;011111011&#39;: 0.015625,
+                      &#39;011111101&#39;: 0.011048543456039806,
+                      &#39;100000000&#39;: 0.015625,
+                      &#39;100000001&#39;: 0.04941058844013093,
+                      &#39;100000010&#39;: 0.03314563036811941,
+                      &#39;100000011&#39;: 0.08267972847076846,
+                      &#39;100000101&#39;: 0.05524271728019903,
+                      &#39;100000110&#39;: 0.011048543456039806,
+                      &#39;100000111&#39;: 0.02209708691207961,
+                      &#39;100001000&#39;: 0.015625,
+                      &#39;100001001&#39;: 0.027063293868263706,
+                      &#39;100001010&#39;: 0.019136638615493577,
+                      &#39;100001011&#39;: 0.05182226234930312,
+                      &#39;100001101&#39;: 0.036643873123620545,
+                      &#39;100010000&#39;: 0.011048543456039806,
+                      &#39;100010001&#39;: 0.024705294220065465,
+                      &#39;100010011&#39;: 0.034938562148434216,
+                      &#39;100010101&#39;: 0.024705294220065465,
+                      &#39;100011000&#39;: 0.024705294220065465,
+                      &#39;100011001&#39;: 0.071602745233685,
+                      &#39;100011010&#39;: 0.048159484398195125,
+                      &#39;100011011&#39;: 0.106548294507702,
+                      &#39;100011101&#39;: 0.07890238233095373,
+                      &#39;100011110&#39;: 0.024705294220065465,
+                      &#39;100011111&#39;: 0.015625,
+                      &#39;100100000&#39;: 0.015625,
+                      &#39;100100001&#39;: 0.03314563036811941,
+                      &#39;100100010&#39;: 0.02209708691207961,
+                      &#39;100100011&#39;: 0.07328774624724109,
+                      &#39;100100101&#39;: 0.048159484398195125,
+                      &#39;100100110&#39;: 0.015625,
+                      &#39;100100111&#39;: 0.011048543456039806,
+                      &#39;100101001&#39;: 0.027063293868263706,
+                      &#39;100101010&#39;: 0.015625,
+                      &#39;100101011&#39;: 0.03125,
+                      &#39;100101101&#39;: 0.036643873123620545,
+                      &#39;100101110&#39;: 0.011048543456039806,
+                      &#39;100110000&#39;: 0.011048543456039806,
+                      &#39;100110001&#39;: 0.02209708691207961,
+                      &#39;100110011&#39;: 0.03983608994994363,
+                      &#39;100110101&#39;: 0.027063293868263706,
+                      &#39;100110110&#39;: 0.011048543456039806,
+                      &#39;100110111&#39;: 0.02209708691207961,
+                      &#39;100111000&#39;: 0.029231698334171417,
+                      &#39;100111001&#39;: 0.06346905003621844,
+                      &#39;100111010&#39;: 0.04133986423538423,
+                      &#39;100111011&#39;: 0.10881553341550093,
+                      &#39;100111101&#39;: 0.0625,
+                      &#39;100111110&#39;: 0.019136638615493577,
+                      &#39;100111111&#39;: 0.011048543456039806,
+                      &#39;101000000&#39;: 0.02209708691207961,
+                      &#39;101000001&#39;: 0.06810779599282303,
+                      &#39;101000010&#39;: 0.04133986423538423,
+                      &#39;101000011&#39;: 0.12645635981436443,
+                      &#39;101000101&#39;: 0.07733980419227864,
+                      &#39;101000110&#39;: 0.015625,
+                      &#39;101000111&#39;: 0.027063293868263706,
+                      &#39;101001001&#39;: 0.029231698334171417,
+                      &#39;101001010&#39;: 0.011048543456039806,
+                      &#39;101001011&#39;: 0.03314563036811941,
+                      &#39;101001101&#39;: 0.019136638615493577,
+                      &#39;101010000&#39;: 0.011048543456039806,
+                      &#39;101010001&#39;: 0.024705294220065465,
+                      &#39;101010010&#39;: 0.02209708691207961,
+                      &#39;101010011&#39;: 0.04941058844013093,
+                      &#39;101010101&#39;: 0.015625,
+                      &#39;101010111&#39;: 0.015625,
+                      &#39;101011000&#39;: 0.015625,
+                      &#39;101011001&#39;: 0.027063293868263706,
+                      &#39;101011011&#39;: 0.03125,
+                      &#39;101011101&#39;: 0.019136638615493577,
+                      &#39;101100000&#39;: 0.06810779599282303,
+                      &#39;101100001&#39;: 0.1690102160373745,
+                      &#39;101100010&#39;: 0.129319885603491,
+                      &#39;101100011&#39;: 0.3125,
+                      &#39;101100100&#39;: 0.011048543456039806,
+                      &#39;101100101&#39;: 0.16424840657522374,
+                      &#39;101100110&#39;: 0.05740991584648074,
+                      &#39;101100111&#39;: 0.06810779599282303,
+                      &#39;101101000&#39;: 0.02209708691207961,
+                      &#39;101101001&#39;: 0.10126157341262282,
+                      &#39;101101010&#39;: 0.05298695299316616,
+                      &#39;101101011&#39;: 0.13887803777055607,
+                      &#39;101101100&#39;: 0.011048543456039806,
+                      &#39;101101101&#39;: 0.10423175050098699,
+                      &#39;101101110&#39;: 0.027063293868263706,
+                      &#39;101101111&#39;: 0.019136638615493577,
+                      &#39;101110000&#39;: 0.011048543456039806,
+                      &#39;101110001&#39;: 0.011048543456039806,
+                      &#39;101110011&#39;: 0.03125,
+                      &#39;101110101&#39;: 0.011048543456039806,
+                      &#39;101111000&#39;: 0.05298695299316616,
+                      &#39;101111001&#39;: 0.13212136347881065,
+                      &#39;101111010&#39;: 0.07245014449606019,
+                      &#39;101111011&#39;: 0.21791133876533364,
+                      &#39;101111100&#39;: 0.011048543456039806,
+                      &#39;101111101&#39;: 0.15428451295415233,
+                      &#39;101111110&#39;: 0.04133986423538423,
+                      &#39;101111111&#39;: 0.03125,
+                      &#39;110001011&#39;: 0.011048543456039806,
+                      &#39;110010001&#39;: 0.02209708691207961,
+                      &#39;110010010&#39;: 0.015625,
+                      &#39;110010011&#39;: 0.038273277230987154,
+                      &#39;110010101&#39;: 0.02209708691207961,
+                      &#39;110010111&#39;: 0.011048543456039806,
+                      &#39;110011000&#39;: 0.019136638615493577,
+                      &#39;110011001&#39;: 0.04555431167847891,
+                      &#39;110011010&#39;: 0.027063293868263706,
+                      &#39;110011011&#39;: 0.06629126073623882,
+                      &#39;110011101&#39;: 0.03983608994994363,
+                      &#39;110011110&#39;: 0.015625,
+                      &#39;110100000&#39;: 0.03314563036811941,
+                      &#39;110100001&#39;: 0.08341467384399462,
+                      &#39;110100010&#39;: 0.05412658773652741,
+                      &#39;110100011&#39;: 0.15027643798180737,
+                      &#39;110100101&#39;: 0.0943987966687076,
+                      &#39;110100110&#39;: 0.027063293868263706,
+                      &#39;110100111&#39;: 0.036643873123620545,
+                      &#39;110101000&#39;: 0.015625,
+                      &#39;110101001&#39;: 0.0427908248050911,
+                      &#39;110101010&#39;: 0.024705294220065465,
+                      &#39;110101011&#39;: 0.07733980419227864,
+                      &#39;110101101&#39;: 0.0625,
+                      &#39;110101110&#39;: 0.015625,
+                      &#39;110110001&#39;: 0.02209708691207961,
+                      &#39;110110010&#39;: 0.011048543456039806,
+                      &#39;110110011&#39;: 0.03125,
+                      &#39;110110101&#39;: 0.024705294220065465,
+                      &#39;110111000&#39;: 0.02209708691207961,
+                      &#39;110111001&#39;: 0.08769509500251425,
+                      &#39;110111010&#39;: 0.04133986423538423,
+                      &#39;110111011&#39;: 0.1316585902058806,
+                      &#39;110111101&#39;: 0.09631896879639025,
+                      &#39;110111110&#39;: 0.019136638615493577,
+                      &#39;110111111&#39;: 0.011048543456039806,
+                      &#39;111000001&#39;: 0.04555431167847891,
+                      &#39;111000010&#39;: 0.02209708691207961,
+                      &#39;111000011&#39;: 0.071602745233685,
+                      &#39;111000100&#39;: 0.011048543456039806,
+                      &#39;111000101&#39;: 0.03983608994994363,
+                      &#39;111000110&#39;: 0.011048543456039806,
+                      &#39;111000111&#39;: 0.019136638615493577,
+                      &#39;111001001&#39;: 0.019136638615493577,
+                      &#39;111001011&#39;: 0.03125,
+                      &#39;111001101&#39;: 0.024705294220065465,
+                      &#39;111011001&#39;: 0.019136638615493577,
+                      &#39;111011010&#39;: 0.02209708691207961,
+                      &#39;111011011&#39;: 0.03314563036811941,
+                      &#39;111011101&#39;: 0.019136638615493577,
+                      &#39;111100001&#39;: 0.03125,
+                      &#39;111100010&#39;: 0.029231698334171417,
+                      &#39;111100011&#39;: 0.061515686515717274,
+                      &#39;111100101&#39;: 0.03125,
+                      &#39;111100110&#39;: 0.011048543456039806,
+                      &#39;111100111&#39;: 0.011048543456039806,
+                      &#39;111101001&#39;: 0.015625,
+                      &#39;111101011&#39;: 0.019136638615493577,
+                      &#39;111101101&#39;: 0.015625,
+                      &#39;111111001&#39;: 0.011048543456039806,
+                      &#39;111111011&#39;: 0.02209708691207961,
+                      &#39;111111101&#39;: 0.015625},
+    &#39;eigenvalue&#39;: (-1.3980178222655593+0j),
+    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[12]): -1.4702306518130106,
+                              ParameterVectorElement(θ[13]): 1.1013642144225715,
+                              ParameterVectorElement(θ[14]): -0.0313552145205504,
+                              ParameterVectorElement(θ[15]): 0.7705700955144723,
+                              ParameterVectorElement(θ[16]): 0.18505081170538862,
+                              ParameterVectorElement(θ[11]): 0.2516332046098113,
+                              ParameterVectorElement(θ[17]): 0.5496347144255032,
+                              ParameterVectorElement(θ[7]): -0.048782814078807774,
+                              ParameterVectorElement(θ[6]): -0.9943385087310626,
+                              ParameterVectorElement(θ[5]): 3.922465032736834,
+                              ParameterVectorElement(θ[8]): 1.190948991529499,
+                              ParameterVectorElement(θ[9]): 0.31372849859857715,
+                              ParameterVectorElement(θ[10]): -1.0964143534287234,
+                              ParameterVectorElement(θ[1]): 1.0035801367262132,
+                              ParameterVectorElement(θ[2]): -0.1383064560367305,
+                              ParameterVectorElement(θ[0]): 2.555308432670651,
+                              ParameterVectorElement(θ[4]): 0.5595204307110316,
+                              ParameterVectorElement(θ[3]): -0.853941001354921},
+    &#39;optimal_point&#39;: array([ 2.55530843,  1.00358014, -0.13830646, -0.853941  ,  0.55952043,
+        3.92246503, -0.99433851, -0.04878281,  1.19094899,  0.3137285 ,
+       -1.09641435,  0.2516332 , -1.47023065,  1.10136421, -0.03135521,
+        0.7705701 ,  0.18505081,  0.54963471]),
+    &#39;optimal_value&#39;: -1.3980178222655593,
+    &#39;optimizer_evals&#39;: None,
+    &#39;optimizer_time&#39;: 32.7032151222229}
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Conformation Energy&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;VQE Iterations&quot;</span><span class="p">)</span>
+
+<span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="mf">0.44</span><span class="p">,</span> <span class="mf">0.51</span><span class="p">,</span> <span class="mf">0.44</span><span class="p">,</span> <span class="mf">0.32</span><span class="p">])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">counts</span><span class="p">[</span><span class="mi">40</span><span class="p">:],</span> <span class="n">values</span><span class="p">[</span><span class="mi">40</span><span class="p">:])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Conformation Energy&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;VQE Iterations&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/protein_folding_protein_folding_30_0.png" src="../_images/protein_folding_protein_folding_30_0.png" />
+</div>
+</div>
+</section>
+<section id="Visualizing-the-answer">
+<h2>Visualizing the answer<a class="headerlink" href="#Visualizing-the-answer" title="Permalink to this heading">¶</a></h2>
+<p>In order to reduce computational costs, we have reduced the problem’s qubit operator to the minimum amount of qubits needed to represent the shape of the protein. In order to decode the answer we need to understand how this has been done. * The shape of the protein has been encoded by a sequence of turns , <span class="math notranslate nohighlight">\(\{0,1,2,3\}\)</span>. Each turn represents a different direction in the lattice. * For a main bead of <span class="math notranslate nohighlight">\(N_{aminoacids}\)</span> in a lattice, we need <span class="math notranslate nohighlight">\(N_{aminoacids}-1\)</span> turns in order to
+represent its shape. However, the orientation of the protein is not relevant to its energy. Therefore the first two turns of the shape can be set to <span class="math notranslate nohighlight">\([1,0]\)</span> without loss of generality. * If the second bead does not have any side chain, we can also set the <span class="math notranslate nohighlight">\(6^{th}\)</span> qubit to <span class="math notranslate nohighlight">\([1]\)</span> without breaking symmetry. * Since the length of the secondary chains is always limited to <span class="math notranslate nohighlight">\(1\)</span> we only need one turn to describe the shape of the chain.</p>
+<p>The total amount of qubits we need to represent the shape of the protein will be <span class="math notranslate nohighlight">\(2(N_{aminoacids}-3)\)</span> if there is a secondary chain coming out of the second bead or <span class="math notranslate nohighlight">\(2(N_{aminoacids}-3) - 1\)</span>, otherwise. All the other qubits will remain unused during the optimization process. See:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">protein_folding_problem</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">raw_result</span><span class="o">=</span><span class="n">raw_result</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span>
+    <span class="s2">&quot;The bitstring representing the shape of the protein during optimization is: &quot;</span><span class="p">,</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">turn_sequence</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The expanded expression is:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">get_result_binary_vector</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+The bitstring representing the shape of the protein during optimization is:  101100011
+The expanded expression is: 1______0_____________________________________________________________________________________________________________________________110001_1____
+</pre></div></div>
+</div>
+<p>Now that we know which qubits encode which information, we can decode the bitstring into the explicit turns that form the shape of the protein.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;The folded protein&#39;s main sequence of turns is: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">protein_shape_decoder</span><span class="o">.</span><span class="n">main_turns</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;and the side turn sequences are: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">protein_shape_decoder</span><span class="o">.</span><span class="n">side_turns</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+The folded protein&#39;s main sequence of turns is: [1, 0, 3, 2, 0, 3]
+and the side turn sequences are: [None, None, None, None, None, None, None]
+</pre></div></div>
+</div>
+<p>From this sequence of turns we can get the cartesian coordinates of each of the aminoacids of the protein.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">protein_shape_file_gen</span><span class="o">.</span><span class="n">get_xyz_data</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[[&#39;A&#39; &#39;0.0&#39; &#39;0.0&#39; &#39;0.0&#39;]
+ [&#39;P&#39; &#39;0.5773502691896258&#39; &#39;0.5773502691896258&#39; &#39;-0.5773502691896258&#39;]
+ [&#39;R&#39; &#39;1.1547005383792517&#39; &#39;0.0&#39; &#39;-1.1547005383792517&#39;]
+ [&#39;L&#39; &#39;1.7320508075688776&#39; &#39;-0.5773502691896258&#39; &#39;-0.5773502691896258&#39;]
+ [&#39;R&#39; &#39;2.3094010767585034&#39; &#39;0.0&#39; &#39;0.0&#39;]
+ [&#39;F&#39; &#39;1.7320508075688776&#39; &#39;0.5773502691896258&#39; &#39;0.5773502691896258&#39;]
+ [&#39;Y&#39; &#39;1.154700538379252&#39; &#39;1.1547005383792517&#39; &#39;0.0&#39;]]
+</pre></div></div>
+</div>
+<p>And finally, we can also plot the structure of the protein in 3D. Note that when rendered with the proper backend this plot can be interactively rotated.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get_figure</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Protein Structure&quot;</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view_init</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">70</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/protein_folding_protein_folding_39_0.png" src="../_images/protein_folding_protein_folding_39_0.png" />
+</div>
+</div>
+<p>And here is an example with side chains.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">peptide</span> <span class="o">=</span> <span class="n">Peptide</span><span class="p">(</span><span class="s2">&quot;APRLR&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">])</span>
+<span class="n">protein_folding_problem</span> <span class="o">=</span> <span class="n">ProteinFoldingProblem</span><span class="p">(</span><span class="n">peptide</span><span class="p">,</span> <span class="n">mj_interaction</span><span class="p">,</span> <span class="n">penalty_terms</span><span class="p">)</span>
+<span class="n">qubit_op</span> <span class="o">=</span> <span class="n">protein_folding_problem</span><span class="o">.</span><span class="n">qubit_op</span><span class="p">()</span>
+<span class="n">raw_result</span> <span class="o">=</span> <span class="n">vqe</span><span class="o">.</span><span class="n">compute_minimum_eigenvalue</span><span class="p">(</span><span class="n">qubit_op</span><span class="p">)</span>
+<span class="n">result_2</span> <span class="o">=</span> <span class="n">protein_folding_problem</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">raw_result</span><span class="o">=</span><span class="n">raw_result</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">result_2</span><span class="o">.</span><span class="n">get_figure</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Protein Structure&quot;</span><span class="p">,</span> <span class="n">ticks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">view_init</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/protein_folding_protein_folding_42_0.png" src="../_images/protein_folding_protein_folding_42_0.png" />
+</div>
+</div>
+</section>
+<section id="References">
+<h2>References<a class="headerlink" href="#References" title="Permalink to this heading">¶</a></h2>
+<p>[1] <a class="reference external" href="https://en.wikipedia.org/wiki/Levinthal%27s_paradox">https://en.wikipedia.org/wiki/Levinthal%27s_paradox</a></p>
+<p>[2] A.Robert, P.Barkoutsos, S.Woerner and I.Tavernelli, Resource-efficient quantum algorithm for protein folding, NPJ Quantum Information, 2021, <a class="reference external" href="https://doi.org/10.1038/s41534-021-00368-4">https://doi.org/10.1038/s41534-021-00368-4</a></p>
+<p>[3] IUPAC–IUB Commission on Biochemical Nomenclature (1972). “A one-letter notation for aminoacid sequences”. Pure and Applied Chemistry. 31 (4): 641–645. doi:10.1351/pac197231040639. PMID 5080161.</p>
+<p>[4] <a class="reference external" href="https://en.wikipedia.org/wiki/Amino_acid">https://en.wikipedia.org/wiki/Amino_acid</a></p>
+<p>[5] S. Miyazawa and R. L.Jernigan, Residue – Residue Potentials with a Favorable Contact Pair Term and an Unfavorable High Packing Density Term for Simulation and Threading, J. Mol. Biol.256, 623–644, 1996, Table 3, <a class="reference external" href="https://doi.org/10.1006/jmbi.1996.0114">https://doi.org/10.1006/jmbi.1996.0114</a></p>
+<p>[6] P.Barkoutsos, G. Nannichini, A.Robert, I.Tavernelli, S.Woerner, Improving Variational Quantum Optimization using CVaR, Quantum 4, 256, 2020, <a class="reference external" href="https://doi.org/10.22331/q-2020-04-20-256">https://doi.org/10.22331/q-2020-04-20-256</a></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">qiskit.tools.jupyter</span>
+
+<span class="o">%</span><span class="k">qiskit_version_table</span>
+<span class="o">%</span><span class="k">qiskit_copyright</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<h3>Version Information</h3><table><tr><th>Qiskit Software</th><th>Version</th></tr><tr><td><code>qiskit-terra</code></td><td>0.21.0</td></tr><tr><td><code>qiskit-aer</code></td><td>0.10.4</td></tr><tr><td><code>qiskit-ibmq-provider</code></td><td>0.19.2</td></tr><tr><td><code>qiskit-nature</code></td><td>0.4.2</td></tr><tr><th>System information</th></tr><tr><td>Python version</td><td>3.9.13</td></tr><tr><td>Python compiler</td><td>GCC 9.4.0</td></tr><tr><td>Python build</td><td>main, Jul 22 2022 09:23:34</td></tr><tr><td>OS</td><td>Linux</td></tr><tr><td>CPUs</td><td>2</td></tr><tr><td>Memory (Gb)</td><td>6.781246185302734</td></tr><tr><td colspan='2'>Thu Aug 25 20:17:59 2022 UTC</td></tr></table></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<div style='width: 100%; background-color:#d5d9e0;padding-left: 10px; padding-bottom: 10px; padding-right: 10px; padding-top: 5px'><h3>This code is a part of Qiskit</h3><p>&copy; Copyright IBM 2017, 2022.</p><p>This code is licensed under the Apache License, Version 2.0. You may<br>obtain a copy of this license in the LICENSE.txt file in the root directory<br> of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.<p>Any modifications or derivative works of this code must retain this<br>copyright notice, and modified files need to carry a notice indicating<br>that they have been altered from the originals.</p></div></div>
+</div>
+<script type="application/vnd.jupyter.widget-state+json">
+{"state": {"4e9e9348472449d9b9c3138c6b231827": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 10px 0px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "ea1556c5702b4efeaf3549da37f393d3": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "aa92bae4af0d4f18a238f5df9c91ee75": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_4e9e9348472449d9b9c3138c6b231827", "placeholder": "\u200b", "style": "IPY_MODEL_ea1556c5702b4efeaf3549da37f393d3", "tabbable": null, "tooltip": null, "value": "<p style='font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-size: 20px; font-weight: medium;'>Circuit Properties</p>"}}, "92e3776904fb4bff883fce3be98bdd26": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": "right", "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": "0px 0px 0px 0px", "right": null, "top": null, "visibility": null, "width": "70px"}}, "c775b2bc2d4445538dd080a45f095177": {"model_name": "ButtonStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "button_color": null, "font_family": null, "font_size": null, "font_style": null, "font_variant": null, "font_weight": null, "text_color": null, "text_decoration": null}}, "8458a3b70e3b486ab76ff778a6ae1445": {"model_name": "ButtonModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "ButtonView", "button_style": "primary", "description": "Clear", "disabled": false, "icon": "", "layout": "IPY_MODEL_92e3776904fb4bff883fce3be98bdd26", "style": "IPY_MODEL_c775b2bc2d4445538dd080a45f095177", "tabbable": null, "tooltip": null}}, "e45f494285c849d58043a01ae454e40e": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": "\n                                       \". . . . right \"\n                                        ", "grid_template_columns": "20% 20% 20% 20% 20%", "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "100%"}}, "1738bda742dd476fb369ac2dc3782178": {"model_name": "GridBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "GridBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "GridBoxView", "box_style": "", "children": ["IPY_MODEL_8458a3b70e3b486ab76ff778a6ae1445"], "layout": "IPY_MODEL_e45f494285c849d58043a01ae454e40e", "tabbable": null, "tooltip": null}}, "5bb6cff0c3fb41eca02ad129b3a61654": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "190px"}}, "2d234ed433524c4c899514a5d5b6a1f0": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "951e034c9b174b95be4b16b933b4dfb5": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_5bb6cff0c3fb41eca02ad129b3a61654", "placeholder": "\u200b", "style": "IPY_MODEL_2d234ed433524c4c899514a5d5b6a1f0", "tabbable": null, "tooltip": null, "value": "<h5>Job ID</h5>"}}, "df8cdd420a2f4f008d9e5efb9d80ec42": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "145px"}}, "ac7009876ce840af95633bc0a82ff46d": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "1c6f2d132c0b46e8bfbab69a1c4fa052": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_df8cdd420a2f4f008d9e5efb9d80ec42", "placeholder": "\u200b", "style": "IPY_MODEL_ac7009876ce840af95633bc0a82ff46d", "tabbable": null, "tooltip": null, "value": "<h5>Backend</h5>"}}, "32284abbfafc42f1a77db03a517bf7cd": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "95px"}}, "71ae451cf1c24d2ba53dbb653bd22613": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "edc92e8ffb034e02a53402f65f13dd86": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_32284abbfafc42f1a77db03a517bf7cd", "placeholder": "\u200b", "style": "IPY_MODEL_71ae451cf1c24d2ba53dbb653bd22613", "tabbable": null, "tooltip": null, "value": "<h5>Status</h5>"}}, "768da2c7bc73472ca3686c1235c894f2": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "70px"}}, "bf9d412345304e78a99f2a3b35951904": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "410c112b2dad4b969aefdfe644380196": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_768da2c7bc73472ca3686c1235c894f2", "placeholder": "\u200b", "style": "IPY_MODEL_bf9d412345304e78a99f2a3b35951904", "tabbable": null, "tooltip": null, "value": "<h5>Queue</h5>"}}, "27d2bf5c1fb84cfea9bb980d71a7c4d1": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "3d1f94b2d5744e559ebfd8136f732eb4": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "ad1566fe224f47de85e5a4ccdbb599a0": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_27d2bf5c1fb84cfea9bb980d71a7c4d1", "placeholder": "\u200b", "style": "IPY_MODEL_3d1f94b2d5744e559ebfd8136f732eb4", "tabbable": null, "tooltip": null, "value": "<h5>Message</h5>"}}, "89993224dfd943e39d30f93814b17deb": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 0px 37px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "600px"}}, "e63dcf20ccb347b8baf817e694fa2623": {"model_name": "HBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_951e034c9b174b95be4b16b933b4dfb5", "IPY_MODEL_1c6f2d132c0b46e8bfbab69a1c4fa052", "IPY_MODEL_edc92e8ffb034e02a53402f65f13dd86", "IPY_MODEL_410c112b2dad4b969aefdfe644380196", "IPY_MODEL_ad1566fe224f47de85e5a4ccdbb599a0"], "layout": "IPY_MODEL_89993224dfd943e39d30f93814b17deb", "tabbable": null, "tooltip": null}}}, "version_major": 2, "version_minor": 0}
+</script></section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Qiskit Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../mzm_generation/index.html">Majorana zero mode generation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Protein folding</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Protein Folding</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../apidocs/index.html">Qiskit Research API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Protein folding</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Protein folding</a></li>
+      <li>Next: <a href="../apidocs/index.html" title="next chapter">Qiskit Research API Reference</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/protein_folding/protein_folding.ipynb.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

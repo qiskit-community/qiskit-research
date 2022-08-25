@@ -8,6 +8,7 @@ Research using Qiskit, demonstrating best practices for running quantum computin
   :maxdepth: 2
 
   mzm_generation/index
+  protein_folding/index
   apidocs/index
 
 .. Hiding - Indices and tables
