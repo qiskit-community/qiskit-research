@@ -61,4 +61,4 @@ autoclass_content = "both"
 nbsphinx_timeout = 180
 nbsphinx_execute = "always"
 nbsphinx_widgets_path = ""
-exclude_patterns = ["_build", "**.ipynb_checkpoints"]
+exclude_patterns = ["_build", "**.ipynb_checkpoints", "getting_started.ipynb"]

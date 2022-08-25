@@ -1,4 +1,4 @@
-name: Lint check
+name: Format check
 
 on:
   push:
@@ -23,5 +23,5 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install tox
-      - name: Run lint check
-        run: tox -elint
+      - name: Run format check
+        run: tox -eformat

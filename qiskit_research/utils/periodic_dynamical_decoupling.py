@@ -176,7 +176,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
         self.max_repeats = max_repeats
         self._extra_slack_distribution = extra_slack_distribution
 
-        self._base_dd_sequence_lengths = {}
+        self._base_dd_sequence_lengths: dict[Qubit, list[float]] = {}
         self._sequence_phase = 0
 
     def _pre_runhook(self, dag: DAGCircuit):
@@ -391,7 +391,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
 
         # (3) Construct DD sequence with delays
         num_elements = max(len(actual_sequence), len(taus))
-        idle_after = t_start
+        idle_after: float = t_start
         for dd_ind in range(num_elements):
             if dd_ind < len(taus):
                 tau = taus[dd_ind]

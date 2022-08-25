@@ -24,7 +24,7 @@ def cost_func_scaled_cr(
     circ: QuantumCircuit,
     layouts: list[list[int]],
     backend: Backend,
-) -> list[tuple[list[int]]]:
+) -> list[tuple[list[int], float]]:
     """
     A custom cost function that includes T1 and T2 computed during idle periods,
     for an already transpiled and scheduled circuit circ
@@ -43,8 +43,8 @@ def cost_func_scaled_cr(
     t1s = [props.qubit_property(qq, "T1")[0] for qq in range(num_qubits)]
     t2s = [props.qubit_property(qq, "T2")[0] for qq in range(num_qubits)]
 
-    error = 0
-    fid = 1
+    error = 0.0
+    fid = 1.0
     touched = set()
     for layout in layouts:
         for item in circ.data:
