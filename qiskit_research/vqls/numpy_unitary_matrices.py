@@ -1,10 +1,9 @@
 
-from multiprocessing.sharedctypes import Value
 from types import SimpleNamespace
 import numpy as np 
 import scipy.linalg as spla
 from qiskit.circuit import QuantumCircuit
-from typing import Optional, Union, List, Callable, Tuple
+from typing import Optional, Union, List, Tuple
 
 
 class UnitaryDecomposition:

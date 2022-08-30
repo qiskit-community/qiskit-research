@@ -14,8 +14,7 @@
 
 import logging
 import unittest
-from test.python.algorithms import QiskitAlgorithmsTestCase
-from test.python.transpiler._dummy_passes import DummyAP
+from test.vqls.vqls_test_case import VQLSTestCase
 
 from functools import partial
 import numpy as np
@@ -24,7 +23,7 @@ from ddt import data, ddt, idata, unpack
 from qiskit.algorithms.linear_solvers.numpy_linear_solver import NumPyLinearSolver
 
 from qiskit import BasicAer, QuantumCircuit
-from qiskit.algorithms import VQLS, AlgorithmError
+from qiskit_research.vqls.vqls import VQLS
 from qiskit.algorithms.optimizers import (
     CG,
     COBYLA,
@@ -60,25 +59,12 @@ from qiskit.algorithms.linear_solvers.matrices.numpy_matrix import NumPyMatrix
 
 from qiskit.circuit.library.n_local.real_amplitudes import RealAmplitudes
 
-from qiskit.algorithms.linear_solvers.matrices import UnitaryDecomposition
+from qiskit_research.vqls.numpy_unitary_matrices import UnitaryDecomposition
 
 from qiskit.quantum_info import Operator
 
 if has_aer():
     from qiskit import Aer
-
-logger = "LocalLogger"
-
-
-class LogPass(DummyAP):
-    """A dummy analysis pass that logs when executed"""
-
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
-
-    def run(self, dag):
-        logging.getLogger(logger).info(self.message)
 
 
 # pylint: disable=invalid-name, unused-argument
@@ -92,7 +78,7 @@ def _mock_optimizer(fun, x0, jac=None, bounds=None) -> OptimizerResult:
 
 
 @ddt
-class TestVQLS(QiskitAlgorithmsTestCase):
+class TestVQLS(VQLSTestCase):
     """Test VQLS"""
 
     def setUp(self):

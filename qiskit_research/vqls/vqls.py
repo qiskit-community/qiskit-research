@@ -9,10 +9,8 @@ See https://arxiv.org/abs/1909.05820
 """
 
 
-from types import SimpleNamespace
 from typing import Optional, Union, List, Callable, Tuple
 import numpy as np
-from qiskit import circuit
 
 
 from qiskit.circuit.library.n_local.real_amplitudes import RealAmplitudes
@@ -22,10 +20,6 @@ from qiskit.circuit import Parameter
 
 
 from qiskit.algorithms.variational_algorithm import VariationalAlgorithm
-from qiskit.algorithms.linear_solvers.variational_linear_solver import VariationalLinearSolver, VariationalLinearSolverResult
-from qiskit.algorithms.linear_solvers.matrices.numpy_unitary_matrices import UnitaryDecomposition
-from qiskit.algorithms.linear_solvers.hadamard_test import HadammardTest
-
 
 
 from qiskit.providers import Backend
@@ -34,9 +28,9 @@ from qiskit.utils import QuantumInstance, algorithm_globals
 from qiskit.utils.backend_utils import is_aer_provider, is_statevector_backend
 from qiskit.utils.validation import validate_min
 
-from .observables.linear_system_observable import LinearSystemObservable
+from qiskit.algorithms.linear_solvers.observables.linear_system_observable import LinearSystemObservable
 
-from ..minimum_eigen_solvers.vqe import _validate_bounds, _validate_initial_point
+from qiskit.algorithms.minimum_eigen_solvers.vqe import _validate_bounds, _validate_initial_point
 
 from qiskit.opflow import (Z, I, StateFn, OperatorBase, TensoredOp, ExpectationBase,
                            CircuitSampler, ListOp, ExpectationFactory)
@@ -44,9 +38,14 @@ from qiskit.opflow import (Z, I, StateFn, OperatorBase, TensoredOp, ExpectationB
 from qiskit.opflow import (CircuitSampler, ExpectationBase, ExpectationFactory,
                            ListOp, OperatorBase, StateFn)
 
-from ..optimizers import SLSQP, Minimizer, Optimizer
+from qiskit.algorithms.optimizers import SLSQP, Minimizer, Optimizer
 from qiskit.opflow.gradients import GradientBase
 
+
+
+from qiskit_research.vqls.variational_linear_solver import VariationalLinearSolver, VariationalLinearSolverResult
+from qiskit_research.vqls.numpy_unitary_matrices import UnitaryDecomposition
+from qiskit_research.vqls.hadamard_test import HadammardTest
 
 
 class VQLS(VariationalAlgorithm, VariationalLinearSolver):
@@ -61,7 +60,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
 
         .. jupyter-execute:
 
-            from qiskit.algorithms.linear_solvers.vqls import VQLS
+            from qiskit_research.vqls import VQLS
             from qiskit.circuit.library.n_local.real_amplitudes import RealAmplitudes
             from qiskit.algorithms.optimizers import COBYLA
             from qiskit.algorithms.linear_solvers.numpy_linear_solver import NumPyLinearSolver
