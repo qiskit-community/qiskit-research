@@ -361,7 +361,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             self.matrix_circuits = UnitaryDecomposition(circuit=matrix)
 
         elif isinstance(matrix, List):
-            assert(isinstance(matrix[0][0], (float,complex)))
+            assert(isinstance(matrix[0][0], (float, complex)))
             assert(isinstance(matrix[0][1], QuantumCircuit))
             self.matrix_circuits = UnitaryDecomposition(circuits=[m[1] for m in matrix],
                                                         coefficients=[m[0] for m in matrix])

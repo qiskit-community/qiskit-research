@@ -4,7 +4,7 @@ import numpy as np
 import scipy.linalg as spla
 from qiskit.circuit import QuantumCircuit
 from typing import Optional, Union, List, Tuple
-
+from qiskit.quantum_info import Operator
 
 class UnitaryDecomposition:
     # https://math.stackexchange.com/questions/1710247/every-matrix-can-be-written-as-a-sum-of-unitary-matrices/1710390#1710390
@@ -53,10 +53,10 @@ class UnitaryDecomposition:
             # set the number of qubits and checkthe size of all circuits
             self.num_qubits = self._circuits[0].num_qubits
             for qc in self._circuits:
-                if qc.num_qubits != self._num_qubit:
+                if qc.num_qubits != self.num_qubits:
                     raise ValueError("All circuits must have the same number of qubits")
 
-            self._unitary_matrices = [qc.to_matrix() for qc in self._circuits] 
+            self._unitary_matrices = [Operator(qc).data for qc in self._circuits] 
 
         # if a matrix is provided
         elif self._matrix is not None:
@@ -113,7 +113,7 @@ class UnitaryDecomposition:
         """Sets the matrix"""
         if not isinstance(coefficients, List):
             coefficients = [coefficients]
-        self._coefficients = coefficients
+        self._coefficients = [c for c in np.array(coefficients).astype(np.cdouble)]
 
     @property
     def num_qubits(self) -> int:

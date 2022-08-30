@@ -14,8 +14,8 @@
 
 import logging
 import unittest
-from test.vqls.vqls_test_case import VQLSTestCase
-
+# from test.vqls.vqls_test_case import VQLSTestCase
+from vqls_test_case import VQLSTestCase
 from functools import partial
 import numpy as np
 from scipy.optimize import minimize as scipy_minimize
@@ -101,35 +101,35 @@ class TestVQLS(VQLSTestCase):
             seed_transpiler=self.seed,
         )
 
-    @idata(
-    [
-        [
-            np.array([
-            [0.50, 0.25, 0.10, 0.00],
-            [0.25, 0.50, 0.25, 0.10],
-            [0.10, 0.25, 0.50, 0.25],
-            [0.00, 0.10, 0.25, 0.50] ]),
-            np.array([0.1]*4),
-            RealAmplitudes(num_qubits=2, reps=3, entanglement='full'),
-        ],
-    ])
-    @unpack
-    def test_numpy_input_statevector(self, matrix, rhs, ansatz):
-        """Test the VQLS on matrix input using statevector simulator."""
+    # @idata(
+    # [
+    #     [
+    #         np.array([
+    #         [0.50, 0.25, 0.10, 0.00],
+    #         [0.25, 0.50, 0.25, 0.10],
+    #         [0.10, 0.25, 0.50, 0.25],
+    #         [0.00, 0.10, 0.25, 0.50] ]),
+    #         np.array([0.1]*4),
+    #         RealAmplitudes(num_qubits=2, reps=3, entanglement='full'),
+    #     ],
+    # ])
+    # @unpack
+    # def test_numpy_input_statevector(self, matrix, rhs, ansatz):
+    #     """Test the VQLS on matrix input using statevector simulator."""
         
-        classical_solution = NumPyLinearSolver().solve(matrix, rhs/np.linalg.norm(rhs))
+    #     classical_solution = NumPyLinearSolver().solve(matrix, rhs/np.linalg.norm(rhs))
         
-        vqls = VQLS(
-            ansatz=ansatz,
-            quantum_instance=self.statevector_simulator,
-        )
-        res = vqls.solve(matrix, rhs)
+    #     vqls = VQLS(
+    #         ansatz=ansatz,
+    #         quantum_instance=self.statevector_simulator,
+    #     )
+    #     res = vqls.solve(matrix, rhs)
 
-        ref_solution = np.abs(classical_solution.state / np.linalg.norm(classical_solution.state))
-        vqls_solution = np.abs(np.real(Statevector(res.state).data))
+    #     ref_solution = np.abs(classical_solution.state / np.linalg.norm(classical_solution.state))
+    #     vqls_solution = np.abs(np.real(Statevector(res.state).data))
         
-        with self.subTest(msg="test solution"):
-            assert np.allclose(ref_solution, vqls_solution, atol=1E-1, rtol=1E-1)
+    #     with self.subTest(msg="test solution"):
+    #         assert np.allclose(ref_solution, vqls_solution, atol=1E-1, rtol=1E-1)
 
 
     def test_circuit_input_statevector(self):
@@ -154,10 +154,10 @@ class TestVQLS(VQLSTestCase):
 
         matrix = UnitaryDecomposition(
             circuits = [qc1, qc2],
-            coefficients = [0.5, 0.5]
+            coefficients = [0.5, 0.5 ]
         )
 
-        np_matrix = matrix.recompose()
+        np_matrix = matrix.recompose(matrix.coefficients, matrix._unitary_matrices)
         np_rhs = Operator(rhs).data @ np.array([1,0,0,0])
 
         classical_solution = NumPyLinearSolver().solve(np_matrix, np_rhs/np.linalg.norm(np_rhs))
@@ -166,7 +166,10 @@ class TestVQLS(VQLSTestCase):
             ansatz=ansatz,
             quantum_instance=self.statevector_simulator,
         )
-        res = vqls.solve(matrix, rhs)
+
+        inp_matrix =  [ [c,m] for c,m  in zip(matrix.coefficients, matrix.circuits)]
+        print(inp_matrix)
+        res = vqls.solve(inp_matrix, rhs)
 
         ref_solution = np.abs(classical_solution.state / np.linalg.norm(classical_solution.state))
         vqls_solution = np.abs(np.real(Statevector(res.state).data))
