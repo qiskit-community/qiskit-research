@@ -337,14 +337,24 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             self.vector_circuit = vector
 
         elif isinstance(vector, np.ndarray):
+
+            # ensure the vector is double 
+            vector = vector.astype('float64')
+
+            # create the circuit
             nb = int(np.log2(len(vector)))
             self.vector_circuit = QuantumCircuit(nb)
+
+            # prep the vector if its norm is non nul
             vec_norm = np.linalg.norm(vector)
             if vec_norm != 0:
                 self.vector_circuit.prepare_state(vector/vec_norm)
 
         # general numpy matrix
         if isinstance(matrix, np.ndarray):
+
+            # ensure the matrix is double 
+            matrix = matrix.astype('float64')
 
             if matrix.shape[0] != 2**self.vector_circuit.num_qubits:
                 raise ValueError(
