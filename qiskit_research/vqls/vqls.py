@@ -339,7 +339,9 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         elif isinstance(vector, np.ndarray):
             nb = int(np.log2(len(vector)))
             self.vector_circuit = QuantumCircuit(nb)
-            self.vector_circuit.prepare_state(vector/np.linalg.norm(vector))
+            vec_norm = np.linalg.norm(vector)
+            if vec_norm != 0:
+                self.vector_circuit.prepare_state(vector/vec_norm)
 
         # general numpy matrix
         if isinstance(matrix, np.ndarray):
