@@ -73,8 +73,7 @@ def main(
     optimizer="SPSA",
     optimizer_config={"maxiter": 100},
     shots=8192,
-    use_measurement_mitigation=False,
-    normalize_cost_function=True
+    use_measurement_mitigation=False
 ):
 
     """
@@ -192,7 +191,7 @@ def main(
 
         # The final cost is obatined via the vqls process_probability_circuit_output
         # method
-        cost = vqls.process_probability_circuit_output(probas, normalize_cost_function=normalize_cost_function)
+        cost = vqls.process_probability_circuit_output(probas)
         return cost
 
     # Here is where we actually perform the computation.  We begin by seeing what
