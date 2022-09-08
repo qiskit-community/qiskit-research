@@ -9,6 +9,7 @@ See https://arxiv.org/abs/1909.05820
 """
 
 
+from multiprocessing.dummy import Value
 from typing import Optional, Union, List, Callable, Tuple
 import numpy as np
 
@@ -111,8 +112,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             include_custom: bool = False,
             max_evals_grouped: int = 1,
             callback: Optional[Callable[[int, np.ndarray, float, float], None]] = None,
-            quantum_instance: Optional[Union[Backend, QuantumInstance]] = None,
-            use_local_cost: Optional[bool] = False
+            quantum_instance: Optional[Union[Backend, QuantumInstance]] = None
         ) -> None:
         r"""
         Args:
@@ -184,8 +184,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         self.callback = callback
 
         self._eval_count = 0
-
-        self._use_local_cost = use_local_cost
 
     @property
     def num_qubits(self) -> int:
