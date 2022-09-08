@@ -296,15 +296,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
 
         self._optimizer = optimizer
 
-    @property
-    def use_local_cost(self) -> bool:
-        """Returns initial point"""
-        return self._use_local_cost
-
-    @use_local_cost.setter
-    def use_local_cost(self, use_local_cost: bool):
-        """Sets initial point"""
-        self._use_local_cost = use_local_cost
 
     def construct_circuit(
         self,
@@ -393,33 +384,11 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
                                           apply_initial_state=self._ansatz,
                                           apply_measurement=appply_explicit_measurement)
 
-                self.num_hdmr += 1
+                self.num_hdmr += 1     
         
-        if self._use_local_cost:
-
-            zero_op = (I - Z) / 2
-
-            for ii in range(len(self.matrix_circuits)):
-                mi = self.matrix_circuits[ii]
-
-                for jj in range(ii,len(self.matrix_circuits)):
-                    mj = self.matrix_circuits[jj]
-
-                    for nb in range(self._num_qubits):
-                        
-                        op = TensoredOp([I]*(nb)) ^ zero_op ^ TensoredOp([I]*(self._num_qubits-1-nb))
-
-                        circuits += HadammardTest(operators=[mi.circuit.inverse(), 
-                                                            self.vector_circuit,
-                                                            op,
-                                                            self.vector_circuit.inverse(),
-                                                            mj.circuit],
-                                                            apply_initial_state=self._ansatz,
-                                                            apply_measurement=appply_explicit_measurement)           
-        else:
-            for mi in self.matrix_circuits:
-                circuits += HadammardTest(operators=[self.ansatz, mi.circuit, self.vector_circuit.inverse()],
-                                          apply_measurement=appply_explicit_measurement) 
+        for mi in self.matrix_circuits:
+            circuits += HadammardTest(operators=[self.ansatz, mi.circuit, self.vector_circuit.inverse()],
+                                        apply_measurement=appply_explicit_measurement) 
 
 
         return circuits   
