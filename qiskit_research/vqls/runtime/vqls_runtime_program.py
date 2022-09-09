@@ -1,65 +1,62 @@
 # Grab functions and modules from dependencies
+
+from abc import ABC, abstractmethod
+from typing import Optional, Union, List, Callable, Tuple
+
+from types import SimpleNamespace
 import numpy as np
+
+import scipy.linalg as spla
 import scipy.optimize as opt
 from scipy.optimize import OptimizeResult
 import mthree
 
 # Grab functions and modules from Qiskit needed
 from qiskit import QuantumCircuit, transpile
-import qiskit.circuit.library.n_local as lib_local
-from qiskit.algorithms.optimizers import SPSA
-
-from typing import Optional, Union, List, Callable, Tuple
-import numpy as np
-
-
-from qiskit.circuit.library.n_local.real_amplitudes import RealAmplitudes
 from qiskit import Aer
-from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter 
-
-from qiskit.quantum_info import Statevector 
-from qiskit.algorithms.variational_algorithm import VariationalAlgorithm
 
 from qiskit.providers import Backend
+
+from qiskit.circuit import Parameter
+from qiskit.circuit.library.n_local.real_amplitudes import RealAmplitudes
+
+
+from qiskit.quantum_info import Statevector
+from qiskit.quantum_info import Operator
 from qiskit.quantum_info.operators.base_operator import BaseOperator
-from qiskit.utils import QuantumInstance, algorithm_globals
+
+from qiskit.algorithms.variational_algorithm import VariationalAlgorithm
+from qiskit.algorithms.optimizers import SLSQP, Minimizer, Optimizer
+from qiskit.algorithms.variational_algorithm import VariationalResult
+from qiskit.algorithms.linear_solvers.linear_solver import LinearSolverResult
+from qiskit.algorithms.linear_solvers.observables.linear_system_observable import (
+    LinearSystemObservable,
+)
+from qiskit.algorithms.minimum_eigen_solvers.vqe import (
+    _validate_bounds,
+    _validate_initial_point,
+)
+
+
+from qiskit.utils import QuantumInstance
 from qiskit.utils.backend_utils import is_aer_provider, is_statevector_backend
 from qiskit.utils.validation import validate_min
 
-from qiskit.algorithms.linear_solvers.observables.linear_system_observable import LinearSystemObservable
 
-from qiskit.opflow import (Z, I, StateFn, OperatorBase, TensoredOp, ExpectationBase,
-                           CircuitSampler, ListOp, ExpectationFactory)
-
-from qiskit.opflow import (CircuitSampler, ExpectationBase, ExpectationFactory,
-                           ListOp, OperatorBase, StateFn)
-
-from qiskit.algorithms.optimizers import SLSQP, Minimizer, Optimizer
 from qiskit.opflow.gradients import GradientBase
+from qiskit.opflow import (
+    Z,
+    I,
+    StateFn,
+    OperatorBase,
+    TensoredOp,
+    ExpectationBase,
+    CircuitSampler,
+    ListOp,
+    ExpectationFactory,
+)
 
-from abc import ABC, abstractmethod
-from typing import Union, Optional, List, Callable
-import numpy as np
 
-from qiskit import QuantumCircuit
-from qiskit.result import Result
-from qiskit.quantum_info.operators.base_operator import BaseOperator
-
-from qiskit.algorithms.variational_algorithm  import VariationalResult
-from qiskit.algorithms.linear_solvers.linear_solver import LinearSolverResult
-
-from types import SimpleNamespace
-import numpy as np 
-import scipy.linalg as spla
-from qiskit.circuit import QuantumCircuit
-
-from typing import Optional, List, Union
-from qiskit import QuantumCircuit
-
-from qiskit.quantum_info import Operator
-
-from qiskit.algorithms.minimum_eigen_solvers.vqe import _validate_bounds, _validate_initial_point
 
 
 # The entrypoint for our Runtime Program
@@ -73,7 +70,7 @@ def main(
     optimizer="SPSA",
     optimizer_config={"maxiter": 100},
     shots=8192,
-    use_measurement_mitigation=False
+    use_measurement_mitigation=False,
 ):
 
     """
@@ -100,18 +97,20 @@ def main(
         VariationalLinearSolverResult: The result of the optimization of the linear system
     """
 
-    vqls = VQLS(ansatz=ansatz,
-                optimizer=optimizer,
-                quantum_instance=backend)
+    vqls = VQLS(ansatz=ansatz, optimizer=optimizer, quantum_instance=backend)
 
     use_state_vector = is_statevector_backend(backend)
     if use_state_vector:
-        print('Use exact statistic from state vector')
-        full_circs = vqls.construct_circuit(matrix, rhs, appply_explicit_measurement=False)
+        print("Use exact statistic from state vector")
+        full_circs = vqls.construct_circuit(
+            matrix, rhs, appply_explicit_measurement=False
+        )
     else:
-        print('Use count statistic')
-        full_circs = vqls.construct_circuit(matrix, rhs, appply_explicit_measurement=True)
-        meas_strings = ['1'] * len(full_circs)
+        print("Use count statistic")
+        full_circs = vqls.construct_circuit(
+            matrix, rhs, appply_explicit_measurement=True
+        )
+        meas_strings = ["1"] * len(full_circs)
 
     # Get the number of parameters in the ansatz circuit.
     num_params = vqls.ansatz.num_parameters
@@ -166,7 +165,7 @@ def main(
 
         if use_state_vector:
             state_vector = [Statevector(circ).data for circ in bound_circs]
-            probas = [ vqls.get_probability_from_statevector(sv) for sv in state_vector ]
+            probas = [vqls.get_probability_from_statevector(sv) for sv in state_vector]
 
         else:
 
@@ -206,23 +205,31 @@ def main(
 
     # Since SPSA is not in SciPy need if statement
     if optimizer == "SPSA":
-        opt_result = fmin_spsa(vqls_func, x0, args=(), **optimizer_config, callback=callback)
+        opt_result = fmin_spsa(
+            vqls_func, x0, args=(), **optimizer_config, callback=callback
+        )
 
     # All other SciPy optimizers here
     else:
         opt_result = opt.minimize(
-            vqls_func, x0, method=optimizer, options=optimizer_config, tol=1E-3, callback=callback
+            vqls_func,
+            x0,
+            method=optimizer,
+            options=optimizer_config,
+            tol=1e-3,
+            callback=callback,
         )
 
         opt_result = OptimizeResult(
-                        fun=vqls_func(opt_result.x),
-                        x=opt_result.x,
-                        nit=0,
-                        nfev=0,
-                        message="Optimization terminated successfully.",
-                        success=True,
-                        )
+            fun=vqls_func(opt_result.x),
+            x=opt_result.x,
+            nit=0,
+            nfev=0,
+            message="Optimization terminated successfully.",
+            success=True,
+        )
     return opt_result
+
 
 def fmin_spsa(
     func,
@@ -299,7 +306,6 @@ def fmin_spsa(
     )
 
 
-
 class VariationalLinearSolverResult(LinearSolverResult, VariationalResult):
     """A base class for linear systems results using variational methods
 
@@ -334,6 +340,7 @@ class VariationalLinearSolverResult(LinearSolverResult, VariationalResult):
         """
         self._state = state
 
+
 class VariationalLinearSolver(ABC):
     """An abstract class for linear system solvers in Qiskit."""
 
@@ -350,7 +357,9 @@ class VariationalLinearSolver(ABC):
                 List[BaseOperator],
             ]
         ] = None,
-        observable_circuit: Optional[Union[QuantumCircuit, List[QuantumCircuit]]] = None,
+        observable_circuit: Optional[
+            Union[QuantumCircuit, List[QuantumCircuit]]
+        ] = None,
         post_processing: Optional[
             Callable[[Union[float, List[float]]], Union[float, List[float]]]
         ] = None,
@@ -375,13 +384,17 @@ class VariationalLinearSolver(ABC):
 
 class UnitaryDecomposition:
     # https://math.stackexchange.com/questions/1710247/every-matrix-can-be-written-as-a-sum-of-unitary-matrices/1710390#1710390
-    
-    def __init__(self, 
-                 matrix: Optional[np.ndarray] = None,
-                 circuits: Optional[Union[QuantumCircuit, List[QuantumCircuit]]] = None,
-                 coefficients: Optional[Union[float, complex, List[float], List[complex]]] = None,
-                 check_decomposition: Optional[bool] = True, 
-                 normalize_coefficients: Optional[bool] = True ):
+
+    def __init__(
+        self,
+        matrix: Optional[np.ndarray] = None,
+        circuits: Optional[Union[QuantumCircuit, List[QuantumCircuit]]] = None,
+        coefficients: Optional[
+            Union[float, complex, List[float], List[complex]]
+        ] = None,
+        check_decomposition: Optional[bool] = True,
+        normalize_coefficients: Optional[bool] = True,
+    ):
         """_summary_
 
         Args:
@@ -391,12 +404,12 @@ class UnitaryDecomposition:
             check_decomposition (Optional[bool], optional): Check if the decomposition matches the input matrix. Defaults to True.
             normalize_coefficients (Optional[bool], optional): normalize the coefficients of the decomposition. Defaults to True.
         """
-        
+
         self._matrix = None
-        self.matrix = matrix 
+        self.matrix = matrix
 
         self._circuits = None
-        self.circuits = circuits 
+        self.circuits = circuits
 
         self._coefficients = None
         self.coefficients = coefficients
@@ -411,11 +424,15 @@ class UnitaryDecomposition:
                 if len(self._circuits) == 1:
                     self.coefficients = [1.0]
                 else:
-                    raise ValueError("Value of coefficients must be provided for multiple circuits")
+                    raise ValueError(
+                        "Value of coefficients must be provided for multiple circuits"
+                    )
 
             # check that we have same number of coefficients and circuits
             if len(self._circuits) != len(self._coefficients):
-                raise ValueError("different number of coefficients and circuits provided as input")
+                raise ValueError(
+                    "different number of coefficients and circuits provided as input"
+                )
 
             # set the number of qubits and checkthe size of all circuits
             self.num_qubits = self._circuits[0].num_qubits
@@ -423,13 +440,15 @@ class UnitaryDecomposition:
                 if qc.num_qubits != self.num_qubits:
                     raise ValueError("All circuits must have the same number of qubits")
 
-            self._unitary_matrices = [Operator(qc).data for qc in self._circuits] 
+            self._unitary_matrices = [Operator(qc).data for qc in self._circuits]
 
         # if a matrix is provided
         elif self._matrix is not None:
-            
+
             if self._circuits is not None:
-                raise ValueError("Circuits cannot be provided if matrix is provided as input")
+                raise ValueError(
+                    "Circuits cannot be provided if matrix is provided as input"
+                )
 
             if matrix.shape[0] != matrix.shape[1]:
                 raise ValueError("Input matrix must be square!")
@@ -437,32 +456,32 @@ class UnitaryDecomposition:
             if np.log2(matrix.shape[0]) % 1 != 0:
                 raise ValueError("Input matrix dimension must be 2^n!")
 
-            self.coefficients , self.unitary_matrices = self.decompose_numpy_matrix(check=check_decomposition, 
-                                                                  normalize_coefficients=normalize_coefficients)
+            self.coefficients, self.unitary_matrices = self.decompose_numpy_matrix(
+                check=check_decomposition, normalize_coefficients=normalize_coefficients
+            )
 
             self.num_qubits = int(np.log2(matrix.shape[0]))
             self.circuits = self.create_circuits(self.unitary_matrices)
 
         self.num_circuits = len(self._circuits)
 
-
     @property
-    def matrix(self) ->  np.ndarray:
+    def matrix(self) -> np.ndarray:
         """return the matrix of the decomposition."""
         if self._matrix is None:
             self._matrix = self.recompose(self.coefficients, self.unitary_matrices)
         return self._matrix
-    
+
     @matrix.setter
     def matrix(self, matrix: np.ndarray) -> None:
         """Sets the matrix"""
         self._matrix = matrix
 
     @property
-    def circuits(self) ->  List[QuantumCircuit]:
+    def circuits(self) -> List[QuantumCircuit]:
         """return the circuits of the decomposition."""
         return self._circuits
-    
+
     @circuits.setter
     def circuits(self, circuits: Union[QuantumCircuit, List[QuantumCircuit]]) -> None:
         """Sets the matrix"""
@@ -471,12 +490,14 @@ class UnitaryDecomposition:
         self._circuits = circuits
 
     @property
-    def coefficients(self) ->  Union[List[float], List[complex]]:
+    def coefficients(self) -> Union[List[float], List[complex]]:
         """return the coefficients of the decomposition."""
         return self._coefficients
-    
+
     @coefficients.setter
-    def coefficients(self, coefficients: Union[float, complex, List[float], List[complex]]) -> None:
+    def coefficients(
+        self, coefficients: Union[float, complex, List[float], List[complex]]
+    ) -> None:
         """Sets the matrix"""
         if not isinstance(coefficients, List):
             coefficients = [coefficients]
@@ -498,7 +519,9 @@ class UnitaryDecomposition:
         return self._unitary_matrices
 
     @unitary_matrices.setter
-    def unitary_matrices(self, unitary_matrices: Union[np.ndarray, List[np.ndarray]]) -> None:
+    def unitary_matrices(
+        self, unitary_matrices: Union[np.ndarray, List[np.ndarray]]
+    ) -> None:
         """Set the number of qubits"""
         if isinstance(unitary_matrices, np.ndarray):
             unitary_matrices = [unitary_matrices]
@@ -510,36 +533,39 @@ class UnitaryDecomposition:
 
     def __next__(self):
         if self.iiter < self.num_circuits:
-            out = SimpleNamespace(coeff=self._coefficients[self.iiter],
-                                  circuit=self._circuits[self.iiter])
-            self.iiter += 1 
+            out = SimpleNamespace(
+                coeff=self._coefficients[self.iiter], circuit=self._circuits[self.iiter]
+            )
+            self.iiter += 1
             return out
         else:
             raise StopIteration
-    
+
     def __len__(self):
         return len(self._circuits)
 
     def __getitem__(self, index):
-        return SimpleNamespace(coeff=self._coefficients[index],
-                                  circuit=self._circuits[index])
+        return SimpleNamespace(
+            coeff=self._coefficients[index], circuit=self._circuits[index]
+        )
 
     @staticmethod
     def get_auxilliary_matrix(x: np.ndarray) -> np.ndarray:
         """Compute i * sqrt(I - x^2)
 
         Args:
-            x (np.ndarray): input matrix 
+            x (np.ndarray): input matrix
 
         Returns:
             np.ndarray: values of i * sqrt(I - x^2)
         """
-        return 1.0j*spla.sqrtm(np.eye(len(x)) - x @ x)
+        return 1.0j * spla.sqrtm(np.eye(len(x)) - x @ x)
 
-    def decompose_numpy_matrix(self, 
-                               check: Optional[bool] = False, 
-                               normalize_coefficients: Optional[bool] = False
-                               ) -> Tuple[List[float], List[np.ndarray]] :
+    def decompose_numpy_matrix(
+        self,
+        check: Optional[bool] = False,
+        normalize_coefficients: Optional[bool] = False,
+    ) -> Tuple[List[float], List[np.ndarray]]:
         """Decompose a generic numpy matrix into a sum of unitary matrices
 
         Args:
@@ -564,19 +590,17 @@ class UnitaryDecomposition:
         unitary_matrices, unitary_coefficients = [], []
         if not np.allclose(mat_real, 0.0):
             aux_mat = self.get_auxilliary_matrix(mat_real)
-            unitary_matrices += [mat_real + aux_mat, 
-                                 mat_real - aux_mat]
-            unitary_coefficients += [coef_real]*2
+            unitary_matrices += [mat_real + aux_mat, mat_real - aux_mat]
+            unitary_coefficients += [coef_real] * 2
 
         if not np.allclose(mat_imag, 0.0):
             aux_mat = self.get_auxilliary_matrix(mat_imag)
-            unitary_matrices += [mat_imag + aux_mat,
-                                 mat_imag - aux_mat]
-            unitary_coefficients += [coef_imag]*2
+            unitary_matrices += [mat_imag + aux_mat, mat_imag - aux_mat]
+            unitary_coefficients += [coef_imag] * 2
 
         if check:
             mat_recomp = self.recompose(unitary_coefficients, unitary_matrices)
-            assert(np.allclose(self._matrix,mat_recomp))
+            assert np.allclose(self._matrix, mat_recomp)
 
         if normalize_coefficients:
             unitary_coefficients = self.normalize_coefficients(unitary_coefficients)
@@ -593,15 +617,16 @@ class UnitaryDecomposition:
             List[float]: List of normalized coefficients
         """
         sum_coeff = np.array(unit_coeffs).sum()
-        return [u/sum_coeff for u in unit_coeffs]
+        return [u / sum_coeff for u in unit_coeffs]
 
-
-    def recompose(self, unit_coeffs: List[float], unit_mats: List[np.ndarray]) -> np.ndarray:
+    def recompose(
+        self, unit_coeffs: List[float], unit_mats: List[np.ndarray]
+    ) -> np.ndarray:
         """Rebuilds the original matrix from the decomposed one.
 
         Args:
             unit_coeffs (List[float]): coefficients of the decomposition
-            unit_mats (List[np.ndarray]): matrices of the decomposition 
+            unit_mats (List[np.ndarray]): matrices of the decomposition
 
         Returns:
             np.ndarray: recomposed matrix
@@ -626,15 +651,16 @@ class UnitaryDecomposition:
             qc.unitary(m, qc.qubits)
             circuits.append(qc)
         return circuits
-class HadammardTest:
 
+
+class HadammardTest:
     def __init__(
         self,
         operators: Union[QuantumCircuit, List[QuantumCircuit]],
         use_barrier: Optional[bool] = False,
         apply_control_to_operator: Optional[bool] = True,
         apply_initial_state: Optional[QuantumCircuit] = None,
-        apply_measurement: Optional[bool] = False
+        apply_measurement: Optional[bool] = False,
     ) -> List[QuantumCircuit]:
         """Create the quantum circuits required to compute the hadamard test:
 
@@ -646,7 +672,7 @@ class HadammardTest:
             operators (Union[QuantumCircuit, List[QuantumCircuit]]): quantum circuit or list of quantum circuits representing the U.
             use_barrier (Optional[bool], optional): introduce barriers in the description of the circuits.  Defaults to False.
             apply_control_to_operator (Optional[bool], optional): Apply control operator to the input quantum circuits. Defaults to True.
-            apply_initial_state (Optional[QuantumCircuit], optional): Quantum Circuit to create |Psi> from |0>. If None, assume that the qubits are alredy in Psi. 
+            apply_initial_state (Optional[QuantumCircuit], optional): Quantum Circuit to create |Psi> from |0>. If None, assume that the qubits are alredy in Psi.
             apply_measurement (Optional[bool], optional): apply explicit measurement. Defaults to False.
 
         Returns:
@@ -660,25 +686,31 @@ class HadammardTest:
             self.num_qubits = operators[0].num_qubits + 1
             if apply_initial_state is not None:
                 if apply_initial_state.num_qubits != operators[0].num_qubits:
-                    raise ValueError("The operator and the initial state circuits have different numbers of qubits")
+                    raise ValueError(
+                        "The operator and the initial state circuits have different numbers of qubits"
+                    )
         else:
             self.num_qubits = operators[0].num_qubits
             if apply_initial_state is not None:
-                if apply_initial_state.num_qubits != operators[0].num_qubits - 1 :
-                    raise ValueError("The operator and the initial state circuits have different numbers of qubits")
+                if apply_initial_state.num_qubits != operators[0].num_qubits - 1:
+                    raise ValueError(
+                        "The operator and the initial state circuits have different numbers of qubits"
+                    )
 
         # classical bit for explicit measurement
-        self.num_clbits = 1 
+        self.num_clbits = 1
 
         # build the circuits
-        self.circuits = self._build_circuit(operators, 
-                                            use_barrier, 
-                                            apply_control_to_operator,
-                                            apply_initial_state,
-                                            apply_measurement)
+        self.circuits = self._build_circuit(
+            operators,
+            use_barrier,
+            apply_control_to_operator,
+            apply_initial_state,
+            apply_measurement,
+        )
 
         # number of circuits required
-        self.ncircuits = len(self.circuits) 
+        self.ncircuits = len(self.circuits)
 
     def __iter__(self):
         self.iiter = 0
@@ -691,20 +723,21 @@ class HadammardTest:
             return out
         else:
             raise StopIteration
-    
+
     def __len__(self):
         return len(self.circuits)
 
     def __getitem__(self, index):
         return self.circuits[index]
 
-    def _build_circuit(self, 
-                      operators: List[QuantumCircuit], 
-                      use_barrier: bool, 
-                      apply_control_to_operator: bool,
-                      apply_initial_state: Optional[QuantumCircuit] = None,
-                      apply_measurement: Optional[bool] = False
-                      ) -> List[QuantumCircuit]:
+    def _build_circuit(
+        self,
+        operators: List[QuantumCircuit],
+        use_barrier: bool,
+        apply_control_to_operator: bool,
+        apply_initial_state: Optional[QuantumCircuit] = None,
+        apply_measurement: Optional[bool] = False,
+    ) -> List[QuantumCircuit]:
         """build the quantum circuits
 
         Args:
@@ -719,19 +752,18 @@ class HadammardTest:
         """
 
         circuits = []
-        
+
         for imaginary in [False, True]:
 
             if apply_measurement:
-                qc = QuantumCircuit(self.num_qubits,self.num_clbits)
+                qc = QuantumCircuit(self.num_qubits, self.num_clbits)
             else:
                 qc = QuantumCircuit(self.num_qubits)
 
-            
             if apply_initial_state is not None:
-                qc.compose(apply_initial_state, 
-                           list(range(1,self.num_qubits)), 
-                           inplace=True)
+                qc.compose(
+                    apply_initial_state, list(range(1, self.num_qubits)), inplace=True
+                )
 
             if use_barrier:
                 qc.barrier()
@@ -742,20 +774,20 @@ class HadammardTest:
             # Sdg on ctrl qbit
             if imaginary:
                 qc.sdg(0)
-            
+
             if use_barrier:
                 qc.barrier()
 
             # matrix circuit
             for op in operators:
                 if apply_control_to_operator:
-                    qc.compose(op.control(1),
-                                qubits=list(range(0,self.num_qubits)),
-                                inplace=True)
+                    qc.compose(
+                        op.control(1),
+                        qubits=list(range(0, self.num_qubits)),
+                        inplace=True,
+                    )
                 else:
-                    qc.compose(op,
-                                qubits=list(range(0,self.num_qubits)),
-                                inplace=True)                    
+                    qc.compose(op, qubits=list(range(0, self.num_qubits)), inplace=True)
             if use_barrier:
                 qc.barrier()
 
@@ -764,12 +796,11 @@ class HadammardTest:
 
             # measure
             if apply_measurement:
-                qc.measure(0,0)
+                qc.measure(0, 0)
 
             circuits.append(qc)
 
         return circuits
-        
 
 
 class VQLS(VariationalAlgorithm, VariationalLinearSolver):
@@ -791,7 +822,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             from qiskit import Aer
             import numpy as np
 
-            # define the matrix and the rhs           
+            # define the matrix and the rhs
             matrix = np.random.rand(4,4)
             matrix = (matrix + matrix.T)
             rhs = np.random.rand(4)
@@ -800,7 +831,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             num_qubits = int(log2(A.shape[0]))
 
             # get the classical solution
-            classical_solution = NumPyLinearSolver().solve(matrix,rhs/np.linalg.norm(rhs))     
+            classical_solution = NumPyLinearSolver().solve(matrix,rhs/np.linalg.norm(rhs))
 
             # specify the backend
             backend = Aer.get_backend('aer_simulator_statevector')
@@ -818,26 +849,26 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             # solve the system
             solution = vqls.solve(matrix,rhs)
 
-    References: 
+    References:
 
         [1] Carlos Bravo-Prieto, Ryan LaRose, M. Cerezo, Yigit Subasi, Lukasz Cincio, Patrick J. Coles
         Variational Quantum Linear Solver
-        `arXiv:1909.05820 <https://arxiv.org/abs/1909.05820>` 
+        `arXiv:1909.05820 <https://arxiv.org/abs/1909.05820>`
     """
 
     def __init__(
-            self,
-            ansatz: Optional[QuantumCircuit] = None,
-            optimizer: Optional[Union[Optimizer, Minimizer]] = None,
-            initial_point: Optional[np.ndarray] = None,
-            gradient: Optional[Union[GradientBase, Callable]] = None,
-            expectation: Optional[ExpectationBase] = None,
-            include_custom: bool = False,
-            max_evals_grouped: int = 1,
-            callback: Optional[Callable[[int, np.ndarray, float, float], None]] = None,
-            quantum_instance: Optional[Union[Backend, QuantumInstance]] = None,
-            use_local_cost: Optional[bool] = False
-        ) -> None:
+        self,
+        ansatz: Optional[QuantumCircuit] = None,
+        optimizer: Optional[Union[Optimizer, Minimizer]] = None,
+        initial_point: Optional[np.ndarray] = None,
+        gradient: Optional[Union[GradientBase, Callable]] = None,
+        expectation: Optional[ExpectationBase] = None,
+        include_custom: bool = False,
+        max_evals_grouped: int = 1,
+        callback: Optional[Callable[[int, np.ndarray, float, float], None]] = None,
+        quantum_instance: Optional[Union[Backend, QuantumInstance]] = None,
+        use_local_cost: Optional[bool] = False,
+    ) -> None:
         r"""
         Args:
             ansatz: A parameterized circuit used as Ansatz for the wave function.
@@ -874,7 +905,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         """
         super().__init__()
 
-
         validate_min("max_evals_grouped", max_evals_grouped, 1)
 
         self._num_qubits = None
@@ -898,11 +928,11 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         self._quantum_instance = None
 
         if quantum_instance is None:
-            quantum_instance = Aer.get_backend('aer_simulator_statevector')
+            quantum_instance = Aer.get_backend("aer_simulator_statevector")
         self.quantum_instance = quantum_instance
 
         self._expectation = None
-        self.expectation = expectation 
+        self.expectation = expectation
 
         self._callback = None
         self.callback = callback
@@ -957,16 +987,18 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         return self._quantum_instance
 
     @quantum_instance.setter
-    def quantum_instance(self, quantum_instance: Union[QuantumInstance, Backend]) -> None:
+    def quantum_instance(
+        self, quantum_instance: Union[QuantumInstance, Backend]
+    ) -> None:
         """Sets quantum_instance"""
         if not isinstance(quantum_instance, QuantumInstance):
             quantum_instance = QuantumInstance(quantum_instance)
 
         self._quantum_instance = quantum_instance
         self._circuit_sampler = CircuitSampler(
-            quantum_instance, 
+            quantum_instance,
             statevector=is_statevector_backend(quantum_instance.backend),
-            param_qobj=is_aer_provider(quantum_instance.backend)
+            param_qobj=is_aer_provider(quantum_instance.backend),
         )
 
     @property
@@ -996,10 +1028,11 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         return self._callback
 
     @callback.setter
-    def callback(self, callback: Optional[Callable[[int, np.ndarray, float, float], None]]):
+    def callback(
+        self, callback: Optional[Callable[[int, np.ndarray, float, float], None]]
+    ):
         """Sets callback"""
         self._callback = callback
-
 
     @property
     def optimizer(self) -> Optimizer:
@@ -1037,8 +1070,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         matrix: Union[np.ndarray, QuantumCircuit, List],
         vector: Union[np.ndarray, QuantumCircuit],
         appply_explicit_measurement: Optional[bool] = False,
-        
-        ) -> List[QuantumCircuit]:
+    ) -> List[QuantumCircuit]:
         """Returns the a list of circuits required to compute the expectation value
 
         Args:
@@ -1063,7 +1095,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         elif isinstance(vector, np.ndarray):
             nb = int(np.log2(len(vector)))
             self.vector_circuit = QuantumCircuit(nb)
-            self.vector_circuit.prepare_state(vector/np.linalg.norm(vector))
+            self.vector_circuit.prepare_state(vector / np.linalg.norm(vector))
 
         # general numpy matrix
         if isinstance(matrix, np.ndarray):
@@ -1079,16 +1111,19 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             self.matrix_circuits = UnitaryDecomposition(matrix=matrix)
 
         # a single circuit
-        elif isinstance(matrix, QuantumCircuit):    
+        elif isinstance(matrix, QuantumCircuit):
             if matrix.num_qubits != self.vector_circuit.num_qubits:
-                raise ValueError("Matrix and vector circuits have different numbers of qubits.")
+                raise ValueError(
+                    "Matrix and vector circuits have different numbers of qubits."
+                )
             self.matrix_circuits = UnitaryDecomposition(circuit=matrix)
 
         elif isinstance(matrix, List):
-            assert(isinstance(matrix[0][0], (float, complex)))
-            assert(isinstance(matrix[0][1], QuantumCircuit))
-            self.matrix_circuits = UnitaryDecomposition(circuits=[m[1] for m in matrix],
-                                                        coefficients=[m[0] for m in matrix])
+            assert isinstance(matrix[0][0], (float, complex))
+            assert isinstance(matrix[0][1], QuantumCircuit)
+            self.matrix_circuits = UnitaryDecomposition(
+                circuits=[m[1] for m in matrix], coefficients=[m[0] for m in matrix]
+            )
 
         else:
             raise ValueError("Format of the input matrix not recognized")
@@ -1101,14 +1136,16 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         for ii in range(len(self.matrix_circuits)):
             mi = self.matrix_circuits[ii]
 
-            for jj in range(ii+1,len(self.matrix_circuits)):
+            for jj in range(ii + 1, len(self.matrix_circuits)):
                 mj = self.matrix_circuits[jj]
-                circuits += HadammardTest(operators=[mi.circuit.inverse(), mj.circuit],
-                                          apply_initial_state=self._ansatz,
-                                          apply_measurement=appply_explicit_measurement)
+                circuits += HadammardTest(
+                    operators=[mi.circuit.inverse(), mj.circuit],
+                    apply_initial_state=self._ansatz,
+                    apply_measurement=appply_explicit_measurement,
+                )
 
                 self.num_hdmr += 1
-        
+
         if self._use_local_cost:
 
             zero_op = (I - Z) / 2
@@ -1116,35 +1153,43 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             for ii in range(len(self.matrix_circuits)):
                 mi = self.matrix_circuits[ii]
 
-                for jj in range(ii,len(self.matrix_circuits)):
+                for jj in range(ii, len(self.matrix_circuits)):
                     mj = self.matrix_circuits[jj]
 
                     for nb in range(self._num_qubits):
-                        
-                        op = TensoredOp([I]*(nb)) ^ zero_op ^ TensoredOp([I]*(self._num_qubits-1-nb))
 
-                        circuits += HadammardTest(operators=[mi.circuit.inverse(), 
-                                                            self.vector_circuit,
-                                                            op,
-                                                            self.vector_circuit.inverse(),
-                                                            mj.circuit],
-                                                            apply_initial_state=self._ansatz,
-                                                            apply_measurement=appply_explicit_measurement)           
+                        op = (
+                            TensoredOp([I] * (nb))
+                            ^ zero_op
+                            ^ TensoredOp([I] * (self._num_qubits - 1 - nb))
+                        )
+
+                        circuits += HadammardTest(
+                            operators=[
+                                mi.circuit.inverse(),
+                                self.vector_circuit,
+                                op,
+                                self.vector_circuit.inverse(),
+                                mj.circuit,
+                            ],
+                            apply_initial_state=self._ansatz,
+                            apply_measurement=appply_explicit_measurement,
+                        )
         else:
             for mi in self.matrix_circuits:
-                circuits += HadammardTest(operators=[self.ansatz, mi.circuit, self.vector_circuit.inverse()],
-                                          apply_measurement=appply_explicit_measurement) 
+                circuits += HadammardTest(
+                    operators=[self.ansatz, mi.circuit, self.vector_circuit.inverse()],
+                    apply_measurement=appply_explicit_measurement,
+                )
 
-
-        return circuits   
+        return circuits
 
     def construct_observalbe(self):
-        """Create the operator to measure the circuit output.
-        """
+        """Create the operator to measure the circuit output."""
 
-        # create thew obsevable 
+        # create thew obsevable
         one_op = (I - Z) / 2
-        self.observable = TensoredOp((self.num_qubits-1) * [I]) ^ one_op
+        self.observable = TensoredOp((self.num_qubits - 1) * [I]) ^ one_op
 
     def construct_expectation(
         self,
@@ -1179,10 +1224,10 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             statevector (List[complex]): circuit state vector
 
         Returns:
-            float: probability 
+            float: probability
         """
         sv = statevector[1::2]
-        exp_val = np.real((sv*sv.conj()).sum())
+        exp_val = np.real((sv * sv.conj()).sum())
         return 1.0 - 2.0 * exp_val
 
     @staticmethod
@@ -1197,7 +1242,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         """
         return 1.0 - 2.0 * exp_val
 
-
     def get_hadamard_sum_coeffcients(self) -> Tuple:
         """Compute the c_i^*c_i and  c_i^*c_j coefficients.
 
@@ -1205,18 +1249,20 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             tuple: c_ii coefficients and c_ij coefficients
         """
 
-         # compute all the ci.conj * cj  for i<j
+        # compute all the ci.conj * cj  for i<j
         cii_coeffs, cij_coeffs = [], []
         for ii in range(len(self.matrix_circuits)):
             ci = self.matrix_circuits[ii].coeff
-            cii_coeffs.append(ci.conj()*ci)
-            for jj in range(ii+1,len(self.matrix_circuits)):
+            cii_coeffs.append(ci.conj() * ci)
+            for jj in range(ii + 1, len(self.matrix_circuits)):
                 cj = self.matrix_circuits[jj].coeff
-                cij_coeffs.append(ci.conj()*cj)
+                cij_coeffs.append(ci.conj() * cj)
 
-        return np.array(cii_coeffs), np.array(cij_coeffs) 
+        return np.array(cii_coeffs), np.array(cij_coeffs)
 
-    def process_probability_circuit_output(self, probabiliy_circuit_output: List) -> float:
+    def process_probability_circuit_output(
+        self, probabiliy_circuit_output: List
+    ) -> float:
         """Compute the final cost function from the output of the different circuits
 
         Args:
@@ -1230,23 +1276,30 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         cii_coeffs, cij_coeffs = self.get_hadamard_sum_coeffcients()
 
         # compute all the terms in <\phi|\phi> = \sum c_i* cj <0|V Ai* Aj V|0>
-        phi_phi_overlap  = self._compute_phi_overlap(cii_coeffs, cij_coeffs, probabiliy_circuit_output)
+        phi_phi_overlap = self._compute_phi_overlap(
+            cii_coeffs, cij_coeffs, probabiliy_circuit_output
+        )
 
         # compute all the terms in |<b|\phi>|^2 = \sum c_i* cj <0|U* Ai V|0><0|V* Aj* U|0>
-        b_phi_overlap = self._compute_bphi_overlap(cii_coeffs, cij_coeffs, probabiliy_circuit_output)
+        b_phi_overlap = self._compute_bphi_overlap(
+            cii_coeffs, cij_coeffs, probabiliy_circuit_output
+        )
 
         # overall cost
-        cost = 1.0 - np.real(b_phi_overlap/phi_phi_overlap)
-        print('Cost function %f' %cost)
+        cost = 1.0 - np.real(b_phi_overlap / phi_phi_overlap)
+        print("Cost function %f" % cost)
         return cost
 
-    def _compute_phi_overlap(self, cii_coeff: np.ndarray, 
-                            cij_coeff: np.ndarray, 
-                            probabiliy_circuit_output: List) -> float:
+    def _compute_phi_overlap(
+        self,
+        cii_coeff: np.ndarray,
+        cij_coeff: np.ndarray,
+        probabiliy_circuit_output: List,
+    ) -> float:
         """Compute the state overlap
 
         .. math:
-            \langle\Phi|\Phi\rangle = \sum_{nm} c_n^*c_m \langle 0|V^* U_n^* U_m V|0\rangle 
+            \langle\Phi|\Phi\rangle = \sum_{nm} c_n^*c_m \langle 0|V^* U_n^* U_m V|0\rangle
 
         Args:
             sum_coeff (List): the values of the c_n^* c_m coefficients
@@ -1257,11 +1310,11 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         """
 
         # compute all the terms in <\phi|\phi> = \sum c_i* cj <0|V Ai* Aj V|0>
-        phi_phi_overlap = np.array(probabiliy_circuit_output)[:2*self.num_hdmr]
-        if phi_phi_overlap.dtype != 'complex128':
-            phi_phi_overlap = phi_phi_overlap.astype('complex128')
-        phi_phi_overlap *= np.array([1.,1.j]*self.num_hdmr)
-        phi_phi_overlap = phi_phi_overlap.reshape(-1,2).sum(1)
+        phi_phi_overlap = np.array(probabiliy_circuit_output)[: 2 * self.num_hdmr]
+        if phi_phi_overlap.dtype != "complex128":
+            phi_phi_overlap = phi_phi_overlap.astype("complex128")
+        phi_phi_overlap *= np.array([1.0, 1.0j] * self.num_hdmr)
+        phi_phi_overlap = phi_phi_overlap.reshape(-1, 2).sum(1)
 
         phi_phi_overlap *= cij_coeff
         phi_phi_overlap = phi_phi_overlap.sum()
@@ -1274,12 +1327,16 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
 
         return phi_phi_overlap
 
-    def _compute_bphi_overlap(self, cii_coeffs: np.ndarray, cij_coeffs: np.ndarray, 
-                              probabiliy_circuit_output: List)-> float:
-        """Compute the overlap 
+    def _compute_bphi_overlap(
+        self,
+        cii_coeffs: np.ndarray,
+        cij_coeffs: np.ndarray,
+        probabiliy_circuit_output: List,
+    ) -> float:
+        """Compute the overlap
 
         .. math:
-            |\langle\b|\Phi\rangle|^2 = \sum_{nm} c_n^*c_m \langle 0|V^* U_n^* U_b |0\rangle \langle 0|U_b^* U_m V |0\rangle 
+            |\langle\b|\Phi\rangle|^2 = \sum_{nm} c_n^*c_m \langle 0|V^* U_n^* U_b |0\rangle \langle 0|U_b^* U_m V |0\rangle
 
         Args:
             cii_coeffs (List): the values of the c_i^* c_i coeffcients
@@ -1292,11 +1349,11 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
 
         # compute <0|V* Ai* U|0> = p[k] + 1.0j p[k+1]
         # with k = 2*(self.num_hdmr + i)
-        bphi_terms = np.array(probabiliy_circuit_output)[2*self.num_hdmr:]
-        if bphi_terms.dtype != 'complex128':
-            bphi_terms = bphi_terms.astype('complex128')
-        bphi_terms *= np.array([1.,1.j] * int(len(bphi_terms)/2))
-        bphi_terms = bphi_terms.reshape(-1,2).sum(1)
+        bphi_terms = np.array(probabiliy_circuit_output)[2 * self.num_hdmr :]
+        if bphi_terms.dtype != "complex128":
+            bphi_terms = bphi_terms.astype("complex128")
+        bphi_terms *= np.array([1.0, 1.0j] * int(len(bphi_terms) / 2))
+        bphi_terms = bphi_terms.reshape(-1, 2).sum(1)
 
         # init the final result
         b_phi_overlap = 0.0 + 0.0j
@@ -1306,7 +1363,7 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             # add |c_i|^2 <0|V* Ai* U|0> * <0|U* Ai V|0>
             xii = cii_coeffs[i] * bphi_terms[i] * bphi_terms[i].conj()
             b_phi_overlap += xii
-            for j in range(i+1, nterm):
+            for j in range(i + 1, nterm):
                 # add c_i* c_j <0|V* Ai* U|0> * <0|U* Aj V|0>
                 xij = cij_coeffs[iterm] * bphi_terms[i] * bphi_terms[j].conj()
                 b_phi_overlap += xij
@@ -1315,7 +1372,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
                 iterm += 1
 
         return b_phi_overlap
-
 
     def get_cost_evaluation_function(
         self,
@@ -1333,13 +1389,14 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             Callable[[np.ndarray], Union[float, List[float]]]: the cost function
         """
 
-
         num_parameters = self.ansatz.num_parameters
         if num_parameters == 0:
-            raise RuntimeError("The ansatz must be parameterized, but has 0 free parameters.")
+            raise RuntimeError(
+                "The ansatz must be parameterized, but has 0 free parameters."
+            )
 
         # construct the observable op
-        self.construct_observalbe() 
+        self.construct_observalbe()
 
         ansatz_params = self.ansatz.parameters
         expect_ops = []
@@ -1350,17 +1407,25 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         expect_ops = ListOp(expect_ops)
 
         def cost_evaluation(parameters):
-            
+
             # Create dict associating each parameter with the lists of parameterization values for it
             parameter_sets = np.reshape(parameters, (-1, num_parameters))
-            param_bindings = dict(zip(ansatz_params, parameter_sets.transpose().tolist()))    
+            param_bindings = dict(
+                zip(ansatz_params, parameter_sets.transpose().tolist())
+            )
 
             # TODO define a multiple sampler, one for each ops, to leverage caching
-            # get the sampled output 
+            # get the sampled output
             out = []
             for op in expect_ops:
-                sampled_expect_op = self._circuit_sampler.convert(op, params=param_bindings)  
-                out.append(self.get_probability_from_expected_value(sampled_expect_op.eval()[0]))
+                sampled_expect_op = self._circuit_sampler.convert(
+                    op, params=param_bindings
+                )
+                out.append(
+                    self.get_probability_from_expected_value(
+                        sampled_expect_op.eval()[0]
+                    )
+                )
 
             # compute the total cost
             cost = self.process_probability_circuit_output(out)
@@ -1376,7 +1441,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             return cost
 
         return cost_evaluation
-
 
     def _calculate_observable(
         self,
@@ -1442,7 +1506,9 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
                 op = expectations.oplist[0]
             else:
                 op = expectations
-            self._expectation = ExpectationFactory.build(op, self._circuit_sampler.quantum_instance)
+            self._expectation = ExpectationFactory.build(
+                op, self._circuit_sampler.quantum_instance
+            )
 
         if self._circuit_sampler is not None:
             expectations = self._circuit_sampler.convert(expectations)
@@ -1454,7 +1520,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         result = post_processing(expectation_results, nb, self.scaling)
 
         return result, expectation_results
-
 
     def solve(
         self,
@@ -1468,11 +1533,13 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
                 List[BaseOperator],
             ]
         ] = None,
-        observable_circuit: Optional[Union[QuantumCircuit, List[QuantumCircuit]]] = None,
+        observable_circuit: Optional[
+            Union[QuantumCircuit, List[QuantumCircuit]]
+        ] = None,
         post_processing: Optional[
             Callable[[Union[float, List[float]]], Union[float, List[float]]]
         ] = None,
-    ) -> VariationalLinearSolverResult:    
+    ) -> VariationalLinearSolverResult:
         """Solve the linear system
 
         Args:
@@ -1492,7 +1559,6 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         Returns:
             VariationalLinearSolverResult: Result of the optimization and solution vector of the linear system
         """
-
 
         # compute the circuits
         circuits = self.construct_circuit(matrix, vector)
@@ -1516,10 +1582,10 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
             )
         else:
             opt_result = self.optimizer.minimize(
-            fun=cost_evaluation, x0=initial_point, jac=gradient, bounds=bounds
-        )   
+                fun=cost_evaluation, x0=initial_point, jac=gradient, bounds=bounds
+            )
 
-        # create the solution 
+        # create the solution
         solution = VariationalLinearSolverResult()
 
         # optimization data
@@ -1532,8 +1598,8 @@ class VQLS(VariationalAlgorithm, VariationalLinearSolver):
         solution.state = self.ansatz.assign_parameters(solution.optimal_parameters)
 
         # observable
-        solution.observable = self._calculate_observable(solution.state, observable, 
-                                                         observable_circuit, post_processing)
+        solution.observable = self._calculate_observable(
+            solution.state, observable, observable_circuit, post_processing
+        )
 
         return solution
-

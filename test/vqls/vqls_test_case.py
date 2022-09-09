@@ -32,7 +32,7 @@ def _noop(*args, **kargs):
 
 
 class VQLSTestCase(unittest.TestCase, ABC):
-    """Protein Folding Test Case"""
+    """VQLS Test Case"""
 
     moduleName = None
 

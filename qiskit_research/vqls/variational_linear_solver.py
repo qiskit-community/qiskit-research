@@ -17,12 +17,15 @@ from typing import Union, Optional, List, Callable
 import numpy as np
 
 from qiskit import QuantumCircuit
-from qiskit.result import Result
+
 from qiskit.quantum_info.operators.base_operator import BaseOperator
 
-from qiskit.algorithms.linear_solvers.observables.linear_system_observable import LinearSystemObservable
+from qiskit.algorithms.linear_solvers.observables.linear_system_observable import (
+    LinearSystemObservable,
+)
 from qiskit.algorithms.variational_algorithm import VariationalResult
 from qiskit.algorithms.linear_solvers.linear_solver import LinearSolverResult
+
 
 class VariationalLinearSolverResult(LinearSolverResult, VariationalResult):
     """A base class for linear systems results using variational methods
@@ -58,6 +61,7 @@ class VariationalLinearSolverResult(LinearSolverResult, VariationalResult):
         """
         self._state = state
 
+
 class VariationalLinearSolver(ABC):
     """An abstract class for linear system solvers in Qiskit."""
 
@@ -74,7 +78,9 @@ class VariationalLinearSolver(ABC):
                 List[BaseOperator],
             ]
         ] = None,
-        observable_circuit: Optional[Union[QuantumCircuit, List[QuantumCircuit]]] = None,
+        observable_circuit: Optional[
+            Union[QuantumCircuit, List[QuantumCircuit]]
+        ] = None,
         post_processing: Optional[
             Callable[[Union[float, List[float]]], Union[float, List[float]]]
         ] = None,

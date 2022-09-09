@@ -1,5 +1,5 @@
 ############################################
-# Upload the vqls_runtime_program to IBMQ 
+# Upload the vqls_runtime_program to IBMQ
 ############################################
 
 from qiskit_ibm_runtime import QiskitRuntimeService
@@ -69,27 +69,32 @@ def get_metadata():
 
     return meta
 
-if __name__ == "__main__":
 
-    # credential
-    ibmq_token = ''
-    hub = ''
-    group = '' 
-    project = '' 
+# if __name__ == "__main__":
 
-    # init the service
-    QiskitRuntimeService.save_account(channel="ibm_quantum", token=ibmq_token, overwrite=True)
-    service = QiskitRuntimeService()
+#     # credential
+#     ibmq_token = ""
+#     hub = ""
+#     group = ""
+#     project = ""
 
-    # if we want to delete an previously uploaded propgram
-    # old_token = ""
-    # service.delete_program(old_token)
+#     # init the service
+#     QiskitRuntimeService.save_account(
+#         channel="ibm_quantum", token=ibmq_token, overwrite=True
+#     )
+#     service = QiskitRuntimeService()
 
-    # upload the code
-    program_id = service.upload_program(data="vqls_runtime_program.py", metadata=get_metadata())
-    print('Program token:', program_id)
+#     # if we want to delete an previously uploaded propgram
+#     # old_token = ""
+#     # service.delete_program(old_token)
 
-    # query the details 
-    prog = service.program(program_id)
-    print('Program details')
-    print(prog)
+#     # upload the code
+#     program_id = service.upload_program(
+#         data="vqls_runtime_program.py", metadata=get_metadata()
+#     )
+#     print("Program token:", program_id)
+
+#     # query the details
+#     prog = service.program(program_id)
+#     print("Program details")
+#     print(prog)

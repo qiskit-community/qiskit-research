@@ -1,4 +1,3 @@
-
 from multiprocessing.sharedctypes import Value
 import numpy as np
 from qiskit_ibm_runtime.program import ResultDecoder
@@ -7,12 +6,12 @@ from qiskit_ibm_runtime import QiskitRuntimeService
 from qiskit.circuit.library.n_local.real_amplitudes import RealAmplitudes
 
 
-
 class VQLSResultDecoder(ResultDecoder):
     @classmethod
     def decode(cls, data):
         data = super().decode(data)  # This is required to preformat the data returned.
         return OptimizeResult(data)
+
 
 class RuntimeJobWrapper:
     """A simple Job wrapper that attaches interim results directly to the job object itself
@@ -70,7 +69,7 @@ def vqls_runner(
     Parameters:
         backend (ProgramBackend): Qiskit backend instance.
         matrix (np.ndarray): the matrix of the linear system.
-        rhs (np.ndarray): the right hand side of the linear system. 
+        rhs (np.ndarray): the right hand side of the linear system.
         ansatz (str): Optional, name of ansatz quantum circuit to use, default='EfficientSU2'
         ansatz_config (dict): Optional, configuration parameters for the ansatz circuit.
         x0 (array_like): Optional, initial vector of parameters.
@@ -88,17 +87,20 @@ def vqls_runner(
 
     # validate the  size
     if matrix.shape[0] != rhs.shape[0]:
-        raise ValueError("Matrix size ({}) and rhs size ({}) are incompatible". format(matrix.shape, rhs.shape))
+        raise ValueError(
+            "Matrix size ({}) and rhs size ({}) are incompatible".format(
+                matrix.shape, rhs.shape
+            )
+        )
 
-    inputs['matrix'] = matrix
-    inputs['rhs'] = rhs
+    inputs["matrix"] = matrix
+    inputs["rhs"] = rhs
 
     # number of qubits
     num_qubits = int(np.ceil(np.log2(matrix.shape[0])))
 
     if num_qubits != int(np.log2(matrix.shape[0])):
-        raise ValueError('Ssytem size ({}) is not a power of 2'.format(matrix.shape[0]))
-
+        raise ValueError("Ssytem size ({}) is not a power of 2".format(matrix.shape[0]))
 
     #
     inputs["ansatz"] = ansatz

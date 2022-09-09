@@ -18,12 +18,16 @@ Variational Quantum Linear Solver
 
 from qiskit_research.vqls.vqls import VQLS
 from qiskit_research.vqls.hadamard_test import HadammardTest
-from qiskit_research.vqls.numpy_unitary_matrices import UnitaryDecomposition 
-from qiskit_research.vqls.variational_linear_solver import VariationalLinearSolver, VariationalResult
+from qiskit_research.vqls.numpy_unitary_matrices import UnitaryDecomposition
+from qiskit_research.vqls.variational_linear_solver import (
+    VariationalLinearSolver,
+    VariationalResult,
+)
+
 __all__ = [
     "VQLS",
     "HadammardTest",
     "UnitaryDecomposition",
     "VariationalLinearSolver",
-    "VariationalResult"
+    "VariationalResult",
 ]
