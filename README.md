@@ -15,7 +15,7 @@ Clone this repository and install from source. For example,
 
 ## Documentation
 
-See [docs/](docs/).
+Documentaton is located [here](https://qiskit-research.github.io/qiskit-research/).
 
 ## Contributing
 
