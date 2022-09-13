@@ -31,7 +31,6 @@ from qiskit.opflow import (
     ComposedOp,
 )
 from qiskit.providers import Backend
-from qiskit.quantum_info.operators.base_operator import BaseOperator
 from qiskit.utils import QuantumInstance
 
 from .linear_solver import LinearSolver, LinearSolverResult
