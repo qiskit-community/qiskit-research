@@ -17,7 +17,7 @@ from typing import Optional
 
 from qiskit import BasicAer
 from qiskit.providers import Backend, Provider
-from qiskit.providers.aer import AerSimulator
+from qiskit_aer import AerSimulator
 
 
 def get_backend(
