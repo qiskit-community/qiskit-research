@@ -11,11 +11,14 @@ Users are encouraged to use GitHub issues for reporting issues and requesting fe
 All submissions require review. To make a submission, open a GitHub pull request.
 
 ## Submitting a new research experiment
+
 To submit a new research experiment:
+
 1. Create a new module for your experiment under the [`qiskit_research`](qiskit_research/) base module.
 2. Create a new directory under [docs/](docs/) and add Jupyter notebooks to document your experiment.
 
 ## Running tests locally
+
 The tests can be run locally using [tox](https://tox.wiki/en/latest/).
 To run the full test suite, execute `tox -e ALL`.
 Individual checks can also be run separately. For example:
@@ -35,3 +38,15 @@ Run type check
 Run format check
 
     tox -eblack
+
+## Building and checking the docs locally
+
+To build the docs locally, run
+
+    tox -edocs
+
+This will generate the documentation files and place them in the directory
+`docs/_build/html`. You can then view the files in your web browser, for example,
+by navigating to `file:///QISKIT_RESEARCH_DIRECTORY/docs/_build/html/index.html`.
+Please take this step when submitting a pull request to ensure that the changes
+you make to the documentation look correct.
