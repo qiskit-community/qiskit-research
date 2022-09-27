@@ -9,6 +9,7 @@ Research using Qiskit, demonstrating best practices for running quantum computin
 
   mzm_generation/index
   protein_folding/index
+  tutorial_quantum_sim/index
   apidocs/index
 
 .. Hiding - Indices and tables
