@@ -14,6 +14,10 @@
 
 from typing import List
 
+import collections
+import functools
+import operator
+
 from qiskit.providers.backend import Backend
 from qiskit.circuit import ClassicalRegister, Parameter, QuantumCircuit, QuantumRegister
 from qiskit.circuit.library import HGate, IGate, SdgGate
@@ -111,3 +115,26 @@ def exact_magnetization(
         mags.append(mag)
 
     return mags
+
+def combine_twirled_data(quasi_probs: list[dict], num_twirls: int) -> List[dict]:
+    # circs are (each Pauli twirl)*(x,y,z meas)*(each time step)
+    num_exps = int(len(quasi_probs)/num_twirls)
+    twirled_data = []
+    for idx in range(num_exps):
+        twirls_per_param = quasi_probs[idx:idx+num_twirls]
+        summed_twirls = dict(functools.reduce(operator.add,
+                    map(collections.Counter, twirls_per_param)))
+        twirled_data.append({key: value/num_twirls for key, value in summed_twirls.items()})
+
+    return twirled_data
+
+def combine_mag_data(twirled_data: list[dict]) -> List[List[dict]]:
+    # twirled_data is (x,y,z meas)*(each time step)
+    num_exps = int(len(twirled_data)/3)
+    mag_data = {"x": [], "y": [], "z": []}
+    for idx in range(num_exps):
+        mag_data["x"].append(twirled_data[3*idx])
+        mag_data["y"].append(twirled_data[3*idx+1])
+        mag_data["z"].append(twirled_data[3*idx+2])
+
+    return mag_data
