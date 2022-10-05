@@ -58,7 +58,7 @@ autosummary_generate_overwrite = False
 autoclass_content = "both"
 
 # nbsphinx options (for tutorials)
-nbsphinx_timeout = 500
+nbsphinx_timeout = 1000
 nbsphinx_execute = "always"
 nbsphinx_widgets_path = ""
 exclude_patterns = ["_build", "**.ipynb_checkpoints", "getting_started.ipynb"]
