@@ -29,5 +29,7 @@ def test_add_dynamical_decoupling():
 
     backend = FakeWashington()
     transpiled = transpile(circuit, backend)
-    transpiled_dd = add_dynamical_decoupling(transpiled, backend, "XY4pm")
+    transpiled_dd = add_dynamical_decoupling(
+        transpiled, backend, "XY4pm", add_pulse_cals=True
+    )
     assert isinstance(transpiled_dd, QuantumCircuit)

@@ -149,7 +149,7 @@ class TestScaledCostFuncs(unittest.TestCase):
 
         layout = [0, 1, 2, 3, 4]
         qc_t = transpile(qc, backend, initial_layout=layout)
-        qc_dd = add_dynamical_decoupling(qc_t, backend, "XY4pm", add_pulse_cals=True)
+        qc_dd = add_dynamical_decoupling(qc_t, backend, "XY4pm")
         best_layout = evaluate_layouts(
             qc_dd,
             layout,
@@ -161,7 +161,7 @@ class TestScaledCostFuncs(unittest.TestCase):
         self.assertLess(best_layout[1], 1)
 
         qc2_t = transpile(qc2, backend, initial_layout=layout)
-        qc2_dd = add_dynamical_decoupling(qc2_t, backend, "XY4pm", add_pulse_cals=True)
+        qc2_dd = add_dynamical_decoupling(qc2_t, backend, "XY4pm")
         best_layout2 = evaluate_layouts(
             qc2_dd,
             layout,
