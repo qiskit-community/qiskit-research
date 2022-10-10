@@ -14,19 +14,19 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Union, Optional
+from typing import Iterable, List, Optional, Union
 
 from qiskit import QuantumCircuit, pulse
 from qiskit.circuit import Gate
 from qiskit.circuit.library import XGate, YGate
 from qiskit.providers.backend import Backend
-from qiskit.pulse import DriveChannel
+from qiskit.pulse import Drag, DriveChannel
 from qiskit.qasm import pi
 from qiskit.transpiler import InstructionDurations
+from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.instruction_durations import InstructionDurationsType
 from qiskit.transpiler.passes import PadDynamicalDecoupling
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
-from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
 from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate
 from qiskit_research.utils.periodic_dynamical_decoupling import (
@@ -155,9 +155,13 @@ def add_pulse_calibrations(
             # def of XmGate() in terms of XGate() and amplitude inversion
             x_sched = inst_sched_map.get("x", qubits=[qubit])
             x_pulse = x_sched.instructions[0][1].pulse
-            # HACK is there a better way?
-            x_pulse._amp = -x_pulse.amp  # pylint: disable=protected-access
-            pulse.play(x_pulse, DriveChannel(qubit))
+            inverted_pulse = Drag(
+                duration=x_pulse.duration,
+                amp=-x_pulse.amp,
+                sigma=x_pulse.sigma,
+                beta=x_pulse.beta,
+            )
+            pulse.play(inverted_pulse, DriveChannel(qubit))
 
             # add calibrations to circuits
             for circ in circuits:
@@ -188,9 +192,13 @@ def add_pulse_calibrations(
             with pulse.phase_offset(-pi / 2, DriveChannel(qubit)):
                 x_sched = inst_sched_map.get("x", qubits=[qubit])
                 x_pulse = x_sched.instructions[0][1].pulse
-                # HACK is there a better way?
-                x_pulse._amp = -x_pulse.amp  # pylint:disable=protected-access
-                pulse.play(x_pulse, DriveChannel(qubit))
+                inverted_pulse = Drag(
+                    duration=x_pulse.duration,
+                    amp=-x_pulse.amp,
+                    sigma=x_pulse.sigma,
+                    beta=x_pulse.beta,
+                )
+                pulse.play(inverted_pulse, DriveChannel(qubit))
 
             # add calibrations to circuits
             for circ in circuits:
