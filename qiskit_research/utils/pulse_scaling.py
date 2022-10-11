@@ -421,9 +421,6 @@ def cr_scaling_passes(
         yield ForceZZTemplateSubstitution()  # workaround for Terra Issue
     if unroll_rzx_to_ecr:
         yield RZXtoEchoedCR(backend)
-    yield Optimize1qGatesDecomposition(BASIS_GATES)
-    yield CXCancellation()
-    yield CombineRuns(["rz"])
     if param_bind is not None:
         yield from pulse_attaching_passes(backend, param_bind)
 
