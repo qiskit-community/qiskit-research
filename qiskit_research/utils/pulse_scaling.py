@@ -12,6 +12,8 @@
 
 """Pulse scaling."""
 
+from __future__ import annotations
+
 import math
 from typing import Iterable, List, Optional, Union
 
@@ -38,12 +40,7 @@ from qiskit.pulse.filters import filter_instructions
 from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.exceptions import TranspilerError
-from qiskit.transpiler.passes import (
-    CXCancellation,
-    Optimize1qGatesDecomposition,
-    RZXCalibrationBuilder,
-    TemplateOptimization,
-)
+from qiskit.transpiler.passes import RZXCalibrationBuilder, TemplateOptimization
 from qiskit.transpiler.passes.calibration.base_builder import CalibrationBuilder
 from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
 from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
@@ -408,37 +405,27 @@ class SECRCalibrationBuilder(CalibrationBuilder):
 
 def cr_scaling_passes(
     backend: Backend,
-    templates: List[QuantumCircuit],
+    templates: list[QuantumCircuit],
+    *,
     unroll_rzx_to_ecr: bool = True,
     force_zz_matches: Optional[bool] = True,
-    param_bind: Optional[dict] = None,
+    add_pulse_calibrations: bool = True,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for CR pulse scaling."""
-
     yield TemplateOptimization(**templates)
     yield CombineRuns(["rzx"])
     if force_zz_matches:
         yield ForceZZTemplateSubstitution()  # workaround for Terra Issue
     if unroll_rzx_to_ecr:
         yield RZXtoEchoedCR(backend)
-    yield Optimize1qGatesDecomposition(BASIS_GATES)
-    yield CXCancellation()
-    yield CombineRuns(["rz"])
-    if param_bind is not None:
-        yield from pulse_attaching_passes(backend, param_bind)
+    if add_pulse_calibrations:
+        yield from pulse_attaching_passes(backend)
 
 
-def pulse_attaching_passes(
-    backend: Backend,
-    param_bind: dict,
-) -> Iterable[BasePass]:
+def pulse_attaching_passes(backend: Backend) -> Iterable[BasePass]:
     """Yields transpilation passes for attaching pulse schedules."""
     inst_sched_map = backend.defaults().instruction_schedule_map
     channel_map = backend.configuration().qubit_channel_mapping
-
-    yield BindParameters(param_bind)
-    yield Optimize1qGatesDecomposition(BASIS_GATES)
-    yield CXCancellation()
     yield SECRCalibrationBuilder(inst_sched_map, channel_map)
     yield RZXCalibrationBuilder(inst_sched_map, channel_map)
 
