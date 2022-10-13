@@ -142,18 +142,18 @@ def add_pulse_calibrations(
         circuits = [circuits]
 
     for qubit in range(num_qubits):
+        # get XGate pulse to define the others
         x_sched = inst_sched_map.get("x", qubits=[qubit])
         _, x_instruction = x_sched.instructions[0]
 
+        # XpGate has the same pulse
         with pulse.build(f"xp gate for qubit {qubit}") as sched:
-            # def of XpGate() in terms of XGate()
             pulse.play(x_instruction.pulse, x_instruction.channel)
-            # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("xp", [qubit], sched)
 
+        # XmGate has amplitude inverted
         with pulse.build(f"xm gate for qubit {qubit}") as sched:
-            # def of XmGate() in terms of XGate() and amplitude inversion
             inverted_pulse = Drag(
                 duration=x_instruction.pulse.duration,
                 amp=-x_instruction.pulse.amp,
@@ -161,28 +161,25 @@ def add_pulse_calibrations(
                 beta=x_instruction.pulse.beta,
             )
             pulse.play(inverted_pulse, x_instruction.channel)
-            # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("xm", [qubit], sched)
 
+        # YGate has phase shifted
         with pulse.build(f"y gate for qubit {qubit}") as sched:
-            # def of YGate() in terms of XGate() and phase_offset
             with pulse.phase_offset(pi / 2, x_instruction.channel):
                 pulse.play(x_instruction.pulse, x_instruction.channel)
-            # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("y", [qubit], sched)
 
+        # YpGate has phase shifted
         with pulse.build(f"yp gate for qubit {qubit}") as sched:
-            # def of YpGate() in terms of XGate() and phase_offset
             with pulse.phase_offset(pi / 2, x_instruction.channel):
                 pulse.play(x_instruction.pulse, x_instruction.channel)
-            # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("yp", [qubit], sched)
 
+        # YmGate has phase shifted in opposite direction and amplitude inverted
         with pulse.build(f"ym gate for qubit {qubit}") as sched:
-            # def of YGate() in terms of XGate() and phase_offset
             with pulse.phase_offset(-pi / 2, x_instruction.channel):
                 inverted_pulse = Drag(
                     duration=x_instruction.pulse.duration,
@@ -191,6 +188,5 @@ def add_pulse_calibrations(
                     beta=x_instruction.pulse.beta,
                 )
                 pulse.play(inverted_pulse, x_instruction.channel)
-            # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("ym", [qubit], sched)
