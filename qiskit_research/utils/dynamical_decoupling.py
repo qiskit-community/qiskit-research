@@ -142,74 +142,56 @@ def add_pulse_calibrations(
         circuits = [circuits]
 
     for qubit in range(num_qubits):
+        x_sched = inst_sched_map.get("x", qubits=[qubit])
+        _, x_instruction = x_sched.instructions[0]
+
         with pulse.build(f"xp gate for qubit {qubit}") as sched:
             # def of XpGate() in terms of XGate()
-            x_sched = inst_sched_map.get("x", qubits=[qubit])
-            instruction = x_sched.instructions[0][1]
-            x_pulse = instruction.pulse
-            x_channel = instruction.channel
-            pulse.play(x_pulse, x_channel)
-
+            pulse.play(x_instruction.pulse, x_instruction.channel)
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("xp", [qubit], sched)
 
         with pulse.build(f"xm gate for qubit {qubit}") as sched:
             # def of XmGate() in terms of XGate() and amplitude inversion
-            x_sched = inst_sched_map.get("x", qubits=[qubit])
-            x_pulse = x_sched.instructions[0][1].pulse
             inverted_pulse = Drag(
-                duration=x_pulse.duration,
-                amp=-x_pulse.amp,
-                sigma=x_pulse.sigma,
-                beta=x_pulse.beta,
+                duration=x_instruction.pulse.duration,
+                amp=-x_instruction.pulse.amp,
+                sigma=x_instruction.pulse.sigma,
+                beta=x_instruction.pulse.beta,
             )
             pulse.play(inverted_pulse, DriveChannel(qubit))
-
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("xm", [qubit], sched)
 
         with pulse.build(f"y gate for qubit {qubit}") as sched:
             # def of YGate() in terms of XGate() and phase_offset
-            x_sched = inst_sched_map.get("x", qubits=[qubit])
-            instruction = x_sched.instructions[0][1]
-            x_pulse = instruction.pulse
-            x_channel = instruction.channel
-            with pulse.phase_offset(pi / 2, x_channel):
-                pulse.play(x_pulse, x_channel)
-
+            with pulse.phase_offset(pi / 2, x_instruction.channel):
+                pulse.play(x_instruction.pulse, x_instruction.channel)
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("y", [qubit], sched)
 
         with pulse.build(f"yp gate for qubit {qubit}") as sched:
             # def of YpGate() in terms of XGate() and phase_offset
-            x_sched = inst_sched_map.get("x", qubits=[qubit])
-            instruction = x_sched.instructions[0][1]
-            x_pulse = instruction.pulse
-            x_channel = instruction.channel
-            with pulse.phase_offset(pi / 2, x_channel):
-                pulse.play(x_pulse, x_channel)
+            with pulse.phase_offset(pi / 2, x_instruction.channel):
+                pulse.play(x_instruction.pulse, x_instruction.channel)
 
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("yp", [qubit], sched)
 
         with pulse.build(f"ym gate for qubit {qubit}") as sched:
-            x_sched = inst_sched_map.get("x", qubits=[qubit])
-            instruction = x_sched.instructions[0][1]
-            x_pulse = instruction.pulse
-            x_channel = instruction.channel
             # def of YGate() in terms of XGate() and phase_offset
-            with pulse.phase_offset(-pi / 2, x_channel):
+            with pulse.phase_offset(-pi / 2, x_instruction.channel):
                 inverted_pulse = Drag(
-                    duration=x_pulse.duration,
-                    amp=-x_pulse.amp,
-                    sigma=x_pulse.sigma,
-                    beta=x_pulse.beta,
+                    duration=x_instruction.pulse.duration,
+                    amp=-x_instruction.pulse.amp,
+                    sigma=x_instruction.pulse.sigma,
+                    beta=x_instruction.pulse.beta,
                 )
-                pulse.play(inverted_pulse, x_channel)
+                pulse.play(inverted_pulse, x_instruction.channel)
 
             # add calibrations to circuits
             for circ in circuits:

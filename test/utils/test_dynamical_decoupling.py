@@ -44,12 +44,6 @@ def test_add_pulse_calibrations():
     backend = FakeWashington()
     add_pulse_calibrations(circuit, backend)
     for key in circuit.calibrations["xp"]:
-        drag_xp = (
-            circuit.calibrations["xp"][key]
-            .instructions[0][1]
-            .operands[0]
-            .instructions[0][1]
-            .operands[0]
-        )
+        drag_xp = circuit.calibrations["xp"][key].instructions[0][1].operands[0]
         drag_xm = circuit.calibrations["xm"][key].instructions[0][1].operands[0]
         assert drag_xm.amp == -drag_xp.amp
