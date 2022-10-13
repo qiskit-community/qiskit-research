@@ -20,7 +20,7 @@ from qiskit import QuantumCircuit, pulse
 from qiskit.circuit import Gate
 from qiskit.circuit.library import XGate, YGate
 from qiskit.providers.backend import Backend
-from qiskit.pulse import Drag, DriveChannel
+from qiskit.pulse import Drag
 from qiskit.qasm import pi
 from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
@@ -160,7 +160,7 @@ def add_pulse_calibrations(
                 sigma=x_instruction.pulse.sigma,
                 beta=x_instruction.pulse.beta,
             )
-            pulse.play(inverted_pulse, DriveChannel(qubit))
+            pulse.play(inverted_pulse, x_instruction.channel)
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("xm", [qubit], sched)
@@ -177,7 +177,6 @@ def add_pulse_calibrations(
             # def of YpGate() in terms of XGate() and phase_offset
             with pulse.phase_offset(pi / 2, x_instruction.channel):
                 pulse.play(x_instruction.pulse, x_instruction.channel)
-
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("yp", [qubit], sched)
@@ -192,7 +191,6 @@ def add_pulse_calibrations(
                     beta=x_instruction.pulse.beta,
                 )
                 pulse.play(inverted_pulse, x_instruction.channel)
-
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("ym", [qubit], sched)
