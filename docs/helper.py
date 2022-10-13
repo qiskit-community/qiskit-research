@@ -23,7 +23,7 @@ from qiskit.circuit import ClassicalRegister, Parameter, QuantumCircuit, Quantum
 from qiskit.circuit.library import HGate, IGate, SdgGate
 from qiskit.opflow import I, X, Y, Z, EvolvedOp, PauliExpectation, PauliOp, Zero
 
-from mapomatic import deflate_circuit
+import numpy as np
 from qiskit_research.utils.convenience import attach_cr_pulses
 
 POST_ROT_GATES = {
@@ -58,10 +58,15 @@ def ising_hamiltonian(
 def init_ground_state(num_spins: int) -> PauliOp:
     return Zero^num_spins
 
+def get_1q_observables(POp: PauliOp, num_spins: int) -> List[PauliOp]:
+    return [(I^num_spins-idx-1)^POp^(I^idx) for idx in range(num_spins)]
+
 def get_magnetic_exps(U_ham: EvolvedOp) -> List[PauliOp]:
     num_spins = U_ham.num_qubits
     init_state = init_ground_state(num_spins)
-    obsvs = [X^num_spins, Y^num_spins, Z^num_spins]
+    obsvs = get_1q_observables(X, num_spins) + \
+            get_1q_observables(Y, num_spins) + \
+            get_1q_observables(Z, num_spins)
     return [(U_ham @ init_state).adjoint() @ obsv @ U_ham @ init_state for obsv in obsvs]
 
 def build_ising_circuits(
@@ -94,17 +99,23 @@ def build_ising_circuits(
                 total_circ.append(gate, [my_layout])
             
             total_circ.measure(my_layout, cr)
-            circs.append(attach_cr_pulses(total_circ, backend, param_bind))
+            # circs.append(attach_cr_pulses(total_circ, backend, param_bind))
+            circs.append(total_circ.bind_parameters(param_bind))
 
     return circs
 
 def exact_magnetization(
     U_ham: EvolvedOp, 
     param_bind: dict, 
-    time_range: list[int]
+    time_range: List[float],
 ):
     exps = get_magnetic_exps(U_ham)
     num_spins = U_ham.num_qubits
+    # find the time parameter in the operator
+    for param in U_ham.parameters:
+        if param.name == 't':
+            tt = param
+
     mags = []
     for time in time_range:
         mag = []
@@ -114,7 +125,9 @@ def exact_magnetization(
         
         mags.append(mag)
 
-    return mags
+    return [[sum(np.real(mag[0:num_spins])) for mag in mags], 
+        [sum(np.real(mag[num_spins:2*num_spins])) for mag in mags], 
+        [sum(np.real(mag[2*num_spins:3*num_spins])) for mag in mags]]
 
 def combine_twirled_data(quasi_probs: list[dict], num_twirls: int) -> List[dict]:
     # circs are (each Pauli twirl)*(x,y,z meas)*(each time step)
