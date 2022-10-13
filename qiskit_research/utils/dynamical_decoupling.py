@@ -145,7 +145,10 @@ def add_pulse_calibrations(
         with pulse.build(f"xp gate for qubit {qubit}") as sched:
             # def of XpGate() in terms of XGate()
             x_sched = inst_sched_map.get("x", qubits=[qubit])
-            pulse.call(x_sched)
+            instruction = x_sched.instructions[0][1]
+            x_pulse = instruction.pulse
+            x_channel = instruction.channel
+            pulse.play(x_pulse, x_channel)
 
             # add calibrations to circuits
             for circ in circuits:
@@ -169,9 +172,12 @@ def add_pulse_calibrations(
 
         with pulse.build(f"y gate for qubit {qubit}") as sched:
             # def of YGate() in terms of XGate() and phase_offset
-            with pulse.phase_offset(pi / 2, DriveChannel(qubit)):
-                x_sched = inst_sched_map.get("x", qubits=[qubit])
-                pulse.call(x_sched)
+            x_sched = inst_sched_map.get("x", qubits=[qubit])
+            instruction = x_sched.instructions[0][1]
+            x_pulse = instruction.pulse
+            x_channel = instruction.channel
+            with pulse.phase_offset(pi / 2, x_channel):
+                pulse.play(x_pulse, x_channel)
 
             # add calibrations to circuits
             for circ in circuits:
@@ -179,26 +185,31 @@ def add_pulse_calibrations(
 
         with pulse.build(f"yp gate for qubit {qubit}") as sched:
             # def of YpGate() in terms of XGate() and phase_offset
-            with pulse.phase_offset(pi / 2, DriveChannel(qubit)):
-                x_sched = inst_sched_map.get("x", qubits=[qubit])
-                pulse.call(x_sched)
+            x_sched = inst_sched_map.get("x", qubits=[qubit])
+            instruction = x_sched.instructions[0][1]
+            x_pulse = instruction.pulse
+            x_channel = instruction.channel
+            with pulse.phase_offset(pi / 2, x_channel):
+                pulse.play(x_pulse, x_channel)
 
             # add calibrations to circuits
             for circ in circuits:
                 circ.add_calibration("yp", [qubit], sched)
 
         with pulse.build(f"ym gate for qubit {qubit}") as sched:
+            x_sched = inst_sched_map.get("x", qubits=[qubit])
+            instruction = x_sched.instructions[0][1]
+            x_pulse = instruction.pulse
+            x_channel = instruction.channel
             # def of YGate() in terms of XGate() and phase_offset
-            with pulse.phase_offset(-pi / 2, DriveChannel(qubit)):
-                x_sched = inst_sched_map.get("x", qubits=[qubit])
-                x_pulse = x_sched.instructions[0][1].pulse
+            with pulse.phase_offset(-pi / 2, x_channel):
                 inverted_pulse = Drag(
                     duration=x_pulse.duration,
                     amp=-x_pulse.amp,
                     sigma=x_pulse.sigma,
                     beta=x_pulse.beta,
                 )
-                pulse.play(inverted_pulse, DriveChannel(qubit))
+                pulse.play(inverted_pulse, x_channel)
 
             # add calibrations to circuits
             for circ in circuits:
