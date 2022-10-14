@@ -20,7 +20,7 @@ from qiskit import QuantumCircuit, pulse
 from qiskit.circuit import Gate
 from qiskit.circuit.library import XGate, YGate
 from qiskit.providers.backend import Backend
-from qiskit.pulse import Drag, DriveChannel
+from qiskit.pulse import Drag
 from qiskit.qasm import pi
 from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
@@ -142,64 +142,45 @@ def add_pulse_calibrations(
         circuits = [circuits]
 
     for qubit in range(num_qubits):
-        with pulse.build(f"xp gate for qubit {qubit}") as sched:
-            # def of XpGate() in terms of XGate()
-            x_sched = inst_sched_map.get("x", qubits=[qubit])
-            pulse.call(x_sched)
+        # get XGate pulse to define the others
+        x_sched = inst_sched_map.get("x", qubits=[qubit])
+        _, x_instruction = x_sched.instructions[0]
 
-            # add calibrations to circuits
+        # XpGate has the same pulse
+        with pulse.build(f"xp gate for qubit {qubit}") as sched:
+            pulse.play(x_instruction.pulse, x_instruction.channel)
             for circ in circuits:
                 circ.add_calibration("xp", [qubit], sched)
 
+        # XmGate has amplitude inverted
         with pulse.build(f"xm gate for qubit {qubit}") as sched:
-            # def of XmGate() in terms of XGate() and amplitude inversion
-            x_sched = inst_sched_map.get("x", qubits=[qubit])
-            x_pulse = x_sched.instructions[0][1].pulse
             inverted_pulse = Drag(
-                duration=x_pulse.duration,
-                amp=-x_pulse.amp,
-                sigma=x_pulse.sigma,
-                beta=x_pulse.beta,
+                duration=x_instruction.pulse.duration,
+                amp=-x_instruction.pulse.amp,
+                sigma=x_instruction.pulse.sigma,
+                beta=x_instruction.pulse.beta,
             )
-            pulse.play(inverted_pulse, DriveChannel(qubit))
-
-            # add calibrations to circuits
+            pulse.play(inverted_pulse, x_instruction.channel)
             for circ in circuits:
                 circ.add_calibration("xm", [qubit], sched)
 
+        # YGate and YpGate have phase shifted
         with pulse.build(f"y gate for qubit {qubit}") as sched:
-            # def of YGate() in terms of XGate() and phase_offset
-            with pulse.phase_offset(pi / 2, DriveChannel(qubit)):
-                x_sched = inst_sched_map.get("x", qubits=[qubit])
-                pulse.call(x_sched)
-
-            # add calibrations to circuits
+            with pulse.phase_offset(pi / 2, x_instruction.channel):
+                pulse.play(x_instruction.pulse, x_instruction.channel)
             for circ in circuits:
                 circ.add_calibration("y", [qubit], sched)
-
-        with pulse.build(f"yp gate for qubit {qubit}") as sched:
-            # def of YpGate() in terms of XGate() and phase_offset
-            with pulse.phase_offset(pi / 2, DriveChannel(qubit)):
-                x_sched = inst_sched_map.get("x", qubits=[qubit])
-                pulse.call(x_sched)
-
-            # add calibrations to circuits
-            for circ in circuits:
                 circ.add_calibration("yp", [qubit], sched)
 
+        # YmGate has phase shifted in opposite direction and amplitude inverted
         with pulse.build(f"ym gate for qubit {qubit}") as sched:
-            # def of YGate() in terms of XGate() and phase_offset
-            with pulse.phase_offset(-pi / 2, DriveChannel(qubit)):
-                x_sched = inst_sched_map.get("x", qubits=[qubit])
-                x_pulse = x_sched.instructions[0][1].pulse
+            with pulse.phase_offset(-pi / 2, x_instruction.channel):
                 inverted_pulse = Drag(
-                    duration=x_pulse.duration,
-                    amp=-x_pulse.amp,
-                    sigma=x_pulse.sigma,
-                    beta=x_pulse.beta,
+                    duration=x_instruction.pulse.duration,
+                    amp=-x_instruction.pulse.amp,
+                    sigma=x_instruction.pulse.sigma,
+                    beta=x_instruction.pulse.beta,
                 )
-                pulse.play(inverted_pulse, DriveChannel(qubit))
-
-            # add calibrations to circuits
+                pulse.play(inverted_pulse, x_instruction.channel)
             for circ in circuits:
                 circ.add_calibration("ym", [qubit], sched)
