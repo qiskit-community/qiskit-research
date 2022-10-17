@@ -99,8 +99,8 @@ def build_ising_circuits(
                 total_circ.append(gate, [my_layout])
             
             total_circ.measure(my_layout, cr)
-            # circs.append(attach_cr_pulses(total_circ, backend, param_bind))
-            circs.append(total_circ.bind_parameters(param_bind))
+            circs.append(attach_cr_pulses(total_circ, backend, param_bind))
+            # circs.append(total_circ.bind_parameters(param_bind))
 
     return circs
 
