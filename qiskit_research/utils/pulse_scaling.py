@@ -36,7 +36,6 @@ from qiskit.pulse import (
 )
 from qiskit.pulse.filters import filter_instructions
 from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
-from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.passes import (
@@ -95,28 +94,7 @@ class CombineRuns(TransformationPass):
                     if len(chunk) > 1:
                         for node in chunk[1:]:
                             dag.remove_op_node(node)
-        return dag
-
-
-class ReduceAngles(TransformationPass):
-    """Reduce angle of scaled pulses to between -pi and pi.
-
-    This works only after Parameters are bound. Gate strings
-    should only be single-parameter scaled pulses, i.e.
-    'rzx' and 'secr'.
-    """
-
-    def __init__(self, gate_strs: List[str]):
-        super().__init__()
-        self._gate_strs = gate_strs
-
-    def run(self, dag: DAGCircuit) -> DAGCircuit:
-        for gate_str in self._gate_strs:
-            for grun in dag.collect_runs([gate_str]):
-                theta = grun[0].op.params[0]
-                grun[0].op.params[0] = (float(theta) + pi) % (2 * pi) - pi
-
-        return dag
+            return dag
 
 
 class BindParameters(TransformationPass):
@@ -461,7 +439,6 @@ def pulse_attaching_passes(
     yield BindParameters(param_bind)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()
-    yield ReduceAngles(["rzx", "secr"])
     yield SECRCalibrationBuilder(inst_sched_map, channel_map)
     yield RZXCalibrationBuilder(inst_sched_map, channel_map)
 

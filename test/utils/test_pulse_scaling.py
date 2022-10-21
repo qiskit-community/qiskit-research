@@ -138,33 +138,3 @@ class TestPulseScaling(unittest.TestCase):
                 Operator(scale_qc_match.bind_parameters({theta: theta_set}))
             )
         )
-
-    def test_angle_reduction(self):
-        """Test Angle Reduction"""
-        backend = FakeMumbai()
-
-        qc1 = QuantumCircuit(2)
-        qc1.rzx(9 * np.pi / 2, 0, 1)
-
-        qc2 = QuantumCircuit(2)
-        qc2.rzx(np.pi / 2, 0, 1)
-
-        qc3 = QuantumCircuit(2)
-        qc3.rzx(-np.pi / 2, 0, 1)
-
-        self.assertTrue(Operator(qc1).equiv(Operator(qc2)))
-        self.assertFalse(Operator(qc1).equiv(Operator(qc3)))
-
-        qc1_s1 = scale_cr_pulses(qc1, backend, unroll_rzx_to_ecr=False)
-        qc2_s1 = scale_cr_pulses(qc2, backend, unroll_rzx_to_ecr=False)
-        qc3_s1 = scale_cr_pulses(qc3, backend, unroll_rzx_to_ecr=False)
-
-        self.assertTrue(Operator(qc1_s1).equiv(Operator(qc2_s1)))
-        self.assertFalse(Operator(qc1_s1).equiv(Operator(qc3_s1)))
-
-        qc1_s2 = scale_cr_pulses(qc1, backend, unroll_rzx_to_ecr=True)
-        qc2_s2 = scale_cr_pulses(qc2, backend, unroll_rzx_to_ecr=True)
-        qc3_s2 = scale_cr_pulses(qc3, backend, unroll_rzx_to_ecr=True)
-
-        self.assertTrue(Operator(qc1_s2).equiv(Operator(qc2_s2)))
-        self.assertFalse(Operator(qc1_s2).equiv(Operator(qc3_s2)))
