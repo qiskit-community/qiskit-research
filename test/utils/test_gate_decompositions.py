@@ -16,10 +16,17 @@ import unittest
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit, QuantumRegister
+from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary as sel
 from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
+from qiskit.opflow import I, X, Y, Z, PauliTrotterEvolution, Suzuki
 from qiskit.transpiler import PassManager
+from qiskit.transpiler.passes import UnrollCustomDefinitions
 from qiskit.quantum_info import Operator
-from qiskit_research.utils.gate_decompositions import XXMinusYYtoRZX, XXPlusYYtoRZX
+from qiskit_research.utils.gate_decompositions import (
+    RZXWeylDecomposition,
+    XXMinusYYtoRZX,
+    XXPlusYYtoRZX,
+)
 
 
 class TestPasses(unittest.TestCase):
@@ -50,3 +57,35 @@ class TestPasses(unittest.TestCase):
         pass_manager = PassManager([pass_])
         decomposed = pass_manager.run(circuit)
         self.assertTrue(Operator(circuit).equiv(Operator(decomposed)))
+
+    def test_rzx_weyl_decomposition(self):
+        """Test RZXWeylDecomposition."""
+
+        JJ = np.random.uniform(-10, 10)
+        hh = np.random.uniform(-10, 10)
+        tt = np.random.uniform(0, 10)
+
+        ham = -JJ * sum(
+            [
+                I ^ X ^ X,
+                I ^ Y ^ Y,
+                I ^ Z ^ Z,
+                X ^ X ^ I,
+                Y ^ Y ^ I,
+                Z ^ Z ^ I,
+            ]
+        ) + hh * sum([I ^ I ^ X, I ^ X ^ I, X ^ I ^ I])
+        U_ham = (ham * tt).exp_i()
+
+        trot_circ = (
+            PauliTrotterEvolution(trotter_mode=Suzuki(order=2, reps=1))
+            .convert(U_ham)
+            .to_circuit()
+        )
+        basis_gates = ["rx", "rz", "rxx", "ryy", "rzz"]
+        pm = PassManager(
+            [UnrollCustomDefinitions(sel, basis_gates), RZXWeylDecomposition()]
+        )
+        trot_circ_w = pm.run(trot_circ)
+
+        self.assertTrue(Operator(trot_circ).equiv(Operator(trot_circ_w)))
