@@ -1,3 +1,60 @@
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "qiskit_research"
+version = "0.0.1"
+description = "Research using Qiskit, demonstrating best practices for running quantum computing experiments."
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+requires-python = ">=3.8"
+
+dependencies = [
+    "mapomatic==0.6",
+    "mthree==0.24",
+    "pylatexenc",
+    "qiskit-aer~=0.11",
+    "qiskit-experiments==0.3.1",
+    "qiskit-ibm-runtime",
+    "qiskit-ibmq-provider",
+    "qiskit-nature==0.4.2",
+    "qiskit-terra~=0.22",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black[jupyter]",
+    "coverage",
+    "ddt~=1.5",
+    "importlib_metadata",
+    "ipywidgets",
+    "mypy==0.961",
+    "jupyter-sphinx",
+    "matplotlib",
+    "nbmake",
+    "nbsphinx",
+    "pylatexenc",
+    "pylint==2.14",
+    "pytest==7.1",
+    "reno",
+    "sphinx-autodoc-typehints",
+    "tqdm>=4.59.0",
+]
+
+[tool.autoflake]
+remove-unused-variables = true
+imports = ["qiskit", "qiskit_aer", "qiskit_nature", "qiskit_ibm_runtime"]
