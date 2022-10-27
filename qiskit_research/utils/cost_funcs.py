@@ -35,6 +35,10 @@ def cost_func_scaled_cr(
 
     Returns:
         float: error
+
+    Note:
+    For a transpiled circuit which uses less qubit than the available ones on the target device,
+    there may be a surplus of matching layouts which differ only by permutations of the unused qubits.
     """
     out = []
     props = backend.properties()
