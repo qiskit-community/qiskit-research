@@ -12,11 +12,8 @@
 
 """Pulse scaling."""
 
-from dis import Instruction
-import math
 from typing import Iterable, List, Optional, Union
 
-import numpy as np
 from qiskit import pulse
 from qiskit.circuit import Instruction as CircuitInst
 from qiskit.circuit import QuantumCircuit, QuantumRegister
@@ -26,20 +23,10 @@ from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGOpNode
 from qiskit.exceptions import QiskitError
 from qiskit.providers.backend import Backend
 from qiskit.pulse import (
-    ControlChannel,
-    DriveChannel,
-    GaussianSquare,
-    InstructionScheduleMap,
-    Play,
     Schedule,
     ScheduleBlock,
-    ShiftPhase,
-    Waveform,
 )
-from qiskit.pulse.filters import filter_instructions
-from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
-from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.passes import (
     CXCancellation,
     Optimize1qGatesDecomposition,
@@ -47,12 +34,12 @@ from qiskit.transpiler.passes import (
     RZXCalibrationBuilderNoEcho,
     TemplateOptimization,
 )
-from qiskit.transpiler.passes.calibration.base_builder import CalibrationBuilder
 from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
 from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
 from qiskit_research.utils.gates import SECRGate
 
 BASIS_GATES = ["sx", "rz", "rzx", "cx"]
+
 
 def cr_scaling_passes(
     backend: Backend,
@@ -244,18 +231,10 @@ class ForceZZTemplateSubstitution(TransformationPass):
 class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
     """
     Creates calibrations for SECRGate(theta) by stretching and compressing
-    Gaussian square pulses in the CX gate. This is done by retrieving (for a given pair of
-    qubits) the CX schedule in the instruction schedule map of the backend defaults.
-    The CX schedule must be an echoed cross-resonance gate optionally with rotary tones.
-    The cross-resonance drive tones and rotary pulses must be Gaussian square pulses.
-    The width of the Gaussian square pulse is adjusted so as to match the desired rotation angle.
-    If the rotation angle is small such that the width disappears then the amplitude of the
-    zero width Gaussian square pulse (i.e. a Gaussian) is reduced to reach the target rotation
-    angle. Additional details can be found in https://arxiv.org/abs/2012.11660.
-
-    Note: this is subclassed from RZXCalibrationBuilderNoEcho, and builds the schedule
-    from the scaled single (non-echoed) CR pulses.
+    Gaussian square pulses in the CX gate. This is subclassed from RZXCalibrationBuilderNoEcho,
+    and builds the schedule from the scaled single (non-echoed) CR pulses.
     """
+
     def supported(self, node_op: CircuitInst, qubits: List) -> bool:
         """Determine if a given node supports the calibration.
 
@@ -271,21 +250,29 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
     def get_calibration(
         self, node_op: CircuitInst, qubits: List
     ) -> Union[Schedule, ScheduleBlock]:
-        theta = node_op.params[0] 
+        """
+        Builds scaled echoed cross resonance (SECR) by doing echoing two single
+        (unechoed) CR pulses of opposite amplitude.
+        """
+        theta = node_op.params[0]
         try:
             theta = float(theta)
         except TypeError as ex:
             raise QiskitError("Target rotation angle is not assigned.") from ex
-        
+
         op_name = node_op.name
-        op_plus = CircuitInst(name=op_name, num_qubits=2, num_clbits=0, params=[theta / 2.0])
-        op_minus = CircuitInst(name=op_name, num_qubits=2, num_clbits=0, params=[-theta / 2.0])
+        op_plus = CircuitInst(
+            name=op_name, num_qubits=2, num_clbits=0, params=[theta / 2.0]
+        )
+        op_minus = CircuitInst(
+            name=op_name, num_qubits=2, num_clbits=0, params=[-theta / 2.0]
+        )
 
         cr_plus = super().get_calibration(op_plus, qubits)
         echo_x_sched = self._inst_map.get("x", qubits=qubits[0])
         cr_minus = super().get_calibration(op_minus, qubits)
 
-        with pulse.build(name="secr(%.3f)" % theta) as secr_sched:
+        with pulse.build(name=f"secr{theta}") as secr_sched:
             with pulse.align_sequential():
                 pulse.call(cr_plus)
                 pulse.call(echo_x_sched)
