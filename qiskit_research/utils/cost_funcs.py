@@ -60,9 +60,9 @@ def cost_func_scaled_cr(
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
 
-                cr_error = (float(item[0].params[0]) / (pi / 2)) * props.gate_error(
-                    "cx", [q0, q1]
-                )
+                cr_error = np.abs(
+                    float(item[0].params[0]) / (pi / 2)
+                ) * props.gate_error("cx", [q0, q1])
 
                 # assumes control qubit is actually control for cr
                 echo_error = props.gate_error("x", q0)
@@ -72,9 +72,9 @@ def cost_func_scaled_cr(
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
 
-                cr_error = (float(item[0].params[0]) / (pi / 2)) * props.gate_error(
-                    "cx", [q0, q1]
-                )
+                cr_error = np.abs(
+                    (float(item[0].params[0])) / (pi / 2)
+                ) * props.gate_error("cx", [q0, q1])
 
                 # assumes control qubit is actually control for cr
                 echo_error = props.gate_error("x", q0)
