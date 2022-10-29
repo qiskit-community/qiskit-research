@@ -60,26 +60,26 @@ class CombineRuns(TransformationPass):
     This works with Parameters whereas other transpiling passes do not.
     """
 
-    def __init__(self, gate_strs: List[str]):
+    def __init__(self, gate_names: List[str]):
         super().__init__()
-        self._gate_strs = gate_strs
+        self._gate_names = gate_names
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
-        for gate_str in self._gate_strs:
-            for grun in dag.collect_runs([gate_str]):
+        for gate_name in self._gate_names:
+            for run in dag.collect_runs([gate_name]):
                 partition = []
                 chunk = []
-                for i in range(len(grun) - 1):
-                    chunk.append(grun[i])
+                for i in range(len(run) - 1):
+                    chunk.append(run[i])
 
-                    qargs0 = grun[i].qargs
-                    qargs1 = grun[i + 1].qargs
+                    qargs0 = run[i].qargs
+                    qargs1 = run[i + 1].qargs
 
                     if qargs0 != qargs1:
                         partition.append(chunk)
                         chunk = []
 
-                chunk.append(grun[-1])
+                chunk.append(run[-1])
                 partition.append(chunk)
 
                 # simplify each chunk in the partition
@@ -106,15 +106,16 @@ class ReduceAngles(TransformationPass):
     'rzx' and 'secr'.
     """
 
-    def __init__(self, gate_strs: List[str]):
+    def __init__(self, gate_names: List[str]):
         super().__init__()
-        self._gate_strs = gate_strs
+        self._gate_names = gate_names
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
-        for gate_str in self._gate_strs:
-            for grun in dag.collect_runs([gate_str]):
-                theta = grun[0].op.params[0]
-                grun[0].op.params[0] = (float(theta) + pi) % (2 * pi) - pi
+        for gate_name in self._gate_names:
+            for run in dag.collect_runs([gate_name]):
+                for node in run:
+                    theta = node.op.params[0]
+                    node.op.params[0] = (float(theta) + pi) % (2 * pi) - pi
 
         return dag
 
