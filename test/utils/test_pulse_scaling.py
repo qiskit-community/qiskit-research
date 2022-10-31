@@ -143,9 +143,20 @@ class TestPulseScaling(unittest.TestCase):
 
     def test_angle_reduction(self):
         """Test Angle Reduction"""
-        qc = QuantumCircuit(2)
-        qc.rzx(9 * np.pi / 2, 0, 1)
         pm = PassManager(ReduceAngles(["rzx"]))
-        qc_s = pm.run(qc)
 
-        self.assertAlmostEqual(qc_s.data[0].operation.params[0], np.pi / 2)
+        qc1 = QuantumCircuit(2)
+        qc1.rzx(9 * np.pi / 2, 0, 1)
+        qc1_s = pm.run(qc1)
+
+        qc2 = QuantumCircuit(2)
+        qc2.rzx(42, 0, 1)
+        qc2_s = pm.run(qc2)
+
+        qc3 = QuantumCircuit(2)
+        qc3.rzx(-np.pi, 0, 1)
+        qc3_s = pm.run(qc3)
+
+        self.assertAlmostEqual(qc1_s.data[0].operation.params[0], np.pi / 2)
+        self.assertAlmostEqual(qc2_s.data[0].operation.params[0], -1.9822971502571)
+        self.assertAlmostEqual(qc3_s.data[0].operation.params[0], -np.pi)
