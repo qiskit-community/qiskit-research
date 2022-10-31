@@ -60,7 +60,7 @@ class CombineRuns(TransformationPass):
     This works with Parameters whereas other transpiling passes do not.
     """
 
-    def __init__(self, gate_names: list[str]):
+    def __init__(self, gate_names: List[str]):
         """
         Args:
 
@@ -112,7 +112,7 @@ class ReduceAngles(TransformationPass):
     'rzx' and 'secr'.
     """
 
-    def __init__(self, gate_names: list[str]):
+    def __init__(self, gate_names: List[str]):
         """
         Args:
 
