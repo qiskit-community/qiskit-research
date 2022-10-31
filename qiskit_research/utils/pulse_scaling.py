@@ -60,7 +60,13 @@ class CombineRuns(TransformationPass):
     This works with Parameters whereas other transpiling passes do not.
     """
 
-    def __init__(self, gate_names: List[str]):
+    def __init__(self, gate_names: list[str]):
+        """
+        Args:
+
+            gate_names: list of strings corresponding to the types
+                of singe-parameter gates to combine.
+        """
         super().__init__()
         self._gate_names = gate_names
 
@@ -106,7 +112,13 @@ class ReduceAngles(TransformationPass):
     'rzx' and 'secr'.
     """
 
-    def __init__(self, gate_names: List[str]):
+    def __init__(self, gate_names: list[str]):
+        """
+        Args:
+
+            gate_names: list of strings corresponding to the types
+                of singe-parameter gates to reduce.
+        """
         super().__init__()
         self._gate_names = gate_names
 

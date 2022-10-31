@@ -147,4 +147,4 @@ class TestPulseScaling(unittest.TestCase):
         qc.rzx(9 * np.pi / 2, 0, 1)
         qc_s = scale_cr_pulses(qc, backend, param_bind={})
 
-        self.assertAlmostEqual(qc_s.data[0].operation.params[0], np.pi/2)
+        self.assertAlmostEqual(qc_s.data[0].operation.params[0], np.pi / 2)
