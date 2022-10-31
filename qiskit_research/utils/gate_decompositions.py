@@ -102,25 +102,21 @@ class RZXtoEchoedCR(TransformationPass):
 
             for node in rzx_run:
                 mini_dag = DAGCircuit()
-                register = QuantumRegister(2)
-                mini_dag.add_qreg(register)
+                q0, q1 = QuantumRegister(2)
+                mini_dag.add_qreg(q0.register)
 
                 rzx_angle = node.op.params[0]
 
                 if cr_forward_dir:
-                    mini_dag.apply_operation_back(
-                        SECRGate(rzx_angle), [register[0], register[1]]
-                    )
-                    mini_dag.apply_operation_back(XGate(), [register[0]])
+                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [q0, q1])
+                    mini_dag.apply_operation_back(XGate(), [q0])
                 else:
-                    mini_dag.apply_operation_back(HGate(), [register[0]])
-                    mini_dag.apply_operation_back(HGate(), [register[1]])
-                    mini_dag.apply_operation_back(
-                        SECRGate(rzx_angle), [register[1], register[0]]
-                    )
-                    mini_dag.apply_operation_back(XGate(), [register[1]])
-                    mini_dag.apply_operation_back(HGate(), [register[0]])
-                    mini_dag.apply_operation_back(HGate(), [register[1]])
+                    mini_dag.apply_operation_back(HGate(), [q0])
+                    mini_dag.apply_operation_back(HGate(), [q1])
+                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [q1, q0])
+                    mini_dag.apply_operation_back(XGate(), [q1])
+                    mini_dag.apply_operation_back(HGate(), [q0])
+                    mini_dag.apply_operation_back(HGate(), [q1])
 
                 dag.substitute_node_with_dag(node, mini_dag)
 
