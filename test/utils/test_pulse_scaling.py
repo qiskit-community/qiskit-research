@@ -19,7 +19,9 @@ from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.converters import circuit_to_dag
 from qiskit.providers.fake_provider import FakeMumbai
 from qiskit.quantum_info import Operator
+from qiskit.transpiler import PassManager
 from qiskit_research.utils.convenience import scale_cr_pulses
+from qiskit_research.utils.pulse_scaling import ReduceAngles
 
 
 class TestPulseScaling(unittest.TestCase):
@@ -141,10 +143,9 @@ class TestPulseScaling(unittest.TestCase):
 
     def test_angle_reduction(self):
         """Test Angle Reduction"""
-        backend = FakeMumbai()
-
         qc = QuantumCircuit(2)
         qc.rzx(9 * np.pi / 2, 0, 1)
-        qc_s = scale_cr_pulses(qc, backend, param_bind={})
+        pm = PassManager(ReduceAngles(["rzx"]))
+        qc_s = pm.run(qc)
 
         self.assertAlmostEqual(qc_s.data[0].operation.params[0], np.pi / 2)
