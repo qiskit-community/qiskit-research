@@ -77,6 +77,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">qiskit.pulse.filters</span> <span class="kn">import</span> <span class="n">filter_instructions</span>
 <span class="kn">from</span> <span class="nn">qiskit.pulse.instruction_schedule_map</span> <span class="kn">import</span> <span class="n">CalibrationPublisher</span>
+<span class="kn">from</span> <span class="nn">qiskit.qasm</span> <span class="kn">import</span> <span class="n">pi</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span><span class="p">,</span> <span class="n">TransformationPass</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.exceptions</span> <span class="kn">import</span> <span class="n">TranspilerError</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="p">(</span>
@@ -100,26 +101,32 @@
 <span class="sd">    This works with Parameters whereas other transpiling passes do not.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+
+<span class="sd">            gate_names: list of strings corresponding to the types</span>
+<span class="sd">                of singe-parameter gates to combine.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_strs</span> <span class="o">=</span> <span class="n">gate_strs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_names</span> <span class="o">=</span> <span class="n">gate_names</span>
 
 <div class="viewcode-block" id="CombineRuns.run"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.CombineRuns.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">gate_str</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gate_strs</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">grun</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">([</span><span class="n">gate_str</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">gate_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gate_names</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">([</span><span class="n">gate_name</span><span class="p">]):</span>
                 <span class="n">partition</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="n">chunk</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">grun</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
-                    <span class="n">chunk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grun</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">run</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                    <span class="n">chunk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
 
-                    <span class="n">qargs0</span> <span class="o">=</span> <span class="n">grun</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span>
-                    <span class="n">qargs1</span> <span class="o">=</span> <span class="n">grun</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span>
+                    <span class="n">qargs0</span> <span class="o">=</span> <span class="n">run</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span>
+                    <span class="n">qargs1</span> <span class="o">=</span> <span class="n">run</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span>
 
                     <span class="k">if</span> <span class="n">qargs0</span> <span class="o">!=</span> <span class="n">qargs1</span><span class="p">:</span>
                         <span class="n">partition</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
                         <span class="n">chunk</span> <span class="o">=</span> <span class="p">[]</span>
 
-                <span class="n">chunk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grun</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">chunk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
                 <span class="n">partition</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
 
                 <span class="c1"># simplify each chunk in the partition</span>
@@ -135,7 +142,35 @@
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
                             <span class="n">dag</span><span class="o">.</span><span class="n">remove_op_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">dag</span></div></div>
+        <span class="k">return</span> <span class="n">dag</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">ReduceAngles</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reduce angle of scaled pulses to between -pi and pi.</span>
+
+<span class="sd">    This works only after Parameters are bound. Gate strings</span>
+<span class="sd">    should only be single-parameter scaled pulses, i.e.</span>
+<span class="sd">    &#39;rzx&#39; and &#39;secr&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+
+<span class="sd">            gate_names: list of strings corresponding to the types</span>
+<span class="sd">                of singe-parameter gates to reduce.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gate_names</span> <span class="o">=</span> <span class="n">gate_names</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">gate_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gate_names</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">([</span><span class="n">gate_name</span><span class="p">]):</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">run</span><span class="p">:</span>
+                    <span class="n">theta</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">pi</span>
+
+        <span class="k">return</span> <span class="n">dag</span>
 
 
 <div class="viewcode-block" id="BindParameters"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.BindParameters">[docs]</a><span class="k">class</span> <span class="nc">BindParameters</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
@@ -480,6 +515,7 @@
     <span class="k">yield</span> <span class="n">BindParameters</span><span class="p">(</span><span class="n">param_bind</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">Optimize1qGatesDecomposition</span><span class="p">(</span><span class="n">BASIS_GATES</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">CXCancellation</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">ReduceAngles</span><span class="p">([</span><span class="s2">&quot;rzx&quot;</span><span class="p">,</span> <span class="s2">&quot;secr&quot;</span><span class="p">])</span>
     <span class="k">yield</span> <span class="n">SECRCalibrationBuilder</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">,</span> <span class="n">channel_map</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">RZXCalibrationBuilder</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">,</span> <span class="n">channel_map</span><span class="p">)</span></div>
 
