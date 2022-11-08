@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - 'stable/**'
   pull_request:
     branches:
       - main
-      - 'stable/**'
   schedule:
     - cron: '0 1 * * *'
 
@@ -44,4 +42,4 @@ jobs:
         shell: bash
         run: |
           pver=${{ matrix.python-version }}
-          tox -epy${pver/./}
+          tox -epy${pver/./},py${pver/./}-notebook
