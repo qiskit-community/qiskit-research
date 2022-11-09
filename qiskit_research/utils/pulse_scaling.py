@@ -18,6 +18,7 @@ from typing import Iterable, List, Optional, Union
 import numpy as np
 from qiskit.circuit import Instruction as CircuitInst
 from qiskit.circuit import QuantumCircuit, QuantumRegister
+from qiskit.circuit.equivalence_library import SessionEquivalenceLibrary as sel
 from qiskit.circuit.library import CXGate, RZGate
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGOpNode
@@ -44,10 +45,14 @@ from qiskit.transpiler.passes import (
     Optimize1qGatesDecomposition,
     RZXCalibrationBuilder,
     TemplateOptimization,
+    UnrollCustomDefinitions,
 )
 from qiskit.transpiler.passes.calibration.base_builder import CalibrationBuilder
 from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
-from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
+from qiskit_research.utils.gate_decompositions import (
+    RZXtoEchoedCR,
+    RZXWeylDecomposition,
+)
 from qiskit_research.utils.gates import SECRGate
 
 BASIS_GATES = ["sx", "rz", "rzx", "cx"]
@@ -445,12 +450,18 @@ def cr_scaling_passes(
     backend: Backend,
     templates: List[QuantumCircuit],
     unroll_rzx_to_ecr: bool = True,
+    weyl_decomp: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for CR pulse scaling."""
 
-    yield TemplateOptimization(**templates)
+    if weyl_decomp:
+        basis_gates = ["rx", "rz", "rxx", "ryy", "rzz"]
+        yield UnrollCustomDefinitions(sel, basis_gates)
+        yield RZXWeylDecomposition()
+    else:  # TODO: probably a better way of combining these
+        yield TemplateOptimization(**templates)
     yield CombineRuns(["rzx"])
     if force_zz_matches:
         yield ForceZZTemplateSubstitution()  # workaround for Terra Issue

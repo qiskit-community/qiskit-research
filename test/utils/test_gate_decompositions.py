@@ -19,7 +19,11 @@ from qiskit.circuit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
 from qiskit.transpiler import PassManager
 from qiskit.quantum_info import Operator
-from qiskit_research.utils.gate_decompositions import XXMinusYYtoRZX, XXPlusYYtoRZX
+from qiskit_research.utils.gate_decompositions import (
+    RZXWeylDecomposition,
+    XXMinusYYtoRZX,
+    XXPlusYYtoRZX,
+)
 
 
 class TestPasses(unittest.TestCase):
@@ -50,3 +54,19 @@ class TestPasses(unittest.TestCase):
         pass_manager = PassManager([pass_])
         decomposed = pass_manager.run(circuit)
         self.assertTrue(Operator(circuit).equiv(Operator(decomposed)))
+
+    def test_rzx_weyl_decomposition(self):
+        """Test RZXWeylDecomposition."""
+
+        qc = QuantumCircuit(3)
+        qc.rxx(np.pi / 3, 0, 1)
+        qc.ryy(np.pi / 5, 1, 2)
+        qc.rzz(np.pi / 7, 2, 0)
+        pm = PassManager(RZXWeylDecomposition())
+        qc_w = pm.run(qc)
+
+        self.assertNotIn("rxx", qc_w.count_ops())
+        self.assertNotIn("ryy", qc_w.count_ops())
+        self.assertNotIn("rzz", qc_w.count_ops())
+        self.assertIn("rzx", qc_w.count_ops())
+        self.assertTrue(np.allclose(Operator(qc), Operator(qc_w), atol=1e-8))
