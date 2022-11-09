@@ -26,6 +26,7 @@ from qiskit.pulse import (
     Schedule,
     ScheduleBlock,
 )
+from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.passes import (
     CXCancellation,
@@ -294,12 +295,11 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
         except TypeError as ex:
             raise QiskitError("Target rotation angle is not assigned.") from ex
 
-        op_name = node_op.name
         op_plus = CircuitInst(
-            name=op_name, num_qubits=2, num_clbits=0, params=[theta / 2.0]
+            name="rzx", num_qubits=2, num_clbits=0, params=[theta / 2.0]
         )
         op_minus = CircuitInst(
-            name=op_name, num_qubits=2, num_clbits=0, params=[-theta / 2.0]
+            name="rzx", num_qubits=2, num_clbits=0, params=[-theta / 2.0]
         )
 
         cr_plus = super().get_calibration(op_plus, qubits)
