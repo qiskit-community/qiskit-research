@@ -59,6 +59,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">Instruction</span> <span class="k">as</span> <span class="n">CircuitInst</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">QuantumRegister</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.equivalence_library</span> <span class="kn">import</span> <span class="n">SessionEquivalenceLibrary</span> <span class="k">as</span> <span class="n">sel</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">CXGate</span><span class="p">,</span> <span class="n">RZGate</span>
 <span class="kn">from</span> <span class="nn">qiskit.converters</span> <span class="kn">import</span> <span class="n">circuit_to_dag</span><span class="p">,</span> <span class="n">dag_to_circuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span><span class="p">,</span> <span class="n">DAGNode</span><span class="p">,</span> <span class="n">DAGOpNode</span>
@@ -85,10 +86,14 @@
     <span class="n">Optimize1qGatesDecomposition</span><span class="p">,</span>
     <span class="n">RZXCalibrationBuilder</span><span class="p">,</span>
     <span class="n">TemplateOptimization</span><span class="p">,</span>
+    <span class="n">UnrollCustomDefinitions</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.calibration.base_builder</span> <span class="kn">import</span> <span class="n">CalibrationBuilder</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.calibration.rzx_templates</span> <span class="kn">import</span> <span class="n">rzx_templates</span>
-<span class="kn">from</span> <span class="nn">qiskit_research.utils.gate_decompositions</span> <span class="kn">import</span> <span class="n">RZXtoEchoedCR</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.utils.gate_decompositions</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RZXtoEchoedCR</span><span class="p">,</span>
+    <span class="n">RZXWeylDecomposition</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">qiskit_research.utils.gates</span> <span class="kn">import</span> <span class="n">SECRGate</span>
 
 <span class="n">BASIS_GATES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sx&quot;</span><span class="p">,</span> <span class="s2">&quot;rz&quot;</span><span class="p">,</span> <span class="s2">&quot;rzx&quot;</span><span class="p">,</span> <span class="s2">&quot;cx&quot;</span><span class="p">]</span>
@@ -486,12 +491,18 @@
     <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
     <span class="n">templates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span>
     <span class="n">unroll_rzx_to_ecr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">weyl_decomp</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">force_zz_matches</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">param_bind</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Yields transpilation passes for CR pulse scaling.&quot;&quot;&quot;</span>
 
-    <span class="k">yield</span> <span class="n">TemplateOptimization</span><span class="p">(</span><span class="o">**</span><span class="n">templates</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">weyl_decomp</span><span class="p">:</span>
+        <span class="n">basis_gates</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;rx&quot;</span><span class="p">,</span> <span class="s2">&quot;rz&quot;</span><span class="p">,</span> <span class="s2">&quot;rxx&quot;</span><span class="p">,</span> <span class="s2">&quot;ryy&quot;</span><span class="p">,</span> <span class="s2">&quot;rzz&quot;</span><span class="p">]</span>
+        <span class="k">yield</span> <span class="n">UnrollCustomDefinitions</span><span class="p">(</span><span class="n">sel</span><span class="p">,</span> <span class="n">basis_gates</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">RZXWeylDecomposition</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># TODO: probably a better way of combining these</span>
+        <span class="k">yield</span> <span class="n">TemplateOptimization</span><span class="p">(</span><span class="o">**</span><span class="n">templates</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">CombineRuns</span><span class="p">([</span><span class="s2">&quot;rzx&quot;</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">force_zz_matches</span><span class="p">:</span>
         <span class="k">yield</span> <span class="n">ForceZZTemplateSubstitution</span><span class="p">()</span>  <span class="c1"># workaround for Terra Issue</span>
