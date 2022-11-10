@@ -36,7 +36,9 @@ from qiskit.transpiler.passes import (
     TemplateOptimization,
 )
 from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
-from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
+from qiskit_research.utils.gate_decompositions import (
+    RZXtoEchoedCR,
+)
 from qiskit_research.utils.gates import SECRGate
 
 BASIS_GATES = ["sx", "rz", "rzx", "cx"]

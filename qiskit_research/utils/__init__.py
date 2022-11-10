@@ -25,6 +25,7 @@ from qiskit_research.utils.gate_decompositions import (
     RZXtoEchoedCR,
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
+    RZXWeylDecomposition,
 )
 from qiskit_research.utils.pauli_twirling import (
     PauliTwirl,
@@ -48,6 +49,7 @@ __all__ = [
     "RZXtoEchoedCR",
     "XXMinusYYtoRZX",
     "XXPlusYYtoRZX",
+    "RZXWeylDecomposition",
     "BindParameters",
     "CombineRuns",
     "SECRCalibrationBuilder",
