@@ -20,6 +20,8 @@ from qiskit import QuantumRegister
 from qiskit.circuit import Gate, Qubit
 from qiskit.circuit.library import (
     HGate,
+    SGate,
+    SdgGate,
     RXGate,
     RZGate,
     RZXGate,
@@ -100,25 +102,21 @@ class RZXtoEchoedCR(TransformationPass):
 
             for node in rzx_run:
                 mini_dag = DAGCircuit()
-                register = QuantumRegister(2)
-                mini_dag.add_qreg(register)
+                q0, q1 = QuantumRegister(2)
+                mini_dag.add_qreg(q0.register)
 
                 rzx_angle = node.op.params[0]
 
                 if cr_forward_dir:
-                    mini_dag.apply_operation_back(
-                        SECRGate(rzx_angle), [register[0], register[1]]
-                    )
-                    mini_dag.apply_operation_back(XGate(), [register[0]])
+                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [q0, q1])
+                    mini_dag.apply_operation_back(XGate(), [q0])
                 else:
-                    mini_dag.apply_operation_back(HGate(), [register[0]])
-                    mini_dag.apply_operation_back(HGate(), [register[1]])
-                    mini_dag.apply_operation_back(
-                        SECRGate(rzx_angle), [register[1], register[0]]
-                    )
-                    mini_dag.apply_operation_back(XGate(), [register[1]])
-                    mini_dag.apply_operation_back(HGate(), [register[0]])
-                    mini_dag.apply_operation_back(HGate(), [register[1]])
+                    mini_dag.apply_operation_back(HGate(), [q0])
+                    mini_dag.apply_operation_back(HGate(), [q1])
+                    mini_dag.apply_operation_back(SECRGate(rzx_angle), [q1, q0])
+                    mini_dag.apply_operation_back(XGate(), [q1])
+                    mini_dag.apply_operation_back(HGate(), [q0])
+                    mini_dag.apply_operation_back(HGate(), [q1])
 
                 dag.substitute_node_with_dag(node, mini_dag)
 
@@ -255,6 +253,51 @@ class XXMinusYYtoRZX(TransformationPass):
 
                 for instr, qargs in self._decomposition(register, node.op):
                     mini_dag.apply_operation_back(instr, qargs)
+
+                dag.substitute_node_with_dag(node, mini_dag)
+
+        return dag
+
+
+class RZXWeylDecomposition(TransformationPass):
+    """
+    Decompose XX, YY, ZZ rotation gates using the Weyl Chamber
+    decomposition, this version accepts Parameter values.
+
+    See https://arxiv.org/abs/2105.01063
+    """
+
+    def run(self, dag: DAGCircuit) -> DAGCircuit:
+        for run in dag.collect_runs(["rxx", "ryy", "rzz"]):
+            for node in run:
+                mini_dag = DAGCircuit()
+                register = QuantumRegister(2)
+                mini_dag.add_qreg(register)
+
+                angle = node.op.params[0]
+
+                if node.op.name == "rxx":
+                    mini_dag.apply_operation_back(HGate(), [register[0]])
+                    mini_dag.apply_operation_back(
+                        RZXGate(angle), [register[0], register[1]]
+                    )
+                    mini_dag.apply_operation_back(HGate(), [register[0]])
+                elif node.op.name == "ryy":
+                    mini_dag.apply_operation_back(SdgGate(), [register[0]])
+                    mini_dag.apply_operation_back(SdgGate(), [register[1]])
+                    mini_dag.apply_operation_back(HGate(), [register[0]])
+                    mini_dag.apply_operation_back(
+                        RZXGate(angle), [register[0], register[1]]
+                    )
+                    mini_dag.apply_operation_back(HGate(), [register[0]])
+                    mini_dag.apply_operation_back(SGate(), [register[0]])
+                    mini_dag.apply_operation_back(SGate(), [register[1]])
+                elif node.op.name == "rzz":
+                    mini_dag.apply_operation_back(HGate(), [register[1]])
+                    mini_dag.apply_operation_back(
+                        RZXGate(angle), [register[0], register[1]]
+                    )
+                    mini_dag.apply_operation_back(HGate(), [register[1]])
 
                 dag.substitute_node_with_dag(node, mini_dag)
 
