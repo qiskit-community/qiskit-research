@@ -325,18 +325,11 @@ to return it to the initial state.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SECRCalibrationBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction_schedule_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubit_channel_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SECRCalibrationBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction_schedule_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubit_channel_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates calibrations for SECRGate(theta) by stretching and compressing
-Gaussian square pulses in the CX gate. This is done by retrieving (for a given pair of
-qubits) the CX schedule in the instruction schedule map of the backend defaults.
-The CX schedule must be an echoed cross-resonance gate optionally with rotary tones.
-The cross-resonance drive tones and rotary pulses must be Gaussian square pulses.
-The width of the Gaussian square pulse is adjusted so as to match the desired rotation angle.
-If the rotation angle is small such that the width disappears then the amplitude of the
-zero width Gaussian square pulse (i.e. a Gaussian) is reduced to reach the target rotation
-angle. Additional details can be found in <a class="reference external" href="https://arxiv.org/abs/2012.11660">https://arxiv.org/abs/2012.11660</a>.</p>
-<p>Note: this is modified from RZXCalibrationBuilder in qiskit.transpiler.passes.calibrations</p>
-<p>Initializes a SECRGate calibration builder.</p>
+Gaussian square pulses in the CX gate. This is subclassed from RZXCalibrationBuilderNoEcho,
+and builds the schedule from the scaled single (non-echoed) CR pulses.</p>
+<p>Initializes a RZXGate calibration builder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -344,65 +337,21 @@ angle. Additional details can be found in <a class="reference external" href="ht
 default pulse calibrations for the target backend</p></li>
 <li><p><strong>qubit_channel_mapping</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]]) – The list mapping qubit indices to the list of
 channel names that apply on that qubit.</p></li>
+<li><p><strong>verbose</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – Set True to raise a user warning when RZX schedule cannot be built.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>QiskitError</strong> – if open pulse is not supported by the backend.</p>
+<dd class="field-even"><p><strong>QiskitError</strong> – Instruction schedule map is not provided.</p>
 </dd>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder.get_calibration">
 <span class="sig-name descname"><span class="pre">get_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.get_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.get_calibration" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds the calibration schedule for the SECRGate(theta).</p>
+<dd><p>Builds scaled echoed cross resonance (SECR) by doing echoing two single
+(unechoed) CR pulses of opposite amplitude.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>node_op</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Instruction</span></code>) – Instruction of the SECRGate(theta). I.e. params[0] is theta.</p></li>
-<li><p><strong>qubits</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>) – List of qubits for which to get the schedules. The first qubit is
-the control and the second is the target.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The calibration schedule for the SECRGate(theta).</p>
-</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>schedule</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>QiskitError</strong> – If the control and target
-    qubits cannot be identified, or the backend does not support cx between
-    the qubits.</p></li>
-<li><p><strong>TranspilerError</strong> – If all Parameters are not bound.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder.rescale_cr_inst">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rescale_cr_inst</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_mult</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.rescale_cr_inst"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.rescale_cr_inst" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>instruction</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Play</span></code>) – The instruction from which to create a new shortened or lengthened pulse.</p></li>
-<li><p><strong>theta</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – desired angle, pi/2 is assumed to be the angle that the pulse in the given
-play instruction implements.</p></li>
-<li><p><strong>sample_mult</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – All pulses must be a multiple of sample_mult.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>The play instruction with the stretched compressed</dt><dd><p>GaussianSquare pulse.</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>qiskit.pulse.Play</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>QiskitError</strong> – if the pulses are not GaussianSquare.</p>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Schedule</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">ScheduleBlock</span></code>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -488,7 +437,7 @@ play instruction implements.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.cr_scaling_passes">
-<span class="sig-name descname"><span class="pre">cr_scaling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unroll_rzx_to_ecr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weyl_decomp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_zz_matches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#cr_scaling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.cr_scaling_passes" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">cr_scaling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unroll_rzx_to_ecr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_zz_matches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#cr_scaling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.cr_scaling_passes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Yields transpilation passes for CR pulse scaling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
