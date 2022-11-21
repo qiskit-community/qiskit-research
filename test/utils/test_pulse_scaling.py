@@ -15,11 +15,21 @@
 import unittest
 
 import numpy as np
+from qiskit import schedule
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.converters import circuit_to_dag
 from qiskit.providers.fake_provider import FakeMumbai
+from qiskit.pulse import Play
 from qiskit.quantum_info import Operator
+from qiskit.transpiler import PassManager
+from qiskit.transpiler.passes import Optimize1qGatesDecomposition
 from qiskit_research.utils.convenience import scale_cr_pulses
+from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
+from qiskit_research.utils.pulse_scaling import (
+    BASIS_GATES,
+    ReduceAngles,
+    SECRCalibrationBuilder,
+)
 
 
 class TestPulseScaling(unittest.TestCase):
@@ -138,3 +148,81 @@ class TestPulseScaling(unittest.TestCase):
                 Operator(scale_qc_match.bind_parameters({theta: theta_set}))
             )
         )
+
+    def test_angle_reduction(self):
+        """Test Angle Reduction"""
+        pm = PassManager(ReduceAngles(["rzx"]))
+
+        qc1 = QuantumCircuit(2)
+        qc1.rzx(9 * np.pi / 2, 0, 1)
+        qc1_s = pm.run(qc1)
+
+        qc2 = QuantumCircuit(2)
+        qc2.rzx(42, 0, 1)
+        qc2_s = pm.run(qc2)
+
+        qc3 = QuantumCircuit(2)
+        qc3.rzx(-np.pi, 0, 1)
+        qc3_s = pm.run(qc3)
+
+        self.assertAlmostEqual(qc1_s.data[0].operation.params[0], np.pi / 2)
+        self.assertAlmostEqual(qc2_s.data[0].operation.params[0], -1.9822971502571)
+        self.assertAlmostEqual(qc3_s.data[0].operation.params[0], -np.pi)
+
+    def test_secr_calibration_builder(self):
+        """
+        Test SECR Calibration Builder
+
+        Note the circuit must first pass through the RZXtoEchoedCR pass to correct
+        for the direction of the native CR operation.
+        """
+        backend = FakeMumbai()
+        inst_sched_map = backend.defaults().instruction_schedule_map
+        ctrl_chans = backend.configuration().control_channels
+
+        theta = -np.pi / 7
+        qc = QuantumCircuit(2)
+        qc.rzx(2 * theta, 1, 0)
+
+        # Verify that there are no calibrations for this circuit yet.
+        self.assertEqual(qc.calibrations, {})
+
+        pm = PassManager(
+            [
+                RZXtoEchoedCR(backend),
+                SECRCalibrationBuilder(inst_sched_map),
+                Optimize1qGatesDecomposition(BASIS_GATES),
+            ]
+        )
+        qc_cal = pm.run(qc)
+        sched = schedule(qc_cal, backend)
+
+        crp_start_time = sched.filter(
+            channels=[chan[0] for chan in ctrl_chans.values()], instruction_types=[Play]
+        ).instructions[0][0]
+        crm_start_time = sched.filter(
+            channels=[chan[0] for chan in ctrl_chans.values()], instruction_types=[Play]
+        ).instructions[1][0]
+
+        crp_duration = (
+            sched.filter(
+                channels=[chan[0] for chan in ctrl_chans.values()],
+                instruction_types=[Play],
+            )
+            .instructions[0][1]
+            .duration
+        )
+        crm_duration = (
+            sched.filter(
+                channels=[chan[0] for chan in ctrl_chans.values()],
+                instruction_types=[Play],
+            )
+            .instructions[1][1]
+            .duration
+        )
+
+        # same duration for all 1Q native gates
+        echo_duration = inst_sched_map.get("x", qubits=[0]).duration
+
+        self.assertEqual(crp_start_time + crp_duration + echo_duration, crm_start_time)
+        self.assertEqual(crp_duration, crm_duration)
