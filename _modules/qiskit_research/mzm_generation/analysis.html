@@ -326,6 +326,7 @@
                         <span class="s2">&quot;pur&quot;</span><span class="p">,</span>
                     <span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">purify_idempotent_matrix</span><span class="p">(</span><span class="n">corr_mat_ps</span><span class="p">),</span> <span class="n">cov_ps</span><span class="p">)</span>
 
+        <span class="k">yield</span> <span class="n">AnalysisResultData</span><span class="p">(</span><span class="s2">&quot;ps_removed_masses&quot;</span><span class="p">,</span> <span class="n">ps_removed_masses</span><span class="p">)</span>
         <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_fidelity_witness</span><span class="p">(</span>
             <span class="p">[</span><span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;mem&quot;</span><span class="p">,</span> <span class="s2">&quot;ps&quot;</span><span class="p">,</span> <span class="s2">&quot;pur&quot;</span><span class="p">],</span>
             <span class="n">corr_matrices</span><span class="p">,</span>
