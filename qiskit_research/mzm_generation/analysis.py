@@ -285,6 +285,7 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                         "pur",
                     ] = (purify_idempotent_matrix(corr_mat_ps), cov_ps)
 
+        yield AnalysisResultData("ps_removed_masses", ps_removed_masses)
         yield from self._compute_fidelity_witness(
             ["raw", "mem", "ps", "pur"],
             corr_matrices,
