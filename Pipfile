@@ -12,7 +12,7 @@ qiskit-aer = "*"
 qiskit-experiments = "==0.3.1"
 qiskit-ibm-runtime = "*"
 qiskit-ibmq-provider = "*"
-qiskit-nature = "==0.4.2"
+qiskit-nature = "~=0.5"
 qiskit-terra = "==0.21"
 
 [dev-packages]
