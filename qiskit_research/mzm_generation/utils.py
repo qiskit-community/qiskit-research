@@ -644,7 +644,7 @@ def post_select_quasis(
     # postselect
     for bitstring in new_quasis:
         if not predicate(bitstring):
-            removed_mass += abs(new_quasis[bitstring])
+            removed_mass += new_quasis[bitstring]
             new_quasis[bitstring] = 0.0
     # normalize
     normalization = sum(new_quasis.values())
