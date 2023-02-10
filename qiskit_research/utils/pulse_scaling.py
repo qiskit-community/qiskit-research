@@ -265,7 +265,7 @@ class ForceZZTemplateSubstitution(TransformationPass):
         return dag
 
 
-class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
+class SECRCalibrationBuilder(RZXCalibrationBuilder):
     """
     Creates calibrations for SECRGate(theta) by stretching and compressing
     Gaussian square pulses in the CX gate. This is subclassed from RZXCalibrationBuilderNoEcho,
