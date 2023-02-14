@@ -22,23 +22,18 @@ from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGOpNode
 from qiskit.exceptions import QiskitError
 from qiskit.providers.backend import Backend
-from qiskit.pulse import (
-    Schedule,
-    ScheduleBlock,
-)
+from qiskit.pulse import Schedule, ScheduleBlock
 from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.passes import (
     CXCancellation,
     Optimize1qGatesDecomposition,
     RZXCalibrationBuilder,
-    RZXCalibrationBuilderNoEcho,
     TemplateOptimization,
 )
 from qiskit.transpiler.passes.calibration.rzx_templates import rzx_templates
-from qiskit_research.utils.gate_decompositions import (
-    RZXtoEchoedCR,
-)
+
+from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
 from qiskit_research.utils.gates import SECRGate
 
 BASIS_GATES = ["sx", "rz", "rzx", "cx"]
@@ -257,7 +252,6 @@ class ForceZZTemplateSubstitution(TransformationPass):
                                 and (cx1_node.qargs[1].index == cx2_node.qargs[1].index)
                                 and (cx2_node.qargs[1].index == rz_node.qargs[0].index)
                             ):
-
                                 dag = self.sub_zz_in_dag(
                                     dag, cx1_node, rz_node, cx2_node
                                 )
