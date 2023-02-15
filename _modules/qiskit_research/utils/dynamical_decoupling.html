@@ -11,9 +11,6 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
@@ -95,7 +92,7 @@
 <div class="viewcode-block" id="dynamical_decoupling_passes"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.dynamical_decoupling_passes">[docs]</a><span class="k">def</span> <span class="nf">dynamical_decoupling_passes</span><span class="p">(</span>
     <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span> <span class="n">dd_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">:</span> <span class="n">BaseScheduler</span> <span class="o">=</span> <span class="n">ALAPScheduleAnalysis</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Yields transpilation passes for dynamical decoupling.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yields transpilation passes for dynamical decoupling.&quot;&quot;&quot;</span>
     <span class="n">durations</span> <span class="o">=</span> <span class="n">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
     <span class="n">pulse_alignment</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">timing_constraints</span><span class="p">[</span><span class="s2">&quot;pulse_alignment&quot;</span><span class="p">]</span>
 
@@ -114,7 +111,7 @@
     <span class="n">max_repeats</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">scheduler</span><span class="p">:</span> <span class="n">BaseScheduler</span> <span class="o">=</span> <span class="n">ALAPScheduleAnalysis</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Yields transpilation passes for periodic dynamical decoupling.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yields transpilation passes for periodic dynamical decoupling.&quot;&quot;&quot;</span>
     <span class="n">durations</span> <span class="o">=</span> <span class="n">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
     <span class="n">pulse_alignment</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">timing_constraints</span><span class="p">[</span><span class="s2">&quot;pulse_alignment&quot;</span><span class="p">]</span>
 
@@ -134,7 +131,7 @@
 
 <span class="c1"># TODO this should take instruction schedule map instead of backend</span>
 <span class="k">def</span> <span class="nf">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InstructionDurations</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieves gate timing information for the backend from the instruction</span>
 <span class="sd">    schedule map, and returns the type InstructionDurations for use by</span>
 <span class="sd">    Qiskit&#39;s scheduler (i.e., ALAP) and DynamicalDecoupling passes.</span>
@@ -175,7 +172,7 @@
     <span class="n">circuits</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]],</span>
     <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Add pulse calibrations for custom gates to circuits in-place.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add pulse calibrations for custom gates to circuits in-place.&quot;&quot;&quot;</span>
     <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
     <span class="n">num_qubits</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">num_qubits</span>
 
@@ -285,8 +282,8 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 

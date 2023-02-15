@@ -11,9 +11,6 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
     <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
-    <script src="../../../_static/jquery.js"></script>
-    <script src="../../../_static/underscore.js"></script>
-    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/sphinx_highlight.js"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
@@ -94,7 +91,7 @@
 
 <div class="viewcode-block" id="KitaevHamiltonianExperimentParameters"><a class="viewcode-back" href="../../../apidocs/mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
 <span class="k">class</span> <span class="nc">KitaevHamiltonianExperimentParameters</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Parameters for a Kitaev Hamiltonian Experiment.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for a Kitaev Hamiltonian Experiment.&quot;&quot;&quot;</span>
 
     <span class="n">timestamp</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">backend_name</span><span class="p">:</span> <span class="nb">str</span>
@@ -112,12 +109,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Filename for data from this experiment.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filename for data from this experiment.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">backend_name</span><span class="si">}</span><span class="s2">_n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_modes</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">__json_decode__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;KitaevHamiltonianExperimentParameters&quot;</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;JSON deserialization.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;JSON deserialization.&quot;&quot;&quot;</span>
         <span class="n">value</span><span class="p">[</span><span class="s2">&quot;occupied_orbitals_list&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="nb">tuple</span><span class="p">(</span><span class="n">occupied_orbitals</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">occupied_orbitals</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="s2">&quot;occupied_orbitals_list&quot;</span><span class="p">]</span>
@@ -126,7 +123,7 @@
 
 
 <div class="viewcode-block" id="KitaevHamiltonianExperiment"><a class="viewcode-back" href="../../../apidocs/mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperiment">[docs]</a><span class="k">class</span> <span class="nc">KitaevHamiltonianExperiment</span><span class="p">(</span><span class="n">BaseExperiment</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Prepare and measure eigenstates of the Kitaev Hamiltonian.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepare and measure eigenstates of the Kitaev Hamiltonian.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -216,7 +213,7 @@
         <span class="k">return</span> <span class="n">FermionicGaussianState</span><span class="p">(</span><span class="n">transformation_matrix</span><span class="p">,</span> <span class="n">occupied_orbitals</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_transpiled_circuits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Return a list of experiment circuits, transpiled.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a list of experiment circuits, transpiled.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">transpile_circuit</span><span class="p">(</span>
                 <span class="n">circuit</span><span class="p">,</span>
@@ -234,7 +231,7 @@
 
 
 <span class="k">def</span> <span class="nf">_all_real_rz_gates</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Check if all RZ gates in the circuit are real-valued up to global phase.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if all RZ gates in the circuit are real-valued up to global phase.&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">gate</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">circuit</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">XXPlusYYGate</span><span class="p">):</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">params</span>
@@ -303,8 +300,8 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 
