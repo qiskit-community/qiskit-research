@@ -390,7 +390,6 @@ class QubitOpBuilder:
                     continue
 
                 if side_chain[j - 1] == 1:
-
                     h_bbsc += self._contact_map.lower_main_upper_side[i][j] ^ (
                         self._distance_map.first_neighbor(
                             self._peptide, i, 0, j, 1, penalty_1, self._pair_energies
