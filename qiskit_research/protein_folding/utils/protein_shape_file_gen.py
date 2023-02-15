@@ -174,7 +174,6 @@ class ProteinShapeFileGen:
         )
         side_data = np.column_stack([side_aminoacid, side_position])
         if side_data.size != 0:
-
             data = np.append(main_data, side_data, axis=0)
 
         else:

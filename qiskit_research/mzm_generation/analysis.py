@@ -138,7 +138,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         dd_sequences = params.dynamical_decoupling_sequences or [None]
         for chemical_potential in params.chemical_potential_values:
             # diagonalize
-            (transformation_matrix, _, _,) = diagonalizing_bogoliubov_transform(
+            (
+                transformation_matrix,
+                _,
+                _,
+            ) = diagonalizing_bogoliubov_transform(
                 params.n_modes,
                 tunneling=tunneling,
                 superconducting=superconducting,
@@ -526,7 +530,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
         }
         for chemical_potential in chemical_potential_values:
             # diagonalize Hamiltonian
-            (transformation_matrix, _, _,) = diagonalizing_bogoliubov_transform(
+            (
+                transformation_matrix,
+                _,
+                _,
+            ) = diagonalizing_bogoliubov_transform(
                 n_modes,
                 tunneling=tunneling,
                 superconducting=superconducting,
@@ -624,7 +632,11 @@ class KitaevHamiltonianAnalysis(BaseAnalysis):
                 chemical_potential=chemical_potential,
             )
             # diagonalize
-            (_, orbital_energies, constant,) = diagonalizing_bogoliubov_transform(
+            (
+                _,
+                orbital_energies,
+                constant,
+            ) = diagonalizing_bogoliubov_transform(
                 n_modes,
                 tunneling=tunneling,
                 superconducting=superconducting,

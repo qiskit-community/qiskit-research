@@ -92,7 +92,6 @@ class RZXtoEchoedCR(TransformationPass):
         self,
         dag: DAGCircuit,
     ) -> DAGCircuit:
-
         for rzx_run in dag.collect_runs(["rzx"]):
             control = rzx_run[0].qargs[0].index
             target = rzx_run[0].qargs[1].index
