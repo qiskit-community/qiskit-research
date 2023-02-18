@@ -32,12 +32,12 @@ dependencies = [
     "qiskit-ibm-runtime",
     "qiskit-ibmq-provider",
     "qiskit-nature~=0.5",
-    "qiskit-terra~=0.22",
+    "qiskit-terra==0.22",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black[jupyter]",
+    "black[jupyter]~=23.1",
     "coverage",
     "ddt~=1.5",
     "importlib_metadata",
