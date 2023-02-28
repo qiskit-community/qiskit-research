@@ -12,6 +12,12 @@ All submissions require review. To make a submission, open a GitHub pull request
 
 ## Submitting a new research experiment
 
+You can submit an experiment if it satisfies the following requirements:
+
+- It is programmed using Qiskit.
+- It is executed on quantum hardware.
+- There is an associated publication or publicly available preprint describing the results from running the experiment.
+
 To submit a new research experiment:
 
 1. Create a new module for your experiment under the [`qiskit_research`](qiskit_research/) base module.
