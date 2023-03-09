@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Union
 
-from qiskit.algorithms import MinimumEigensolverResult
+from qiskit.algorithms.minimum_eigensolvers import MinimumEigensolverResult
 from qiskit.opflow import PauliOp, PauliSumOp
 
 from .interactions.interaction import Interaction
@@ -109,7 +109,8 @@ class ProteinFoldingProblem(SamplingProblem):
         # pylint: disable=import-outside-toplevel
         from .protein_folding_result import ProteinFoldingResult
 
-        best_turn_sequence = max(raw_result.eigenstate, key=raw_result.eigenstate.get)
+        probs = raw_result.eigenstate.binary_probabilities()
+        best_turn_sequence = max(probs, key=probs.get)
         return ProteinFoldingResult(
             unused_qubits=self.unused_qubits,
             peptide=self.peptide,
