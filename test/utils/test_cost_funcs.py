@@ -19,14 +19,14 @@ import numpy as np
 
 from qiskit import transpile
 from qiskit.circuit import Parameter, QuantumCircuit
-from qiskit.providers.fake_provider import FakeWashington
+from qiskit.providers.fake_provider import FakeSherbrooke, FakeWashington
 
 from qiskit_research.utils.gates import SECRGate
 from qiskit_research.utils.convenience import (
     add_dynamical_decoupling,
     attach_cr_pulses,
 )
-from qiskit_research.utils.cost_funcs import cost_func_scaled_cr
+from qiskit_research.utils.cost_funcs import cost_func_scaled_cr, cost_func_ecr
 
 
 class TestScaledCostFuncs(unittest.TestCase):
@@ -170,3 +170,27 @@ class TestScaledCostFuncs(unittest.TestCase):
         )[0]
 
         self.assertLess(best_layout[1], best_layout2[1])
+
+    def test_cost_func_ecr(self):
+        """Test cost function for ECR"""
+
+        backend = FakeSherbrooke()
+    
+        qc = QuantumCircuit(5)
+        qc.h(0)
+        qc.cx(0, 1)
+        qc.cx(1, 2)
+        qc.cx(2, 3)
+        qc.cx(3, 4)
+
+        qc_t = transpile(qc, backend)
+        layouts = matching_layouts(deflate_circuit(qc_t), backend)
+        best_layout = evaluate_layouts(
+            deflate_circuit(qc_t),
+            layouts,
+            backend,
+            cost_function=cost_func_ecr,
+        )[0]
+        
+        self.assertGreater(best_layout[1], 0)
+        self.assertLess(best_layout[1], 1)

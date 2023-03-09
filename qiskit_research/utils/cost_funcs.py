@@ -38,6 +38,7 @@ def cost_func_scaled_cr(
     """
     out = []
     props = backend.properties()
+    inst_sched_map = backend.defaults().instruction_schedule_map
     dt = backend.configuration().dt
     num_qubits = backend.configuration().num_qubits
     t1s = [props.qubit_property(qq, "T1")[0] for qq in range(num_qubits)]
@@ -48,33 +49,38 @@ def cost_func_scaled_cr(
     touched = set()
     for layout in layouts:
         for item in circ.data:
-            if item[0].name == "cx":
+            if item[0].num_qubits == 2:
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
-                fid *= 1 - props.gate_error("cx", [q0, q1])
+                if inst_sched_map.has('cx', qubits=[q0, q1]):
+                    basis_2q_error = props.gate_error("cx", [q0, q1])
+                elif inst_sched_map.has('ecr', qubits=[q0, q1]):
+                    basis_2q_error = props.gate_error("ecr", [q0, q1])
+                elif inst_sched_map.has("ecr", qubits=[q1, q0]):
+                    basis_2q_error = props.gate_error("ecr", [q1, q0])
+                else:
+                    print(f'{backend.name} missing 2Q gate between qubit pair ({q0}, {q1})')
+
+            if item[0].name == "cx":
+                
+                fid *= 1 - basis_2q_error
                 touched.add(q0)
                 touched.add(q1)
 
             # if it is a scaled pulse derived from cx
             elif item[0].name == "rzx":
-                q0 = circ.find_bit(item[1][0]).index
-                q1 = circ.find_bit(item[1][1]).index
-
                 cr_error = np.abs(
                     float(item[0].params[0]) / (pi / 2)
-                ) * props.gate_error("cx", [q0, q1])
+                ) * basis_2q_error
 
                 # assumes control qubit is actually control for cr
                 echo_error = props.gate_error("x", q0)
 
                 fid *= 1 - max(cr_error, 2 * echo_error)
             elif item[0].name == "secr":
-                q0 = circ.find_bit(item[1][0]).index
-                q1 = circ.find_bit(item[1][1]).index
-
                 cr_error = np.abs(
                     (float(item[0].params[0])) / (pi / 2)
-                ) * props.gate_error("cx", [q0, q1])
+                ) * basis_2q_error
 
                 # assumes control qubit is actually control for cr
                 echo_error = props.gate_error("x", q0)
@@ -126,3 +132,51 @@ def idle_error(time, t1, t2):
     p_reset = 1 - np.exp(-time * rate1)
     p_z = (1 - p_reset) * (1 - np.exp(-time * (rate2 - rate1))) / 2
     return p_z + p_reset
+
+def cost_func_ecr(circ, layouts, backend):
+    """
+    A custom cost function that includes ECR gates in either direction
+
+    Parameters:
+        circ (QuantumCircuit): circuit of interest
+        layouts (list of lists): List of specified layouts
+        backend (IBMQBackend): An IBM Quantum backend instance
+
+    Returns:
+        list: Tuples of layout and cost
+    """
+    out = []
+    inst_sched_map = backend.defaults().instruction_schedule_map
+    props = backend.properties()
+    for layout in layouts:
+        sch_circ = transpile(circ, backend, initial_layout=layout,
+                             optimization_level=0, scheduling_method='alap')
+        error = 0
+        fid = 1
+        touched = set()
+        for item in sch_circ._data:
+            if item[0].name == 'ecr':
+                q0 = sch_circ.find_bit(item[1][0]).index
+                q1 = sch_circ.find_bit(item[1][1]).index
+                if inst_sched_map.has('ecr', [q0, q1]):
+                    fid *= (1-props.gate_error('ecr', [q0, q1]))
+                elif inst_sched_map.has('ecr', [q1, q0]):
+                    fid *= (1-props.gate_error('ecr', [q1, q0]))
+                else:
+                    print(f'{backend.name} does not support {item[0].name} for qubit pair ({q0}, {q1})')
+                touched.add(q0)
+                touched.add(q1)
+
+            elif item[0].name in ['sx', 'x']:
+                q0 = sch_circ.find_bit(item[1][0]).index
+                fid *= 1-props.gate_error(item[0].name, q0)
+                touched.add(q0)
+
+            elif item[0].name == 'measure':
+                q0 = sch_circ.find_bit(item[1][0]).index
+                fid *= 1-props.readout_error(q0)
+                touched.add(q0)
+
+        error = 1-fid
+        out.append((layout, error))
+    return out
