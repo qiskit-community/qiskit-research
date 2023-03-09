@@ -311,7 +311,7 @@ div.rendered_html tbody tr:hover {
 <li><p>Interaction qubits: qubits that encode interactions between the different aminoacids</p></li>
 </ul>
 <p>For our case we use a tetrahedral lattice (diamond shape lattice) where we encode the movement through the configuration qubits (see image below).</p>
-<p><img alt="80c927b0694e44d1bf0dc89e760bf5e9" class="no-scaled-link" src="../_images/lattice_protein.png" style="width: 300px;" /></p>
+<p><img alt="aba794d6952747198a31736c6f75869c" class="no-scaled-link" src="../_images/lattice_protein.png" style="width: 300px;" /></p>
 <p>The Hamiltonian of the system for a set of qubits <span class="math notranslate nohighlight">\(\mathbf{q}=\{\mathbf{q}_{cf}, \mathbf{q}_{in}\}\)</span> is</p>
 <div class="math notranslate nohighlight">
 \[H(\mathbf{q}) = H_{gc}(\mathbf{q}_{cf}) + H_{ch}(\mathbf{q}_{cf}) + H_{in}(\mathbf{q}_{cf}, \mathbf{q}_{in})\]</div>
@@ -533,24 +533,16 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">RealAmplitudes</span>
 <span class="kn">from</span> <span class="nn">qiskit.algorithms.optimizers</span> <span class="kn">import</span> <span class="n">COBYLA</span>
-<span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">NumPyMinimumEigensolver</span><span class="p">,</span> <span class="n">VQE</span>
-<span class="kn">from</span> <span class="nn">qiskit.opflow</span> <span class="kn">import</span> <span class="n">PauliExpectation</span><span class="p">,</span> <span class="n">CVaRExpectation</span>
+<span class="kn">from</span> <span class="nn">qiskit.algorithms</span> <span class="kn">import</span> <span class="n">NumPyMinimumEigensolver</span>
+<span class="kn">from</span> <span class="nn">qiskit.algorithms.minimum_eigensolvers</span> <span class="kn">import</span> <span class="n">SamplingVQE</span>
 <span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">execute</span><span class="p">,</span> <span class="n">Aer</span>
+<span class="kn">from</span> <span class="nn">qiskit.primitives</span> <span class="kn">import</span> <span class="n">Sampler</span>
 
 <span class="c1"># set classical optimizer</span>
 <span class="n">optimizer</span> <span class="o">=</span> <span class="n">COBYLA</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
 
 <span class="c1"># set variational ansatz</span>
 <span class="n">ansatz</span> <span class="o">=</span> <span class="n">RealAmplitudes</span><span class="p">(</span><span class="n">reps</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-<span class="c1"># set the backend</span>
-<span class="n">backend_name</span> <span class="o">=</span> <span class="s2">&quot;aer_simulator&quot;</span>
-<span class="n">backend</span> <span class="o">=</span> <span class="n">QuantumInstance</span><span class="p">(</span>
-    <span class="n">Aer</span><span class="o">.</span><span class="n">get_backend</span><span class="p">(</span><span class="n">backend_name</span><span class="p">),</span>
-    <span class="n">shots</span><span class="o">=</span><span class="mi">8192</span><span class="p">,</span>
-    <span class="n">seed_transpiler</span><span class="o">=</span><span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span><span class="p">,</span>
-    <span class="n">seed_simulator</span><span class="o">=</span><span class="n">algorithm_globals</span><span class="o">.</span><span class="n">random_seed</span><span class="p">,</span>
-<span class="p">)</span>
 
 <span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
@@ -561,15 +553,12 @@ div.rendered_html tbody tr:hover {
     <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
 
 
-<span class="c1"># initialize CVaR_alpha objective with alpha = 0.1</span>
-<span class="n">cvar_exp</span> <span class="o">=</span> <span class="n">CVaRExpectation</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">PauliExpectation</span><span class="p">())</span>
-
-<span class="c1"># initialize VQE using CVaR</span>
-<span class="n">vqe</span> <span class="o">=</span> <span class="n">VQE</span><span class="p">(</span>
-    <span class="n">expectation</span><span class="o">=</span><span class="n">cvar_exp</span><span class="p">,</span>
-    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+<span class="c1"># initialize VQE using CVaR with alpha = 0.1</span>
+<span class="n">vqe</span> <span class="o">=</span> <span class="n">SamplingVQE</span><span class="p">(</span>
+    <span class="n">Sampler</span><span class="p">(),</span>
     <span class="n">ansatz</span><span class="o">=</span><span class="n">ansatz</span><span class="p">,</span>
-    <span class="n">quantum_instance</span><span class="o">=</span><span class="n">backend</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+    <span class="n">aggregation</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
     <span class="n">callback</span><span class="o">=</span><span class="n">store_intermediate_result</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -583,339 +572,11 @@ div.rendered_html tbody tr:hover {
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{   &#39;aux_operator_eigenvalues&#39;: None,
-    &#39;cost_function_evals&#39;: 50,
-    &#39;eigenstate&#39;: {   &#39;000000000&#39;: 0.015625,
-                      &#39;000000001&#39;: 0.046875,
-                      &#39;000000010&#39;: 0.03314563036811941,
-                      &#39;000000011&#39;: 0.06346905003621844,
-                      &#39;000000101&#39;: 0.04941058844013093,
-                      &#39;000000110&#39;: 0.015625,
-                      &#39;000000111&#39;: 0.02209708691207961,
-                      &#39;000001001&#39;: 0.029231698334171417,
-                      &#39;000001010&#39;: 0.019136638615493577,
-                      &#39;000001011&#39;: 0.04555431167847891,
-                      &#39;000001101&#39;: 0.029231698334171417,
-                      &#39;000010001&#39;: 0.015625,
-                      &#39;000010011&#39;: 0.027063293868263706,
-                      &#39;000010101&#39;: 0.02209708691207961,
-                      &#39;000010111&#39;: 0.011048543456039806,
-                      &#39;000011000&#39;: 0.02209708691207961,
-                      &#39;000011001&#39;: 0.06051536478449089,
-                      &#39;000011010&#39;: 0.03983608994994363,
-                      &#39;000011011&#39;: 0.09631896879639025,
-                      &#39;000011100&#39;: 0.011048543456039806,
-                      &#39;000011101&#39;: 0.06810779599282303,
-                      &#39;000011110&#39;: 0.02209708691207961,
-                      &#39;000011111&#39;: 0.019136638615493577,
-                      &#39;000100000&#39;: 0.015625,
-                      &#39;000100001&#39;: 0.03125,
-                      &#39;000100010&#39;: 0.019136638615493577,
-                      &#39;000100011&#39;: 0.05063078670631141,
-                      &#39;000100101&#39;: 0.03983608994994363,
-                      &#39;000100110&#39;: 0.015625,
-                      &#39;000100111&#39;: 0.015625,
-                      &#39;000101001&#39;: 0.03314563036811941,
-                      &#39;000101010&#39;: 0.011048543456039806,
-                      &#39;000101011&#39;: 0.036643873123620545,
-                      &#39;000101101&#39;: 0.019136638615493577,
-                      &#39;000110000&#39;: 0.011048543456039806,
-                      &#39;000110010&#39;: 0.011048543456039806,
-                      &#39;000110011&#39;: 0.019136638615493577,
-                      &#39;000110101&#39;: 0.029231698334171417,
-                      &#39;000111000&#39;: 0.015625,
-                      &#39;000111001&#39;: 0.04555431167847891,
-                      &#39;000111010&#39;: 0.024705294220065465,
-                      &#39;000111011&#39;: 0.09110862335695782,
-                      &#39;000111101&#39;: 0.05412658773652741,
-                      &#39;000111110&#39;: 0.015625,
-                      &#39;000111111&#39;: 0.011048543456039806,
-                      &#39;001000000&#39;: 0.024705294220065465,
-                      &#39;001000001&#39;: 0.04941058844013093,
-                      &#39;001000010&#39;: 0.036643873123620545,
-                      &#39;001000011&#39;: 0.09820160226544168,
-                      &#39;001000101&#39;: 0.061515686515717274,
-                      &#39;001000110&#39;: 0.024705294220065465,
-                      &#39;001000111&#39;: 0.02209708691207961,
-                      &#39;001001001&#39;: 0.011048543456039806,
-                      &#39;001001010&#39;: 0.011048543456039806,
-                      &#39;001001011&#39;: 0.04133986423538423,
-                      &#39;001001101&#39;: 0.019136638615493577,
-                      &#39;001010001&#39;: 0.019136638615493577,
-                      &#39;001010010&#39;: 0.019136638615493577,
-                      &#39;001010011&#39;: 0.034938562148434216,
-                      &#39;001010101&#39;: 0.034938562148434216,
-                      &#39;001011001&#39;: 0.019136638615493577,
-                      &#39;001011011&#39;: 0.034938562148434216,
-                      &#39;001011101&#39;: 0.027063293868263706,
-                      &#39;001100000&#39;: 0.04419417382415922,
-                      &#39;001100001&#39;: 0.13799626353637262,
-                      &#39;001100010&#39;: 0.10065702130254005,
-                      &#39;001100011&#39;: 0.27085837223999554,
-                      &#39;001100100&#39;: 0.019136638615493577,
-                      &#39;001100101&#39;: 0.15428451295415233,
-                      &#39;001100110&#39;: 0.05412658773652741,
-                      &#39;001100111&#39;: 0.06442352540027595,
-                      &#39;001101000&#39;: 0.015625,
-                      &#39;001101001&#39;: 0.07574499777213015,
-                      &#39;001101010&#39;: 0.03983608994994363,
-                      &#39;001101011&#39;: 0.11267347735824966,
-                      &#39;001101100&#39;: 0.015625,
-                      &#39;001101101&#39;: 0.0855816496101822,
-                      &#39;001101111&#39;: 0.015625,
-                      &#39;001110001&#39;: 0.011048543456039806,
-                      &#39;001110011&#39;: 0.029231698334171417,
-                      &#39;001110101&#39;: 0.02209708691207961,
-                      &#39;001111000&#39;: 0.038273277230987154,
-                      &#39;001111001&#39;: 0.10825317547305482,
-                      &#39;001111010&#39;: 0.05740991584648074,
-                      &#39;001111011&#39;: 0.18087245160609727,
-                      &#39;001111100&#39;: 0.015625,
-                      &#39;001111101&#39;: 0.11744762795603834,
-                      &#39;001111110&#39;: 0.024705294220065465,
-                      &#39;001111111&#39;: 0.019136638615493577,
-                      &#39;010001011&#39;: 0.011048543456039806,
-                      &#39;010001101&#39;: 0.011048543456039806,
-                      &#39;010010000&#39;: 0.011048543456039806,
-                      &#39;010010001&#39;: 0.015625,
-                      &#39;010010010&#39;: 0.02209708691207961,
-                      &#39;010010011&#39;: 0.029231698334171417,
-                      &#39;010010101&#39;: 0.011048543456039806,
-                      &#39;010010111&#39;: 0.011048543456039806,
-                      &#39;010011000&#39;: 0.011048543456039806,
-                      &#39;010011001&#39;: 0.036643873123620545,
-                      &#39;010011010&#39;: 0.03125,
-                      &#39;010011011&#39;: 0.05298695299316616,
-                      &#39;010011101&#39;: 0.038273277230987154,
-                      &#39;010100000&#39;: 0.03314563036811941,
-                      &#39;010100001&#39;: 0.07967217989988726,
-                      &#39;010100010&#39;: 0.046875,
-                      &#39;010100011&#39;: 0.12979099785809492,
-                      &#39;010100100&#39;: 0.011048543456039806,
-                      &#39;010100101&#39;: 0.07493486755176124,
-                      &#39;010100110&#39;: 0.024705294220065465,
-                      &#39;010100111&#39;: 0.036643873123620545,
-                      &#39;010101001&#39;: 0.04133986423538423,
-                      &#39;010101010&#39;: 0.024705294220065465,
-                      &#39;010101011&#39;: 0.06536406457297465,
-                      &#39;010101101&#39;: 0.04419417382415922,
-                      &#39;010101110&#39;: 0.011048543456039806,
-                      &#39;010110001&#39;: 0.015625,
-                      &#39;010110011&#39;: 0.03125,
-                      &#39;010110110&#39;: 0.011048543456039806,
-                      &#39;010111000&#39;: 0.024705294220065465,
-                      &#39;010111001&#39;: 0.07328774624724109,
-                      &#39;010111010&#39;: 0.03983608994994363,
-                      &#39;010111011&#39;: 0.10768788087570486,
-                      &#39;010111101&#39;: 0.08193819126329309,
-                      &#39;010111110&#39;: 0.011048543456039806,
-                      &#39;010111111&#39;: 0.019136638615493577,
-                      &#39;011000001&#39;: 0.03983608994994363,
-                      &#39;011000011&#39;: 0.05524271728019903,
-                      &#39;011000101&#39;: 0.036643873123620545,
-                      &#39;011001001&#39;: 0.024705294220065465,
-                      &#39;011001010&#39;: 0.011048543456039806,
-                      &#39;011001011&#39;: 0.03125,
-                      &#39;011001101&#39;: 0.019136638615493577,
-                      &#39;011011001&#39;: 0.024705294220065465,
-                      &#39;011011010&#39;: 0.011048543456039806,
-                      &#39;011011011&#39;: 0.029231698334171417,
-                      &#39;011011101&#39;: 0.015625,
-                      &#39;011100001&#39;: 0.024705294220065465,
-                      &#39;011100010&#39;: 0.019136638615493577,
-                      &#39;011100011&#39;: 0.03983608994994363,
-                      &#39;011100101&#39;: 0.034938562148434216,
-                      &#39;011101011&#39;: 0.019136638615493577,
-                      &#39;011101101&#39;: 0.02209708691207961,
-                      &#39;011111011&#39;: 0.015625,
-                      &#39;011111101&#39;: 0.011048543456039806,
-                      &#39;100000000&#39;: 0.015625,
-                      &#39;100000001&#39;: 0.04941058844013093,
-                      &#39;100000010&#39;: 0.03314563036811941,
-                      &#39;100000011&#39;: 0.08267972847076846,
-                      &#39;100000101&#39;: 0.05524271728019903,
-                      &#39;100000110&#39;: 0.011048543456039806,
-                      &#39;100000111&#39;: 0.02209708691207961,
-                      &#39;100001000&#39;: 0.015625,
-                      &#39;100001001&#39;: 0.027063293868263706,
-                      &#39;100001010&#39;: 0.019136638615493577,
-                      &#39;100001011&#39;: 0.05182226234930312,
-                      &#39;100001101&#39;: 0.036643873123620545,
-                      &#39;100010000&#39;: 0.011048543456039806,
-                      &#39;100010001&#39;: 0.024705294220065465,
-                      &#39;100010011&#39;: 0.034938562148434216,
-                      &#39;100010101&#39;: 0.024705294220065465,
-                      &#39;100011000&#39;: 0.024705294220065465,
-                      &#39;100011001&#39;: 0.071602745233685,
-                      &#39;100011010&#39;: 0.048159484398195125,
-                      &#39;100011011&#39;: 0.106548294507702,
-                      &#39;100011101&#39;: 0.07890238233095373,
-                      &#39;100011110&#39;: 0.024705294220065465,
-                      &#39;100011111&#39;: 0.015625,
-                      &#39;100100000&#39;: 0.015625,
-                      &#39;100100001&#39;: 0.03314563036811941,
-                      &#39;100100010&#39;: 0.02209708691207961,
-                      &#39;100100011&#39;: 0.07328774624724109,
-                      &#39;100100101&#39;: 0.048159484398195125,
-                      &#39;100100110&#39;: 0.015625,
-                      &#39;100100111&#39;: 0.011048543456039806,
-                      &#39;100101001&#39;: 0.027063293868263706,
-                      &#39;100101010&#39;: 0.015625,
-                      &#39;100101011&#39;: 0.03125,
-                      &#39;100101101&#39;: 0.036643873123620545,
-                      &#39;100101110&#39;: 0.011048543456039806,
-                      &#39;100110000&#39;: 0.011048543456039806,
-                      &#39;100110001&#39;: 0.02209708691207961,
-                      &#39;100110011&#39;: 0.03983608994994363,
-                      &#39;100110101&#39;: 0.027063293868263706,
-                      &#39;100110110&#39;: 0.011048543456039806,
-                      &#39;100110111&#39;: 0.02209708691207961,
-                      &#39;100111000&#39;: 0.029231698334171417,
-                      &#39;100111001&#39;: 0.06346905003621844,
-                      &#39;100111010&#39;: 0.04133986423538423,
-                      &#39;100111011&#39;: 0.10881553341550093,
-                      &#39;100111101&#39;: 0.0625,
-                      &#39;100111110&#39;: 0.019136638615493577,
-                      &#39;100111111&#39;: 0.011048543456039806,
-                      &#39;101000000&#39;: 0.02209708691207961,
-                      &#39;101000001&#39;: 0.06810779599282303,
-                      &#39;101000010&#39;: 0.04133986423538423,
-                      &#39;101000011&#39;: 0.12645635981436443,
-                      &#39;101000101&#39;: 0.07733980419227864,
-                      &#39;101000110&#39;: 0.015625,
-                      &#39;101000111&#39;: 0.027063293868263706,
-                      &#39;101001001&#39;: 0.029231698334171417,
-                      &#39;101001010&#39;: 0.011048543456039806,
-                      &#39;101001011&#39;: 0.03314563036811941,
-                      &#39;101001101&#39;: 0.019136638615493577,
-                      &#39;101010000&#39;: 0.011048543456039806,
-                      &#39;101010001&#39;: 0.024705294220065465,
-                      &#39;101010010&#39;: 0.02209708691207961,
-                      &#39;101010011&#39;: 0.04941058844013093,
-                      &#39;101010101&#39;: 0.015625,
-                      &#39;101010111&#39;: 0.015625,
-                      &#39;101011000&#39;: 0.015625,
-                      &#39;101011001&#39;: 0.027063293868263706,
-                      &#39;101011011&#39;: 0.03125,
-                      &#39;101011101&#39;: 0.019136638615493577,
-                      &#39;101100000&#39;: 0.06810779599282303,
-                      &#39;101100001&#39;: 0.1690102160373745,
-                      &#39;101100010&#39;: 0.129319885603491,
-                      &#39;101100011&#39;: 0.3125,
-                      &#39;101100100&#39;: 0.011048543456039806,
-                      &#39;101100101&#39;: 0.16424840657522374,
-                      &#39;101100110&#39;: 0.05740991584648074,
-                      &#39;101100111&#39;: 0.06810779599282303,
-                      &#39;101101000&#39;: 0.02209708691207961,
-                      &#39;101101001&#39;: 0.10126157341262282,
-                      &#39;101101010&#39;: 0.05298695299316616,
-                      &#39;101101011&#39;: 0.13887803777055607,
-                      &#39;101101100&#39;: 0.011048543456039806,
-                      &#39;101101101&#39;: 0.10423175050098699,
-                      &#39;101101110&#39;: 0.027063293868263706,
-                      &#39;101101111&#39;: 0.019136638615493577,
-                      &#39;101110000&#39;: 0.011048543456039806,
-                      &#39;101110001&#39;: 0.011048543456039806,
-                      &#39;101110011&#39;: 0.03125,
-                      &#39;101110101&#39;: 0.011048543456039806,
-                      &#39;101111000&#39;: 0.05298695299316616,
-                      &#39;101111001&#39;: 0.13212136347881065,
-                      &#39;101111010&#39;: 0.07245014449606019,
-                      &#39;101111011&#39;: 0.21791133876533364,
-                      &#39;101111100&#39;: 0.011048543456039806,
-                      &#39;101111101&#39;: 0.15428451295415233,
-                      &#39;101111110&#39;: 0.04133986423538423,
-                      &#39;101111111&#39;: 0.03125,
-                      &#39;110001011&#39;: 0.011048543456039806,
-                      &#39;110010001&#39;: 0.02209708691207961,
-                      &#39;110010010&#39;: 0.015625,
-                      &#39;110010011&#39;: 0.038273277230987154,
-                      &#39;110010101&#39;: 0.02209708691207961,
-                      &#39;110010111&#39;: 0.011048543456039806,
-                      &#39;110011000&#39;: 0.019136638615493577,
-                      &#39;110011001&#39;: 0.04555431167847891,
-                      &#39;110011010&#39;: 0.027063293868263706,
-                      &#39;110011011&#39;: 0.06629126073623882,
-                      &#39;110011101&#39;: 0.03983608994994363,
-                      &#39;110011110&#39;: 0.015625,
-                      &#39;110100000&#39;: 0.03314563036811941,
-                      &#39;110100001&#39;: 0.08341467384399462,
-                      &#39;110100010&#39;: 0.05412658773652741,
-                      &#39;110100011&#39;: 0.15027643798180737,
-                      &#39;110100101&#39;: 0.0943987966687076,
-                      &#39;110100110&#39;: 0.027063293868263706,
-                      &#39;110100111&#39;: 0.036643873123620545,
-                      &#39;110101000&#39;: 0.015625,
-                      &#39;110101001&#39;: 0.0427908248050911,
-                      &#39;110101010&#39;: 0.024705294220065465,
-                      &#39;110101011&#39;: 0.07733980419227864,
-                      &#39;110101101&#39;: 0.0625,
-                      &#39;110101110&#39;: 0.015625,
-                      &#39;110110001&#39;: 0.02209708691207961,
-                      &#39;110110010&#39;: 0.011048543456039806,
-                      &#39;110110011&#39;: 0.03125,
-                      &#39;110110101&#39;: 0.024705294220065465,
-                      &#39;110111000&#39;: 0.02209708691207961,
-                      &#39;110111001&#39;: 0.08769509500251425,
-                      &#39;110111010&#39;: 0.04133986423538423,
-                      &#39;110111011&#39;: 0.1316585902058806,
-                      &#39;110111101&#39;: 0.09631896879639025,
-                      &#39;110111110&#39;: 0.019136638615493577,
-                      &#39;110111111&#39;: 0.011048543456039806,
-                      &#39;111000001&#39;: 0.04555431167847891,
-                      &#39;111000010&#39;: 0.02209708691207961,
-                      &#39;111000011&#39;: 0.071602745233685,
-                      &#39;111000100&#39;: 0.011048543456039806,
-                      &#39;111000101&#39;: 0.03983608994994363,
-                      &#39;111000110&#39;: 0.011048543456039806,
-                      &#39;111000111&#39;: 0.019136638615493577,
-                      &#39;111001001&#39;: 0.019136638615493577,
-                      &#39;111001011&#39;: 0.03125,
-                      &#39;111001101&#39;: 0.024705294220065465,
-                      &#39;111011001&#39;: 0.019136638615493577,
-                      &#39;111011010&#39;: 0.02209708691207961,
-                      &#39;111011011&#39;: 0.03314563036811941,
-                      &#39;111011101&#39;: 0.019136638615493577,
-                      &#39;111100001&#39;: 0.03125,
-                      &#39;111100010&#39;: 0.029231698334171417,
-                      &#39;111100011&#39;: 0.061515686515717274,
-                      &#39;111100101&#39;: 0.03125,
-                      &#39;111100110&#39;: 0.011048543456039806,
-                      &#39;111100111&#39;: 0.011048543456039806,
-                      &#39;111101001&#39;: 0.015625,
-                      &#39;111101011&#39;: 0.019136638615493577,
-                      &#39;111101101&#39;: 0.015625,
-                      &#39;111111001&#39;: 0.011048543456039806,
-                      &#39;111111011&#39;: 0.02209708691207961,
-                      &#39;111111101&#39;: 0.015625},
-    &#39;eigenvalue&#39;: (-1.398017822265559+0j),
-    &#39;optimal_circuit&#39;: None,
-    &#39;optimal_parameters&#39;: {   ParameterVectorElement(θ[17]): 0.5496347144255027,
-                              ParameterVectorElement(θ[12]): -1.470230651813011,
-                              ParameterVectorElement(θ[13]): 1.1013642144225717,
-                              ParameterVectorElement(θ[14]): -0.03135521452055092,
-                              ParameterVectorElement(θ[15]): 0.770570095514474,
-                              ParameterVectorElement(θ[16]): 0.18505081170538817,
-                              ParameterVectorElement(θ[5]): 3.9224650327368344,
-                              ParameterVectorElement(θ[6]): -0.9943385087310631,
-                              ParameterVectorElement(θ[7]): -0.04878281407880619,
-                              ParameterVectorElement(θ[8]): 1.1909489915294984,
-                              ParameterVectorElement(θ[9]): 0.3137284985985782,
-                              ParameterVectorElement(θ[10]): -1.0964143534287227,
-                              ParameterVectorElement(θ[11]): 0.25163320460981237,
-                              ParameterVectorElement(θ[0]): 2.55530843267065,
-                              ParameterVectorElement(θ[1]): 1.0035801367262125,
-                              ParameterVectorElement(θ[2]): -0.13830645603673172,
-                              ParameterVectorElement(θ[3]): -0.8539410013549205,
-                              ParameterVectorElement(θ[4]): 0.5595204307110316},
-    &#39;optimal_point&#39;: array([ 2.55530843,  1.00358014, -0.13830646, -0.853941  ,  0.55952043,
-        3.92246503, -0.99433851, -0.04878281,  1.19094899,  0.3137285 ,
-       -1.09641435,  0.2516332 , -1.47023065,  1.10136421, -0.03135521,
-        0.7705701 ,  0.18505081,  0.54963471]),
-    &#39;optimal_value&#39;: -1.398017822265559,
-    &#39;optimizer_evals&#39;: None,
-    &#39;optimizer_result&#39;: None,
-    &#39;optimizer_time&#39;: 33.46971845626831}
+SamplingMinimumEigensolverResult:
+        Eigenvalue: -1.396058817404514
+        Best measurement
+: {&#39;state&#39;: 165, &#39;bitstring&#39;: &#39;010100101&#39;, &#39;value&#39;: (-1.4249999999996135+0j), &#39;probability&#39;: 0.0012630027202188}
+
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -939,11 +600,20 @@ div.rendered_html tbody tr:hover {
 </pre></div>
 </div>
 </div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/matplotlib/cbook/__init__.py:1335: ComplexWarning: Casting complex values to real discards the imaginary part
+  return np.asarray(x, float)
+</pre></div></div>
+</div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/protein_folding_protein_folding_30_0.png" src="../_images/protein_folding_protein_folding_30_0.png" />
+<img alt="../_images/protein_folding_protein_folding_30_1.png" src="../_images/protein_folding_protein_folding_30_1.png" />
 </div>
 </div>
 </section>
@@ -1043,6 +713,31 @@ and the side turn sequences are: [None, None, None, None, None, None, None]
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">peptide</span> <span class="o">=</span> <span class="n">Peptide</span><span class="p">(</span><span class="s2">&quot;APRLR&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">])</span>
 <span class="n">protein_folding_problem</span> <span class="o">=</span> <span class="n">ProteinFoldingProblem</span><span class="p">(</span><span class="n">peptide</span><span class="p">,</span> <span class="n">mj_interaction</span><span class="p">,</span> <span class="n">penalty_terms</span><span class="p">)</span>
 <span class="n">qubit_op</span> <span class="o">=</span> <span class="n">protein_folding_problem</span><span class="o">.</span><span class="n">qubit_op</span><span class="p">()</span>
+
+<span class="c1"># set classical optimizer</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">COBYLA</span><span class="p">(</span><span class="n">maxiter</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+<span class="c1"># set variational ansatz</span>
+<span class="n">ansatz</span> <span class="o">=</span> <span class="n">RealAmplitudes</span><span class="p">(</span><span class="n">reps</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">counts</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="k">def</span> <span class="nf">store_intermediate_result</span><span class="p">(</span><span class="n">eval_count</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">):</span>
+    <span class="n">counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eval_count</span><span class="p">)</span>
+    <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
+
+
+<span class="c1"># initialize VQE using CVaR with alpha = 0.1</span>
+<span class="n">vqe</span> <span class="o">=</span> <span class="n">SamplingVQE</span><span class="p">(</span>
+    <span class="n">Sampler</span><span class="p">(),</span>
+    <span class="n">ansatz</span><span class="o">=</span><span class="n">ansatz</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+    <span class="n">aggregation</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">callback</span><span class="o">=</span><span class="n">store_intermediate_result</span><span class="p">,</span>
+<span class="p">)</span>
+
 <span class="n">raw_result</span> <span class="o">=</span> <span class="n">vqe</span><span class="o">.</span><span class="n">compute_minimum_eigenvalue</span><span class="p">(</span><span class="n">qubit_op</span><span class="p">)</span>
 <span class="n">result_2</span> <span class="o">=</span> <span class="n">protein_folding_problem</span><span class="o">.</span><span class="n">interpret</span><span class="p">(</span><span class="n">raw_result</span><span class="o">=</span><span class="n">raw_result</span><span class="p">)</span>
 </pre></div>
@@ -1088,7 +783,7 @@ and the side turn sequences are: [None, None, None, None, None, None, None]
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<h3>Version Information</h3><table><tr><th>Qiskit Software</th><th>Version</th></tr><tr><td><code>qiskit-terra</code></td><td>0.22.0</td></tr><tr><td><code>qiskit-aer</code></td><td>0.11.2</td></tr><tr><td><code>qiskit-ibmq-provider</code></td><td>0.20.0</td></tr><tr><td><code>qiskit-nature</code></td><td>0.5.2</td></tr><tr><th>System information</th></tr><tr><td>Python version</td><td>3.9.16</td></tr><tr><td>Python compiler</td><td>GCC 11.3.0</td></tr><tr><td>Python build</td><td>main, Dec  8 2022 11:01:53</td></tr><tr><td>OS</td><td>Linux</td></tr><tr><td>CPUs</td><td>2</td></tr><tr><td>Memory (Gb)</td><td>6.781219482421875</td></tr><tr><td colspan='2'>Wed Feb 15 16:44:20 2023 UTC</td></tr></table></div>
+<h3>Version Information</h3><table><tr><th>Qiskit Software</th><th>Version</th></tr><tr><td><code>qiskit-terra</code></td><td>0.23.0</td></tr><tr><td><code>qiskit-aer</code></td><td>0.12.0</td></tr><tr><td><code>qiskit-ibmq-provider</code></td><td>0.20.0</td></tr><tr><td><code>qiskit-nature</code></td><td>0.5.2</td></tr><tr><th>System information</th></tr><tr><td>Python version</td><td>3.9.16</td></tr><tr><td>Python compiler</td><td>GCC 11.3.0</td></tr><tr><td>Python build</td><td>main, Dec  8 2022 11:01:53</td></tr><tr><td>OS</td><td>Linux</td></tr><tr><td>CPUs</td><td>2</td></tr><tr><td>Memory (Gb)</td><td>6.781215667724609</td></tr><tr><td colspan='2'>Thu Mar 09 22:44:09 2023 UTC</td></tr></table></div>
 </div>
 <div class="nboutput nblast docutils container">
 <div class="prompt empty docutils container">
@@ -1097,7 +792,7 @@ and the side turn sequences are: [None, None, None, None, None, None, None]
 <div style='width: 100%; background-color:#d5d9e0;padding-left: 10px; padding-bottom: 10px; padding-right: 10px; padding-top: 5px'><h3>This code is a part of Qiskit</h3><p>&copy; Copyright IBM 2017, 2023.</p><p>This code is licensed under the Apache License, Version 2.0. You may<br>obtain a copy of this license in the LICENSE.txt file in the root directory<br> of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.<p>Any modifications or derivative works of this code must retain this<br>copyright notice, and modified files need to carry a notice indicating<br>that they have been altered from the originals.</p></div></div>
 </div>
 <script type="application/vnd.jupyter.widget-state+json">
-{"state": {"b1158d2eaf544a9ca5f829a33a9dadec": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 10px 0px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "f05e6d6b3edb429e81894e740f4905d5": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "cf3466d778b44fe290e1a54f80cda020": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_b1158d2eaf544a9ca5f829a33a9dadec", "placeholder": "\u200b", "style": "IPY_MODEL_f05e6d6b3edb429e81894e740f4905d5", "tabbable": null, "tooltip": null, "value": "<p style='font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-size: 20px; font-weight: medium;'>Circuit Properties</p>"}}, "2c2f839c405b43b89cc7e64a39b4a85f": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": "right", "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": "0px 0px 0px 0px", "right": null, "top": null, "visibility": null, "width": "70px"}}, "fce4823b9157495e900b1254098458c0": {"model_name": "ButtonStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "button_color": null, "font_family": null, "font_size": null, "font_style": null, "font_variant": null, "font_weight": null, "text_color": null, "text_decoration": null}}, "30fd154828364c2c8dd3694478814ba6": {"model_name": "ButtonModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "ButtonView", "button_style": "primary", "description": "Clear", "disabled": false, "icon": "", "layout": "IPY_MODEL_2c2f839c405b43b89cc7e64a39b4a85f", "style": "IPY_MODEL_fce4823b9157495e900b1254098458c0", "tabbable": null, "tooltip": null}}, "b29e39ed36d4413d97307feaec5841e4": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": "\n                                       \". . . . right \"\n                                        ", "grid_template_columns": "20% 20% 20% 20% 20%", "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "100%"}}, "142facb9496644e5b888f4eb0f75960b": {"model_name": "GridBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "GridBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "GridBoxView", "box_style": "", "children": ["IPY_MODEL_30fd154828364c2c8dd3694478814ba6"], "layout": "IPY_MODEL_b29e39ed36d4413d97307feaec5841e4", "tabbable": null, "tooltip": null}}, "f20b9972c26947599b18fa1cdf1c23ea": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "190px"}}, "bad2011d9242400a8221e938cf67483f": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "701dd5b478a643eaac9e02a24d6fabf2": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_f20b9972c26947599b18fa1cdf1c23ea", "placeholder": "\u200b", "style": "IPY_MODEL_bad2011d9242400a8221e938cf67483f", "tabbable": null, "tooltip": null, "value": "<h5>Job ID</h5>"}}, "e2768541b49242fbb853390ec7b5d4a4": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "145px"}}, "1c4d95c986fb4762b1d27ecd4c5ae1d9": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "fd49f1581df247cea9d158c9c0e911f7": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_e2768541b49242fbb853390ec7b5d4a4", "placeholder": "\u200b", "style": "IPY_MODEL_1c4d95c986fb4762b1d27ecd4c5ae1d9", "tabbable": null, "tooltip": null, "value": "<h5>Backend</h5>"}}, "246960013b4842a29443dacad4dc6ed2": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "95px"}}, "e559a166c13c48c3b39a9f1a4059e335": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "111009d4b2e44a18b871e118c4bd5005": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_246960013b4842a29443dacad4dc6ed2", "placeholder": "\u200b", "style": "IPY_MODEL_e559a166c13c48c3b39a9f1a4059e335", "tabbable": null, "tooltip": null, "value": "<h5>Status</h5>"}}, "501147d45bb54c308b79d1b1887b0ae2": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "70px"}}, "2fbe8bfde93446afb25c3ca3e6672c2a": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "320398c92e274779843839cd37a1bf9d": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_501147d45bb54c308b79d1b1887b0ae2", "placeholder": "\u200b", "style": "IPY_MODEL_2fbe8bfde93446afb25c3ca3e6672c2a", "tabbable": null, "tooltip": null, "value": "<h5>Queue</h5>"}}, "e53c9032048249cf97e96aafcde41cd4": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "5ce72b6c74724e4fa0244e784ba6cfd4": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "fb48b945b2ef4017a2ad0d8a93b10119": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_e53c9032048249cf97e96aafcde41cd4", "placeholder": "\u200b", "style": "IPY_MODEL_5ce72b6c74724e4fa0244e784ba6cfd4", "tabbable": null, "tooltip": null, "value": "<h5>Message</h5>"}}, "1cd81d0f8f6a4351a5345855aa897c4b": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 0px 37px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "600px"}}, "e59cd0e498c445d49feef4b9edfc61d2": {"model_name": "HBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_701dd5b478a643eaac9e02a24d6fabf2", "IPY_MODEL_fd49f1581df247cea9d158c9c0e911f7", "IPY_MODEL_111009d4b2e44a18b871e118c4bd5005", "IPY_MODEL_320398c92e274779843839cd37a1bf9d", "IPY_MODEL_fb48b945b2ef4017a2ad0d8a93b10119"], "layout": "IPY_MODEL_1cd81d0f8f6a4351a5345855aa897c4b", "tabbable": null, "tooltip": null}}}, "version_major": 2, "version_minor": 0}
+{"state": {"ef17fa33687f420a95599e7510d3c25f": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 10px 0px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "aea6348f29164ef89a44ed6ccac8f8fd": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "203ef2ce3a0f4087ad581c3ae730db44": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_ef17fa33687f420a95599e7510d3c25f", "placeholder": "\u200b", "style": "IPY_MODEL_aea6348f29164ef89a44ed6ccac8f8fd", "tabbable": null, "tooltip": null, "value": "<p style='font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-size: 20px; font-weight: medium;'>Circuit Properties</p>"}}, "d60ce430e1a048bbafb00bd107fc91c5": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": "right", "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": "0px 0px 0px 0px", "right": null, "top": null, "visibility": null, "width": "70px"}}, "214362b83c084fca9b86feee5d984eb0": {"model_name": "ButtonStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "button_color": null, "font_family": null, "font_size": null, "font_style": null, "font_variant": null, "font_weight": null, "text_color": null, "text_decoration": null}}, "bbc28ba767ea4d2d931c38cce802c495": {"model_name": "ButtonModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "ButtonView", "button_style": "primary", "description": "Clear", "disabled": false, "icon": "", "layout": "IPY_MODEL_d60ce430e1a048bbafb00bd107fc91c5", "style": "IPY_MODEL_214362b83c084fca9b86feee5d984eb0", "tabbable": null, "tooltip": null}}, "730df973eb2c4016b3a7d1716a58ff08": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": "\n                                       \". . . . right \"\n                                        ", "grid_template_columns": "20% 20% 20% 20% 20%", "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "100%"}}, "59f56e5042284a078421adb52cdeb272": {"model_name": "GridBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "GridBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "GridBoxView", "box_style": "", "children": ["IPY_MODEL_bbc28ba767ea4d2d931c38cce802c495"], "layout": "IPY_MODEL_730df973eb2c4016b3a7d1716a58ff08", "tabbable": null, "tooltip": null}}, "492efd28ba1b4d9ab7a5f494f1c5f0b3": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "190px"}}, "79a84c6307a14464a571066cfd66920f": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "227e6289b0b54beb8201a9f75b629b77": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_492efd28ba1b4d9ab7a5f494f1c5f0b3", "placeholder": "\u200b", "style": "IPY_MODEL_79a84c6307a14464a571066cfd66920f", "tabbable": null, "tooltip": null, "value": "<h5>Job ID</h5>"}}, "6e2126d08408497da2205e42d93a8467": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "145px"}}, "1e72a3b21ce449888d25636ba563a783": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "3fac653d431848f78291543c85d239b7": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_6e2126d08408497da2205e42d93a8467", "placeholder": "\u200b", "style": "IPY_MODEL_1e72a3b21ce449888d25636ba563a783", "tabbable": null, "tooltip": null, "value": "<h5>Backend</h5>"}}, "bfa1afb34ff34cdda05382ba7c1dfa27": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "95px"}}, "d4d2c8e82809478099726da289fa1e27": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "73b424398acd4ca8a78f900f2cb5eb23": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_bfa1afb34ff34cdda05382ba7c1dfa27", "placeholder": "\u200b", "style": "IPY_MODEL_d4d2c8e82809478099726da289fa1e27", "tabbable": null, "tooltip": null, "value": "<h5>Status</h5>"}}, "1272cfe07d2641c79a922634d0dff322": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "70px"}}, "392c7fec13214a69a07adf7fac68fadc": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "a080438e33df485e9ab97809ecb30dc7": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_1272cfe07d2641c79a922634d0dff322", "placeholder": "\u200b", "style": "IPY_MODEL_392c7fec13214a69a07adf7fac68fadc", "tabbable": null, "tooltip": null, "value": "<h5>Queue</h5>"}}, "b02baf95f087436daba51dc76ee8ab07": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "e60e5d9c71d54440a0aa2da5ce6ab186": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "8846ed7b9cc84ee7a4c15d791a698cf8": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_b02baf95f087436daba51dc76ee8ab07", "placeholder": "\u200b", "style": "IPY_MODEL_e60e5d9c71d54440a0aa2da5ce6ab186", "tabbable": null, "tooltip": null, "value": "<h5>Message</h5>"}}, "e521c5f5f1374bc9a16a9a91dc392194": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 0px 37px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "600px"}}, "b7c74837e73c4435afc5aff298a3143e": {"model_name": "HBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_227e6289b0b54beb8201a9f75b629b77", "IPY_MODEL_3fac653d431848f78291543c85d239b7", "IPY_MODEL_73b424398acd4ca8a78f900f2cb5eb23", "IPY_MODEL_a080438e33df485e9ab97809ecb30dc7", "IPY_MODEL_8846ed7b9cc84ee7a4c15d791a698cf8"], "layout": "IPY_MODEL_e521c5f5f1374bc9a16a9a91dc392194", "tabbable": null, "tooltip": null}}}, "version_major": 2, "version_minor": 0}
 </script></section>
 </section>
 
