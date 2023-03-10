@@ -160,7 +160,7 @@ def idle_error(
 
 def cost_func_ecr(
     circ: QuantumCircuit,
-    layouts: list[list[int]],
+    layouts: List[List[int]],
     backend: Backend,
 ) -> List[Tuple[List[int], float]]:
     """
