@@ -19,14 +19,14 @@ import numpy as np
 
 from qiskit import transpile
 from qiskit.circuit import Parameter, QuantumCircuit
-from qiskit.providers.fake_provider import FakeSherbrooke, FakeWashington
+from qiskit.providers.fake_provider import FakeWashington
 
 from qiskit_research.utils.gates import SECRGate
 from qiskit_research.utils.convenience import (
     add_dynamical_decoupling,
     attach_cr_pulses,
 )
-from qiskit_research.utils.cost_funcs import cost_func_scaled_cr, cost_func_ecr
+from qiskit_research.utils.cost_funcs import cost_func_scaled_cr
 
 
 class TestScaledCostFuncs(unittest.TestCase):
@@ -171,4 +171,5 @@ class TestScaledCostFuncs(unittest.TestCase):
 
         self.assertLess(best_layout[1], best_layout2[1])
 
-# TODO: Add unit test for ECR gate (i.e., ibm_sherbrooke)
+# TODO: Add unit test for ECR gate (i.e., ibm_sherbrooke) when resolved:
+# https://github.com/Qiskit/qiskit-terra/issues/9553
