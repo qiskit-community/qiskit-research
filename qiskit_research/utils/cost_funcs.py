@@ -162,7 +162,7 @@ def cost_func_ecr(
     circ: QuantumCircuit,
     layouts: list[list[int]],
     backend: Backend,
-) -> list[tuple[list[int], float]]:
+) -> List[Tuple[List[int], float]]:
     """
     A custom cost function that includes ECR gates in either direction
 
