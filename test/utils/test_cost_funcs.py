@@ -184,7 +184,7 @@ class TestScaledCostFuncs(unittest.TestCase):
     #     qc.cx(3, 4)
 
     #     qc_t = transpile(qc, backend)
-    #     layouts = matching_layouts(deflate_circuit(qc_t), backend)
+    #     layouts = matching_layouts(deflate_circuit(qc_t), backend, strict_direction=False)
     #     best_layout = evaluate_layouts(
     #         deflate_circuit(qc_t),
     #         layouts,

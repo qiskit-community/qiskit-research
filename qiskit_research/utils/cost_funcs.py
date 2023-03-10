@@ -138,6 +138,11 @@ def idle_error(
     t1: float, 
     t2: float,
 ) -> float:
+def idle_error(
+    time: float, 
+    t1: float, 
+    t2: float,
+) -> float:
     """Compute the approx. idle error from T1 and T2
     Parameters:
         time (float): Delay time in sec
@@ -155,9 +160,9 @@ def idle_error(
 
 def cost_func_ecr(
     circ: QuantumCircuit,
-    layouts: List[List[int]],
+    layouts: list[list[int]],
     backend: Backend,
-) -> List[Tuple[List[int], float]]:
+) -> list[tuple[list[int], float]]:
     """
     A custom cost function that includes ECR gates in either direction
 
