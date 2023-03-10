@@ -141,7 +141,7 @@ def cost_func_ecr(
     circ: QuantumCircuit,
     layouts: list[list[int]],
     backend: Backend,
-) -> list[tuple[list[int], float]]:
+) -> List[Tuple[List[int], float]]:
     """
     A custom cost function that includes ECR gates in either direction
 
@@ -157,15 +157,13 @@ def cost_func_ecr(
     inst_sched_map = backend.defaults().instruction_schedule_map
     props = backend.properties()
     for layout in layouts:
-        sch_circ = transpile(circ, backend, initial_layout=layout,
-                             optimization_level=0, scheduling_method='alap')
         error = 0
         fid = 1
         touched = set()
-        for item in sch_circ._data:
+        for item in circ._data:
             if item[0].name == 'ecr':
-                q0 = sch_circ.find_bit(item[1][0]).index
-                q1 = sch_circ.find_bit(item[1][1]).index
+                q0 = layout[circ.find_bit(item[1][0]).index]
+                q1 = layout[circ.find_bit(item[1][1]).index]
                 if inst_sched_map.has('ecr', [q0, q1]):
                     fid *= (1-props.gate_error('ecr', [q0, q1]))
                 elif inst_sched_map.has('ecr', [q1, q0]):
@@ -176,12 +174,12 @@ def cost_func_ecr(
                 touched.add(q1)
 
             elif item[0].name in ['sx', 'x']:
-                q0 = sch_circ.find_bit(item[1][0]).index
+                q0 = layout[circ.find_bit(item[1][0]).index]
                 fid *= 1-props.gate_error(item[0].name, q0)
                 touched.add(q0)
 
             elif item[0].name == 'measure':
-                q0 = sch_circ.find_bit(item[1][0]).index
+                q0 = layout[circ.find_bit(item[1][0]).index]
                 fid *= 1-props.readout_error(q0)
                 touched.add(q0)
 
