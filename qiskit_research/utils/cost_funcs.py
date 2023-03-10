@@ -117,7 +117,11 @@ def cost_func_scaled_cr(
     return out
 
 
-def idle_error(time, t1, t2):
+def idle_error(
+    time: float, 
+    t1: float, 
+    t2: float,
+) -> float:
     """Compute the approx. idle error from T1 and T2
     Parameters:
         time (float): Delay time in sec
@@ -133,7 +137,11 @@ def idle_error(time, t1, t2):
     p_z = (1 - p_reset) * (1 - np.exp(-time * (rate2 - rate1))) / 2
     return p_z + p_reset
 
-def cost_func_ecr(circ, layouts, backend):
+def cost_func_ecr(
+    circ: QuantumCircuit,
+    layouts: list[list[int]],
+    backend: Backend,
+) -> list[tuple[list[int], float]]:
     """
     A custom cost function that includes ECR gates in either direction
 
