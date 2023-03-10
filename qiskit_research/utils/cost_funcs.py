@@ -19,12 +19,13 @@ from qiskit.circuit import QuantumCircuit
 from qiskit.providers.backend import Backend
 from qiskit.qasm import pi
 
+from typing import List, Tuple
 
 def cost_func_scaled_cr(
     circ: QuantumCircuit,
     layouts: list[list[int]],
     backend: Backend,
-) -> list[tuple[list[int], float]]:
+) -> List[Tuple[List[int], float]]:
     """
     A custom cost function that includes T1 and T2 computed during idle periods,
     for an already transpiled and scheduled circuit circ
