@@ -171,26 +171,4 @@ class TestScaledCostFuncs(unittest.TestCase):
 
         self.assertLess(best_layout[1], best_layout2[1])
 
-    # def test_cost_func_ecr(self):
-    #     """Test cost function for ECR"""
-
-    #     backend = FakeSherbrooke()
-    
-    #     qc = QuantumCircuit(5)
-    #     qc.h(0)
-    #     qc.cx(0, 1)
-    #     qc.cx(1, 2)
-    #     qc.cx(2, 3)
-    #     qc.cx(3, 4)
-
-    #     qc_t = transpile(qc, backend)
-    #     layouts = matching_layouts(deflate_circuit(qc_t), backend, strict_direction=False)
-    #     best_layout = evaluate_layouts(
-    #         deflate_circuit(qc_t),
-    #         layouts,
-    #         backend,
-    #         cost_function=cost_func_ecr,
-    #     )[0]
-        
-    #     self.assertGreater(best_layout[1], 0)
-    #     self.assertLess(best_layout[1], 1)
+# TODO: Add unit test for ECR gate (i.e., ibm_sherbrooke)
