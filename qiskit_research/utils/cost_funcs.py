@@ -51,21 +51,8 @@ def cost_func_scaled_cr(
     for layout in layouts:
         for item in circ.data:
             if item[0].num_qubits == 2:
-            if item[0].num_qubits == 2:
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
-                if inst_sched_map.has('cx', qubits=[q0, q1]):
-                    basis_2q_error = props.gate_error("cx", [q0, q1])
-                elif inst_sched_map.has('ecr', qubits=[q0, q1]):
-                    basis_2q_error = props.gate_error("ecr", [q0, q1])
-                elif inst_sched_map.has("ecr", qubits=[q1, q0]):
-                    basis_2q_error = props.gate_error("ecr", [q1, q0])
-                else:
-                    print(f'{backend.name} missing 2Q gate between qubit pair ({q0}, {q1})')
-
-            if item[0].name == "cx":
-                
-                fid *= 1 - basis_2q_error
                 if inst_sched_map.has('cx', qubits=[q0, q1]):
                     basis_2q_error = props.gate_error("cx", [q0, q1])
                 elif inst_sched_map.has('ecr', qubits=[q0, q1]):
@@ -86,7 +73,6 @@ def cost_func_scaled_cr(
                 cr_error = np.abs(
                     float(item[0].params[0]) / (pi / 2)
                 ) * basis_2q_error
-                ) * basis_2q_error
 
                 # assumes control qubit is actually control for cr
                 echo_error = props.gate_error("x", q0)
@@ -95,7 +81,6 @@ def cost_func_scaled_cr(
             elif item[0].name == "secr":
                 cr_error = np.abs(
                     (float(item[0].params[0])) / (pi / 2)
-                ) * basis_2q_error
                 ) * basis_2q_error
 
                 # assumes control qubit is actually control for cr
@@ -133,11 +118,6 @@ def cost_func_scaled_cr(
     return out
 
 
-def idle_error(
-    time: float, 
-    t1: float, 
-    t2: float,
-) -> float:
 def idle_error(
     time: float, 
     t1: float, 
