@@ -163,7 +163,7 @@ def cost_func_ecr(
         error = 0
         fid = 1
         touched = set()
-        for item in circ._data:
+        for item in circ.data:
             if item[0].name == "ecr":
                 q0 = layout[circ.find_bit(item[1][0]).index]
                 q1 = layout[circ.find_bit(item[1][1]).index]
