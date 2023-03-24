@@ -14,12 +14,14 @@
 
 from __future__ import annotations
 
-import numpy as np
+from typing import List, Tuple
+
 from qiskit.circuit import QuantumCircuit
 from qiskit.providers.backend import Backend
 from qiskit.qasm import pi
 
-from typing import List, Tuple
+import numpy as np
+
 
 def cost_func_scaled_cr(
     circ: QuantumCircuit,
@@ -53,35 +55,34 @@ def cost_func_scaled_cr(
             if item[0].num_qubits == 2:
                 q0 = circ.find_bit(item[1][0]).index
                 q1 = circ.find_bit(item[1][1]).index
-                if inst_sched_map.has('cx', qubits=[q0, q1]):
+                if inst_sched_map.has("cx", qubits=[q0, q1]):
                     basis_2q_error = props.gate_error("cx", [q0, q1])
-                elif inst_sched_map.has('ecr', qubits=[q0, q1]):
+                elif inst_sched_map.has("ecr", qubits=[q0, q1]):
                     basis_2q_error = props.gate_error("ecr", [q0, q1])
                 elif inst_sched_map.has("ecr", qubits=[q1, q0]):
                     basis_2q_error = props.gate_error("ecr", [q1, q0])
                 else:
-                    print(f'{backend.name} missing 2Q gate between qubit pair ({q0}, {q1})')
+                    print(
+                        f"{backend.name} missing 2Q gate between qubit pair ({q0}, {q1})"
+                    )
 
             if item[0].name == "cx":
-                
                 fid *= 1 - basis_2q_error
                 touched.add(q0)
                 touched.add(q1)
 
             # if it is a scaled pulse derived from cx
             elif item[0].name == "rzx":
-                cr_error = np.abs(
-                    float(item[0].params[0]) / (pi / 2)
-                ) * basis_2q_error
+                cr_error = np.abs(float(item[0].params[0]) / (pi / 2)) * basis_2q_error
 
                 # assumes control qubit is actually control for cr
                 echo_error = props.gate_error("x", q0)
 
                 fid *= 1 - max(cr_error, 2 * echo_error)
             elif item[0].name == "secr":
-                cr_error = np.abs(
-                    (float(item[0].params[0])) / (pi / 2)
-                ) * basis_2q_error
+                cr_error = (
+                    np.abs((float(item[0].params[0])) / (pi / 2)) * basis_2q_error
+                )
 
                 # assumes control qubit is actually control for cr
                 echo_error = props.gate_error("x", q0)
@@ -119,8 +120,8 @@ def cost_func_scaled_cr(
 
 
 def idle_error(
-    time: float, 
-    t1: float, 
+    time: float,
+    t1: float,
     t2: float,
 ) -> float:
     """Compute the approx. idle error from T1 and T2
@@ -137,6 +138,7 @@ def idle_error(
     p_reset = 1 - np.exp(-time * rate1)
     p_z = (1 - p_reset) * (1 - np.exp(-time * (rate2 - rate1))) / 2
     return p_z + p_reset
+
 
 def cost_func_ecr(
     circ: QuantumCircuit,
@@ -162,28 +164,31 @@ def cost_func_ecr(
         fid = 1
         touched = set()
         for item in circ._data:
-            if item[0].name == 'ecr':
+            if item[0].name == "ecr":
                 q0 = layout[circ.find_bit(item[1][0]).index]
                 q1 = layout[circ.find_bit(item[1][1]).index]
-                if inst_sched_map.has('ecr', [q0, q1]):
-                    fid *= (1-props.gate_error('ecr', [q0, q1]))
-                elif inst_sched_map.has('ecr', [q1, q0]):
-                    fid *= (1-props.gate_error('ecr', [q1, q0]))
+                if inst_sched_map.has("ecr", [q0, q1]):
+                    fid *= 1 - props.gate_error("ecr", [q0, q1])
+                elif inst_sched_map.has("ecr", [q1, q0]):
+                    fid *= 1 - props.gate_error("ecr", [q1, q0])
                 else:
-                    print(f'{backend.name} does not support {item[0].name} for qubit pair ({q0}, {q1})')
+                    print(
+                        f"{backend.name} does not support {item[0].name} \
+                        for qubit pair ({q0}, {q1})"
+                    )
                 touched.add(q0)
                 touched.add(q1)
 
-            elif item[0].name in ['sx', 'x']:
+            elif item[0].name in ["sx", "x"]:
                 q0 = layout[circ.find_bit(item[1][0]).index]
-                fid *= 1-props.gate_error(item[0].name, q0)
+                fid *= 1 - props.gate_error(item[0].name, q0)
                 touched.add(q0)
 
-            elif item[0].name == 'measure':
+            elif item[0].name == "measure":
                 q0 = layout[circ.find_bit(item[1][0]).index]
-                fid *= 1-props.readout_error(q0)
+                fid *= 1 - props.readout_error(q0)
                 touched.add(q0)
 
-        error = 1-fid
+        error = 1 - fid
         out.append((layout, error))
     return out

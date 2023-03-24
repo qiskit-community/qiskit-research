@@ -32,42 +32,63 @@ POST_ROT_GATES = {
     "z": [IGate()],
 }
 
+
 def ising_hamiltonian(
-    num_spins: int, 
-    JJ: Parameter, 
-    hh: Parameter, 
+    num_spins: int,
+    JJ: Parameter,
+    hh: Parameter,
     tt: Parameter,
-    connectivity: str = 'nearest-neighbor',
+    connectivity: str = "nearest-neighbor",
 ) -> EvolvedOp:
-    if connectivity == 'nearest-neighbor':
-        int_terms = -JJ*sum([(I^idx) ^ Z ^ Z ^ (I ^ (num_spins - idx - 2)) for idx in range(num_spins-1)])
-    elif connectivity == 'all-to-all':
+    if connectivity == "nearest-neighbor":
+        int_terms = -JJ * sum(
+            [
+                (I ^ idx) ^ Z ^ Z ^ (I ^ (num_spins - idx - 2))
+                for idx in range(num_spins - 1)
+            ]
+        )
+    elif connectivity == "all-to-all":
         int_terms = -JJ * sum(
             [
                 sum(
                     [
-                        (I ^ idx) ^ Z ^ (I ^ jdx) ^ Z ^ (I ^ (num_spins - idx - jdx - 2))
+                        (I ^ idx)
+                        ^ Z
+                        ^ (I ^ jdx)
+                        ^ Z
+                        ^ (I ^ (num_spins - idx - jdx - 2))
                         for jdx in range(num_spins - idx - 1)
                     ]
                 )
                 for idx in range(num_spins - 1)
-            ])
-    ham = int_terms +  hh * sum([(I ^ idx) ^ X ^ (I ^ (num_spins - idx - 1)) for idx in range(num_spins)])
+            ]
+        )
+    ham = int_terms + hh * sum(
+        [(I ^ idx) ^ X ^ (I ^ (num_spins - idx - 1)) for idx in range(num_spins)]
+    )
     return (ham * tt).exp_i()
 
+
 def init_ground_state(num_spins: int) -> PauliOp:
-    return Zero^num_spins
+    return Zero ^ num_spins
+
 
 def get_1q_observables(POp: PauliOp, num_spins: int) -> List[PauliOp]:
-    return [(I^num_spins-idx-1)^POp^(I^idx) for idx in range(num_spins)]
+    return [(I ^ num_spins - idx - 1) ^ POp ^ (I ^ idx) for idx in range(num_spins)]
+
 
 def get_magnetic_exps(U_ham: EvolvedOp) -> List[PauliOp]:
     num_spins = U_ham.num_qubits
     init_state = init_ground_state(num_spins)
-    obsvs = get_1q_observables(X, num_spins) + \
-            get_1q_observables(Y, num_spins) + \
-            get_1q_observables(Z, num_spins)
-    return [(U_ham @ init_state).adjoint() @ obsv @ U_ham @ init_state for obsv in obsvs]
+    obsvs = (
+        get_1q_observables(X, num_spins)
+        + get_1q_observables(Y, num_spins)
+        + get_1q_observables(Z, num_spins)
+    )
+    return [
+        (U_ham @ init_state).adjoint() @ obsv @ U_ham @ init_state for obsv in obsvs
+    ]
+
 
 def build_ising_circuits(
     circ: QuantumCircuit,
@@ -97,23 +118,24 @@ def build_ising_circuits(
 
             for gate in POST_ROT_GATES[meas_basis]:
                 total_circ.append(gate, [my_layout])
-            
+
             total_circ.measure(my_layout, cr)
             circs.append(attach_cr_pulses(total_circ, backend, param_bind))
             # circs.append(total_circ.bind_parameters(param_bind))
 
     return circs
 
+
 def exact_magnetization(
-    U_ham: EvolvedOp, 
-    param_bind: dict, 
+    U_ham: EvolvedOp,
+    param_bind: dict,
     time_range: List[float],
 ):
     exps = get_magnetic_exps(U_ham)
     num_spins = U_ham.num_qubits
     # find the time parameter in the operator
     for param in U_ham.parameters:
-        if param.name == 't':
+        if param.name == "t":
             tt = param
 
     mags = []
@@ -121,33 +143,43 @@ def exact_magnetization(
         mag = []
         for exp in exps:
             param_bind[tt] = time
-            mag.append(PauliExpectation().convert(exp.bind_parameters(param_bind)).eval() / num_spins)
-        
+            mag.append(
+                PauliExpectation().convert(exp.bind_parameters(param_bind)).eval()
+                / num_spins
+            )
+
         mags.append(mag)
 
-    return [[sum(np.real(mag[0:num_spins])) for mag in mags], 
-        [sum(np.real(mag[num_spins:2*num_spins])) for mag in mags], 
-        [sum(np.real(mag[2*num_spins:3*num_spins])) for mag in mags]]
+    return [
+        [sum(np.real(mag[0:num_spins])) for mag in mags],
+        [sum(np.real(mag[num_spins : 2 * num_spins])) for mag in mags],
+        [sum(np.real(mag[2 * num_spins : 3 * num_spins])) for mag in mags],
+    ]
+
 
 def combine_twirled_data(quasi_probs: list[dict], num_twirls: int) -> List[dict]:
     # circs are (each Pauli twirl)*(x,y,z meas)*(each time step)
-    num_exps = int(len(quasi_probs)/num_twirls)
+    num_exps = int(len(quasi_probs) / num_twirls)
     twirled_data = []
     for idx in range(num_exps):
-        twirls_per_param = quasi_probs[idx:idx+num_twirls]
-        summed_twirls = dict(functools.reduce(operator.add,
-                    map(collections.Counter, twirls_per_param)))
-        twirled_data.append({key: value/num_twirls for key, value in summed_twirls.items()})
+        twirls_per_param = quasi_probs[idx : idx + num_twirls]
+        summed_twirls = dict(
+            functools.reduce(operator.add, map(collections.Counter, twirls_per_param))
+        )
+        twirled_data.append(
+            {key: value / num_twirls for key, value in summed_twirls.items()}
+        )
 
     return twirled_data
 
+
 def combine_mag_data(twirled_data: list[dict]) -> List[List[dict]]:
     # twirled_data is (x,y,z meas)*(each time step)
-    num_exps = int(len(twirled_data)/3)
+    num_exps = int(len(twirled_data) / 3)
     mag_data = {"x": [], "y": [], "z": []}
     for idx in range(num_exps):
-        mag_data["x"].append(twirled_data[3*idx])
-        mag_data["y"].append(twirled_data[3*idx+1])
-        mag_data["z"].append(twirled_data[3*idx+2])
+        mag_data["x"].append(twirled_data[3 * idx])
+        mag_data["y"].append(twirled_data[3 * idx + 1])
+        mag_data["z"].append(twirled_data[3 * idx + 2])
 
     return mag_data
