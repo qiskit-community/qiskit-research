@@ -1,0 +1,11 @@
+{
+    "title": "Qiskit Research",
+    "description": "Research using Qiskit. This repository contains modules for running quantum computing research experiments using Qiskit and the IBM Quantum Services, demonstrating by example best practices for running such experiments.",
+    "upload_type": "software",
+    "license": "Apache-2.0",
+    "creators": [
+        {
+            "name": "The Qiskit Research developers and contributors"
+        }
+    ]
+}
