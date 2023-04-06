@@ -21,3 +21,9 @@ Documentation is located [here](https://qiskit-research.github.io/qiskit-researc
 ## Contributing
 
 For information on how to contribute to this project, please take a look at our [contribution guidelines](CONTRIBUTING.md).
+
+## Citing
+
+[![DOI](https://zenodo.org/badge/498756635.svg)](https://zenodo.org/badge/latestdoi/498756635)
+
+Qiskit Research is automatically uploaded to Zenodo with every release. Click the badge above to see all citation formats for all versions, or just use [this BibTeX file](CITATION.bib).
