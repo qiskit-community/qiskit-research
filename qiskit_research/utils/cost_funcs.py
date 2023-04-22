@@ -160,8 +160,8 @@ def cost_func_ecr(
     inst_sched_map = backend.defaults().instruction_schedule_map
     props = backend.properties()
     for layout in layouts:
-        error = 0
-        fid = 1
+        error = 0.0
+        fid = 1.0
         touched = set()
         for item in circ.data:
             if item[0].name == "ecr":
