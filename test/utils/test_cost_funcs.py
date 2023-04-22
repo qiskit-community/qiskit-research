@@ -170,3 +170,7 @@ class TestScaledCostFuncs(unittest.TestCase):
         )[0]
 
         self.assertLess(best_layout[1], best_layout2[1])
+
+
+# TODO: Add unit test for ECR gate (i.e., ibm_sherbrooke) when resolved:
+# https://github.com/Qiskit/qiskit-terra/issues/9553
