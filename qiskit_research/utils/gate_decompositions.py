@@ -17,14 +17,15 @@ from __future__ import annotations
 from collections.abc import Iterator
 
 from qiskit import QuantumRegister
-from qiskit.circuit import Gate, Qubit
+from qiskit.circuit import ControlledGate, Gate, Qubit
 from qiskit.circuit.library import (
+    CXGate,
     HGate,
-    SGate,
-    SdgGate,
     RXGate,
     RZGate,
     RZXGate,
+    SdgGate,
+    SGate,
     XGate,
     XXMinusYYGate,
     XXPlusYYGate,
@@ -116,6 +117,39 @@ class RZXtoEchoedCR(TransformationPass):
                     mini_dag.apply_operation_back(XGate(), [q1])
                     mini_dag.apply_operation_back(HGate(), [q0])
                     mini_dag.apply_operation_back(HGate(), [q1])
+
+                dag.substitute_node_with_dag(node, mini_dag)
+
+        return dag
+
+
+class ControlledRZZToCX(TransformationPass):
+    """Transformation pass to decompose Controlled RZZGate to CXGate."""
+
+    def _decomposition(
+        self,
+        register: QuantumRegister,
+        gate: ControlledGate,
+    ) -> Iterator[tuple[Gate, tuple[Qubit, ...]]]:
+        a, b, c = register
+        (theta,) = gate.params
+
+        yield CXGate(), (b, c)
+        yield RZGate(theta).control(1), (a, c)
+        yield CXGate(), (b, c)
+
+    def run(
+        self,
+        dag: DAGCircuit,
+    ) -> DAGCircuit:
+        for run in dag.collect_runs(["crzz"]):
+            for node in run:
+                mini_dag = DAGCircuit()
+                register = QuantumRegister(3)
+                mini_dag.add_qreg(register)
+
+                for instr, qargs in self._decomposition(register, node.op):
+                    mini_dag.apply_operation_back(instr, qargs)
 
                 dag.substitute_node_with_dag(node, mini_dag)
 
