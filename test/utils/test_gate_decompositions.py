@@ -33,7 +33,8 @@ class TestPasses(unittest.TestCase):
 
     def test_controlled_rzz_to_cx(self):
         """Test controlled RZZGate to CXGate decomposition."""
-        theta = np.random.uniform(-10, 10)
+        rng = np.random.default_rng()
+        theta = rng.uniform(-10, 10)
         gate = RZZGate(theta).control(1)
         register = QuantumRegister(3)
         circuit = QuantumCircuit(register)
@@ -45,8 +46,9 @@ class TestPasses(unittest.TestCase):
 
     def test_xxplusyy_to_rzx(self):
         """Test XXPlusYYGate to RZXGate decomposition."""
-        theta = np.random.uniform(-10, 10)
-        beta = np.random.uniform(-10, 10)
+        rng = np.random.default_rng()
+        theta = rng.uniform(-10, 10)
+        beta = rng.uniform(-10, 10)
         gate = XXPlusYYGate(theta, beta)
         register = QuantumRegister(2)
         circuit = QuantumCircuit(register)
@@ -58,8 +60,9 @@ class TestPasses(unittest.TestCase):
 
     def test_xxminusyy_to_rzx(self):
         """Test XXMinusYYGate to RZXGate decomposition."""
-        theta = np.random.uniform(-10, 10)
-        beta = np.random.uniform(-10, 10)
+        rng = np.random.default_rng()
+        theta = rng.uniform(-10, 10)
+        beta = rng.uniform(-10, 10)
         gate = XXMinusYYGate(theta, beta)
         register = QuantumRegister(2)
         circuit = QuantumCircuit(register)
