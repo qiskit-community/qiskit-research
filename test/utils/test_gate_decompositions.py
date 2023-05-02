@@ -16,10 +16,12 @@ import unittest
 
 import numpy as np
 from qiskit.circuit import QuantumCircuit, QuantumRegister
-from qiskit.circuit.library import XXMinusYYGate, XXPlusYYGate
-from qiskit.transpiler import PassManager
+from qiskit.circuit.library import RZZGate, XXMinusYYGate, XXPlusYYGate
 from qiskit.quantum_info import Operator
+from qiskit.transpiler import PassManager
+
 from qiskit_research.utils.gate_decompositions import (
+    ControlledRZZToCX,
     RZXWeylDecomposition,
     XXMinusYYtoRZX,
     XXPlusYYtoRZX,
@@ -29,10 +31,24 @@ from qiskit_research.utils.gate_decompositions import (
 class TestPasses(unittest.TestCase):
     """Test passes."""
 
+    def test_controlled_rzz_to_cx(self):
+        """Test controlled RZZGate to CXGate decomposition."""
+        rng = np.random.default_rng()
+        theta = rng.uniform(-10, 10)
+        gate = RZZGate(theta).control(1)
+        register = QuantumRegister(3)
+        circuit = QuantumCircuit(register)
+        circuit.append(gate, register)
+        pass_ = ControlledRZZToCX()
+        pass_manager = PassManager([pass_])
+        decomposed = pass_manager.run(circuit)
+        self.assertTrue(Operator(circuit).equiv(Operator(decomposed)))
+
     def test_xxplusyy_to_rzx(self):
         """Test XXPlusYYGate to RZXGate decomposition."""
-        theta = np.random.uniform(-10, 10)
-        beta = np.random.uniform(-10, 10)
+        rng = np.random.default_rng()
+        theta = rng.uniform(-10, 10)
+        beta = rng.uniform(-10, 10)
         gate = XXPlusYYGate(theta, beta)
         register = QuantumRegister(2)
         circuit = QuantumCircuit(register)
@@ -44,8 +60,9 @@ class TestPasses(unittest.TestCase):
 
     def test_xxminusyy_to_rzx(self):
         """Test XXMinusYYGate to RZXGate decomposition."""
-        theta = np.random.uniform(-10, 10)
-        beta = np.random.uniform(-10, 10)
+        rng = np.random.default_rng()
+        theta = rng.uniform(-10, 10)
+        beta = rng.uniform(-10, 10)
         gate = XXMinusYYGate(theta, beta)
         register = QuantumRegister(2)
         circuit = QuantumCircuit(register)
