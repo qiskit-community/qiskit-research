@@ -79,7 +79,8 @@ class ProteinFoldingResult:
     @property
     def protein_shape_decoder(self) -> ProteinShapeDecoder:
         """Returns the :class:`ProteinShapeDecoder` of the result.
-        This class will interpret the result bitstring and return the encoded information."""
+        This class will interpret the result bitstring and return the encoded information.
+        """
         return self._protein_shape_decoder
 
     @property
@@ -144,7 +145,6 @@ class ProteinFoldingResult:
         comment: str = "",
         replace: bool = False,
     ) -> None:
-
         """
         Generates a .xyz file.
 

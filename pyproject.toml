@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "qiskit_research"
-version = "0.0.1"
+version = "0.0.2"
 description = "Research using Qiskit, demonstrating best practices for running quantum computing experiments."
 readme = "README.md"
 license = { file = "LICENSE.txt" }
@@ -24,7 +24,7 @@ classifiers = [
 requires-python = ">=3.8"
 
 dependencies = [
-    "mapomatic==0.6",
+    "mapomatic==0.8.0",
     "mthree==0.24",
     "pylatexenc",
     "qiskit-aer~=0.11",
@@ -32,12 +32,12 @@ dependencies = [
     "qiskit-ibm-runtime",
     "qiskit-ibmq-provider",
     "qiskit-nature~=0.5",
-    "qiskit-terra~=0.22",
+    "qiskit-terra==0.23",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black[jupyter]",
+    "black[jupyter]~=23.1",
     "coverage",
     "ddt~=1.5",
     "importlib_metadata",

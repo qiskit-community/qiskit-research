@@ -257,7 +257,6 @@ class ForceZZTemplateSubstitution(TransformationPass):
                                 and (cx1_node.qargs[1].index == cx2_node.qargs[1].index)
                                 and (cx2_node.qargs[1].index == rz_node.qargs[0].index)
                             ):
-
                                 dag = self.sub_zz_in_dag(
                                     dag, cx1_node, rz_node, cx2_node
                                 )

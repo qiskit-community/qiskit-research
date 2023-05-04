@@ -244,7 +244,6 @@ class DistanceMapBuilder:
         for dist_map_ax, lower_indic_fun_x, upper_indic_fun_x in zip(
             self._distance_map_axes, lower_indic_funs, upper_indic_funs
         ):
-
             dist_map_ax[lower_side_bead][upper_side_bead] = self._calc_distance_term(
                 peptide,
                 dist_map_ax,
@@ -278,7 +277,6 @@ class DistanceMapBuilder:
         indic_funs: Tuple[OperatorBase, OperatorBase, OperatorBase, OperatorBase],
     ) -> None:
         for dist_map_ax, indic_fun_x in zip(self._distance_map_axes, indic_funs):
-
             dist_map_ax[lower_bead][upper_bead] = self._calc_distance_term(
                 peptide, dist_map_ax, lower_bead_ind, None, upper_bead_ind, indic_fun_x
             )
