@@ -14,6 +14,7 @@
 
 from typing import Any, Iterable, Optional
 
+from copy import deepcopy
 import numpy as np
 from qiskit.circuit import QuantumRegister
 from qiskit.circuit.library import IGate, XGate, YGate, ZGate
@@ -23,6 +24,7 @@ from qiskit.transpiler.passes import (
     CXCancellation,
     Optimize1qGatesDecomposition,
 )
+from qiskit.quantum_info import Pauli, pauli_basis
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 I = IGate()
@@ -109,19 +111,47 @@ class PauliTwirl(TransformationPass):
     ) -> DAGCircuit:
         for run in dag.collect_runs(list(self.gates_to_twirl)):
             for node in run:
-                twirl_gates = TWIRL_GATES[node.op.name]
-                (before0, before1), (after0, after1) = twirl_gates[
-                    self.rng.integers(len(twirl_gates))
-                ]
-                mini_dag = DAGCircuit()
-                register = QuantumRegister(2)
-                mini_dag.add_qreg(register)
-                mini_dag.apply_operation_back(before0, [register[0]])
-                mini_dag.apply_operation_back(before1, [register[1]])
-                mini_dag.apply_operation_back(node.op, [register[0], register[1]])
-                mini_dag.apply_operation_back(after0, [register[0]])
-                mini_dag.apply_operation_back(after1, [register[1]])
-                dag.substitute_node_with_dag(node, mini_dag)
+                if len(node.op.params) == 1: # supersede the parameterized list
+                    mini_dag = DAGCircuit()
+                    q0, q1 = node.qargs
+                    mini_dag.add_qreg(q0.register)
+
+                    theta = node.op.params[0]
+                    this_pauli = Pauli(self.rng.choice(pauli_basis(2).to_labels())).to_instruction()
+                    if node.op.name[0] == 'r':
+                        if Pauli(node.op.name.split('r')[1].upper()[::-1]).anticommutes(this_pauli):
+                            theta *= -1
+                    elif node.op.name == 'secr':
+                        if Pauli('XZ').anticommutes(this_pauli):
+                            theta *= -1
+
+                    new_op = deepcopy(node.op) # maybe not necessary
+                    new_op.params[0] = theta
+
+                    mini_dag.apply_operation_back(this_pauli, [q0, q1])
+                    mini_dag.apply_operation_back(new_op, [q0, q1])
+                    if node.op.name == 'secr':
+                        mini_dag.apply_operation_back(X, [q0])
+                    mini_dag.apply_operation_back(this_pauli, [q0, q1])
+                    if node.op.name == 'secr':
+                        mini_dag.apply_operation_back(X, [q0])
+
+                    dag.substitute_node_with_dag(node, mini_dag, wires=[q0, q1])
+
+                else:
+                    twirl_gates = TWIRL_GATES[node.op.name]
+                    (before0, before1), (after0, after1) = twirl_gates[
+                        self.rng.integers(len(twirl_gates))
+                    ]
+                    mini_dag = DAGCircuit()
+                    register = QuantumRegister(2)
+                    mini_dag.add_qreg(register)
+                    mini_dag.apply_operation_back(before0, [register[0]])
+                    mini_dag.apply_operation_back(before1, [register[1]])
+                    mini_dag.apply_operation_back(node.op, [register[0], register[1]])
+                    mini_dag.apply_operation_back(after0, [register[0]])
+                    mini_dag.apply_operation_back(after1, [register[1]])
+                    dag.substitute_node_with_dag(node, mini_dag)
         return dag
 
 
