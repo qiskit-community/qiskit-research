@@ -111,29 +111,33 @@ class PauliTwirl(TransformationPass):
     ) -> DAGCircuit:
         for run in dag.collect_runs(list(self.gates_to_twirl)):
             for node in run:
-                if len(node.op.params) == 1: # supersede the parameterized list
+                if len(node.op.params) == 1:  # supersede the parameterized list
                     mini_dag = DAGCircuit()
                     q0, q1 = node.qargs
                     mini_dag.add_qreg(q0.register)
 
                     theta = node.op.params[0]
-                    this_pauli = Pauli(self.rng.choice(pauli_basis(2).to_labels())).to_instruction()
-                    if node.op.name[0] == 'r':
-                        if Pauli(node.op.name.split('r')[1].upper()[::-1]).anticommutes(this_pauli):
+                    this_pauli = Pauli(
+                        self.rng.choice(pauli_basis(2).to_labels())
+                    ).to_instruction()
+                    if node.op.name[0] == "r":
+                        if Pauli(node.op.name.split("r")[1].upper()[::-1]).anticommutes(
+                            this_pauli
+                        ):
                             theta *= -1
-                    elif node.op.name == 'secr':
-                        if Pauli('XZ').anticommutes(this_pauli):
+                    elif node.op.name == "secr":
+                        if Pauli("XZ").anticommutes(this_pauli):
                             theta *= -1
 
-                    new_op = deepcopy(node.op) # maybe not necessary
+                    new_op = deepcopy(node.op)  # maybe not necessary
                     new_op.params[0] = theta
 
                     mini_dag.apply_operation_back(this_pauli, [q0, q1])
                     mini_dag.apply_operation_back(new_op, [q0, q1])
-                    if node.op.name == 'secr':
+                    if node.op.name == "secr":
                         mini_dag.apply_operation_back(X, [q0])
                     mini_dag.apply_operation_back(this_pauli, [q0, q1])
-                    if node.op.name == 'secr':
+                    if node.op.name == "secr":
                         mini_dag.apply_operation_back(X, [q0])
 
                     dag.substitute_node_with_dag(node, mini_dag, wires=[q0, q1])
