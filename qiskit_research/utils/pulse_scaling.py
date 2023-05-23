@@ -23,6 +23,8 @@ from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGOpNode
 from qiskit.exceptions import QiskitError
 from qiskit.providers.backend import Backend
 from qiskit.pulse import (
+    ControlChannel,
+    Play,
     Schedule,
     ScheduleBlock,
 )
@@ -314,3 +316,33 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
                 pulse.call(cr_minus)
 
         return secr_sched
+
+
+def get_ecr_pairs_from_backend(backend: Backend) -> List[List[int]]:
+    """
+    Retrieve the coupling map of only CX defined be echoed cross resonance.
+
+    Args:
+        backend (Backend): backend one desires the ECR coupling map from
+
+    Returns:
+        List[List[int]]: coupling map consisting only of ECR pairs.
+    """
+    coupling_map = backend.configuration().coupling_map
+    inst_sched_map = backend.defaults().instruction_schedule_map
+
+    new_coupling_map = []
+    for pair in coupling_map:
+        cx = inst_sched_map.get("cx", qubits=pair)
+        if (
+            len(
+                cx.filter(
+                    channels=[ControlChannel(ii) for ii in range(len(coupling_map))],
+                    instruction_types=Play,
+                )
+            )
+            == 2
+        ):
+            new_coupling_map.append(pair)
+
+    return new_coupling_map
