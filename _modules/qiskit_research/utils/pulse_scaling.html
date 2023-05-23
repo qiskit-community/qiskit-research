@@ -60,6 +60,8 @@
 <span class="kn">from</span> <span class="nn">qiskit.exceptions</span> <span class="kn">import</span> <span class="n">QiskitError</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers.backend</span> <span class="kn">import</span> <span class="n">Backend</span>
 <span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ControlChannel</span><span class="p">,</span>
+    <span class="n">Play</span><span class="p">,</span>
     <span class="n">Schedule</span><span class="p">,</span>
     <span class="n">ScheduleBlock</span><span class="p">,</span>
 <span class="p">)</span>
@@ -351,6 +353,36 @@
                 <span class="n">pulse</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">cr_minus</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">secr_sched</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">get_ecr_pairs_from_backend</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve the coupling map of only CX defined be echoed cross resonance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        backend (Backend): backend one desires the ECR coupling map from</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[List[int]]: coupling map consisting only of ECR pairs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">coupling_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">coupling_map</span>
+    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
+
+    <span class="n">new_coupling_map</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">coupling_map</span><span class="p">:</span>
+        <span class="n">cx</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cx&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="n">pair</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span>
+                <span class="n">cx</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="n">ControlChannel</span><span class="p">(</span><span class="n">ii</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">coupling_map</span><span class="p">))],</span>
+                    <span class="n">instruction_types</span><span class="o">=</span><span class="n">Play</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="o">==</span> <span class="mi">2</span>
+        <span class="p">):</span>
+            <span class="n">new_coupling_map</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pair</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">new_coupling_map</span>
 </pre></div>
 
           </div>
