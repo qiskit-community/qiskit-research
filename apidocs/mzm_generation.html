@@ -55,14 +55,14 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>qubits</strong> – list of physical qubits for the experiment.</p></li>
+<li><p><strong>physical_qubits</strong> – list of physical qubits for the experiment.</p></li>
 <li><p><strong>analysis</strong> – Optional, the analysis to use for the experiment.</p></li>
 <li><p><strong>backend</strong> – Optional, the backend to run the experiment on.</p></li>
 <li><p><strong>experiment_type</strong> – Optional, the experiment type string.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>QiskitError</strong> – if qubits contains duplicates.</p>
+<dd class="field-even"><p><strong>QiskitError</strong> – If qubits contains duplicates.</p>
 </dd>
 </dl>
 <dl class="py method">
@@ -81,7 +81,7 @@
 <p class="admonition-title">Note</p>
 <p>These circuits should be on qubits <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">..,</span> <span class="pre">N-1]</span></code> for an
 <em>N</em>-qubit experiment. The circuits mapped to physical qubits
-are obtained via the <code class="xref py py-meth docutils literal notranslate"><span class="pre">transpiled_circuits()</span></code> method.</p>
+are obtained via the internal <code class="xref py py-meth docutils literal notranslate"><span class="pre">_transpiled_circuits()</span></code> method.</p>
 </div>
 </dd></dl>
 

@@ -93,7 +93,7 @@
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># load data from local disk</span>
 
-<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;2022-06-09T012809.963762_aer_simulator_n3&quot;</span>
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;2023-05-23T113937.711789_aer_simulator_n3&quot;</span>
 
 <span class="c1"># directory with test data, edit this as appropriate</span>
 <span class="n">basedir</span> <span class="o">=</span> <span class="s2">&quot;../../test/test_data/mzm_generation&quot;</span>
@@ -109,19 +109,12 @@
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/qiskit_experiments/framework/json.py:584: UserWarning: Could not deserialize instance of class &lt;class &#39;qiskit_research.mzm_generation.experiment.KitaevHamiltonianExperiment&#39;&gt; from value ExperimentConfig(cls=&lt;class &#39;qiskit_research.mzm_generation.experiment.KitaevHamiltonianExperiment&#39;&gt;, args=[{&#39;timestamp&#39;: &#39;2022-06-09T012809.963762&#39;, &#39;backend_name&#39;: &#39;aer_simulator&#39;, &#39;qubits&#39;: [0, 1, 2], &#39;n_modes&#39;: 3, &#39;tunneling_values&#39;: [-1.0], &#39;superconducting_values&#39;: [1.0], &#39;chemical_potential_values&#39;: [0.0, 0.75, 1.5, 2.25, 3.0], &#39;occupied_orbitals_list&#39;: [[], [0, 1, 2], [0], [1, 2], [1], [0, 2]], &#39;dynamical_decoupling_sequences&#39;: None, &#39;pulse_scaling&#39;: False, &#39;num_twirled_circuits&#39;: 0, &#39;seed&#39;: 11364, &#39;basedir&#39;: None}], kwargs={&#39;provider&#39;: None}, experiment_options={}, transpile_options={}, run_options={&#39;shots&#39;: 10000}, version=&#39;0.3.1&#39;) using __json_decode__ method.
-NOTE: The current version of module &#39;qiskit_research&#39; (None) differs from the version used for serialization (0.1.dev256+g5463053.d20220605).
+/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/qiskit_experiments/framework/json.py:600: UserWarning: Could not deserialize instance of class &lt;class &#39;datetime.datetime&#39;&gt; from settings {}.
 The following exception was raised:
 Traceback (most recent call last):
-  File &#34;/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/qiskit_experiments/framework/json.py&#34;, line 329, in _deserialize_object
-    return cls.__json_decode__(settings)
-  File &#34;/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/qiskit_experiments/framework/base_experiment.py&#34;, line 519, in __json_decode__
-    return cls.from_config(value)
-  File &#34;/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/qiskit_experiments/framework/base_experiment.py&#34;, line 188, in from_config
-    ret = cls(*config.args, **config.kwargs)
-  File &#34;/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/qiskit_research/mzm_generation/experiment.py&#34;, line 96, in __init__
-    self.rng = np.random.default_rng(params.seed)
-AttributeError: &#39;dict&#39; object has no attribute &#39;seed&#39;
+  File &#34;/home/runner/work/qiskit-research/qiskit-research/.tox/docs/lib/python3.9/site-packages/qiskit_experiments/framework/json.py&#34;, line 340, in _deserialize_object
+    return cls(**settings)
+TypeError: function missing required argument &#39;year&#39; (pos 1)
 
   return _deserialize_object(obj_val)
 </pre></div></div>
@@ -143,8 +136,8 @@ AttributeError: &#39;dict&#39; object has no attribute &#39;seed&#39;
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-CPU times: user 584 ms, sys: 51.4 ms, total: 635 ms
-Wall time: 509 ms
+CPU times: user 657 ms, sys: 44.5 ms, total: 702 ms
+Wall time: 524 ms
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -153,7 +146,7 @@ Wall time: 509 ms
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-&lt;ExperimentData[KitaevHamiltonianExperiment], backend: None, status: ExperimentStatus.DONE, experiment_id: 62043feb-f813-4893-96e8-2e2263e0d9ea&gt;
+ExperimentData(KitaevHamiltonianExperiment, dead87c1-a030-4d55-8248-fe9618c97aed, job_ids=[&#39;dbb9b2c3-5e68-481f-8ada-e46a11820019&#39;], metadata=&lt;3 items&gt;)
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -195,7 +188,7 @@ Wall time: 509 ms
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-KitaevHamiltonianExperimentParameters(timestamp=&#39;2022-06-09T012809.963762&#39;, backend_name=&#39;aer_simulator&#39;, qubits=[0, 1, 2], n_modes=3, tunneling_values=[-1.0], superconducting_values=[1.0], chemical_potential_values=[0.0, 0.75, 1.5, 2.25, 3.0], occupied_orbitals_list=[(), (0, 1, 2), (0,), (1, 2), (1,), (0, 2)], dynamical_decoupling_sequences=None, pulse_scaling=False, num_twirled_circuits=0, seed=11364, basedir=&#39;../../test/test_data/mzm_generation&#39;)
+KitaevHamiltonianExperimentParameters(timestamp=&#39;2023-05-23T113937.711789&#39;, backend_name=&#39;aer_simulator&#39;, qubits=[0, 1, 2], n_modes=3, tunneling_values=[-1.0], superconducting_values=[1.0], chemical_potential_values=[0.0, 0.75, 1.5, 2.25, 3.0], occupied_orbitals_list=[(), (0, 1, 2), (0,), (1, 2), (1,), (0, 2)], dynamical_decoupling_sequences=None, pulse_scaling=False, num_twirled_circuits=0, seed=11364, basedir=&#39;../../test/test_data/mzm_generation&#39;)
 </pre></div></div>
 </div>
 </section>
