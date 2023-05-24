@@ -95,7 +95,7 @@ class KitaevHamiltonianExperiment(BaseExperiment):
         self.params = params
         self.rng = np.random.default_rng(params.seed)
         backend = get_backend(params.backend_name, provider, seed_simulator=params.seed)
-        super().__init__(qubits=params.qubits, backend=backend)
+        super().__init__(physical_qubits=params.qubits, backend=backend)
 
     def _metadata(self) -> dict:
         metadata = super()._metadata()
