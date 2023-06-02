@@ -49,9 +49,16 @@ def cr_forward_direction(
     Determines if the direction of cross resonance is forward (True), applied on control qubit qc or
     reverse (False), applied to target qubit qt.
     """
-    cx_sched = inst_sched_map.get("cx", qubits=[control, target])
-    cx_ctrl_chan = (
-        cx_sched.filter(
+    if inst_sched_map.has("cx", qubits=[control, target]):
+        cr_sched = inst_sched_map.get("cx", qubits=[control, target])
+    elif inst_sched_map.has("ecr", qubits=[control, target]):
+        return True
+    elif inst_sched_map.has("ecr", qubits=[target, control]):
+        return False
+    else:
+        raise QiskitError(f"{repr(cr_sched)} native direction cannot be determined.")
+    cr_ctrl_chan = (
+        cr_sched.filter(
             channels=[
                 ControlChannel(idx)
                 for idx in range(len(inst_sched_map.qubits_with_instruction("cx")))
@@ -64,13 +71,12 @@ def cr_forward_direction(
     forward_ctrl_chan = ctrl_chans[(control, target)][0]
     reverse_ctrl_chan = ctrl_chans[(target, control)][0]
 
-    if cx_ctrl_chan == forward_ctrl_chan:
+    if cr_ctrl_chan == forward_ctrl_chan:
         return True
-    if cx_ctrl_chan == reverse_ctrl_chan:
+    if cr_ctrl_chan == reverse_ctrl_chan:
         return False
 
     raise ValueError(f"Qubits {control} and {target} are not a cross resonance pair.")
-
 
 class RZXtoEchoedCR(TransformationPass):
     """
