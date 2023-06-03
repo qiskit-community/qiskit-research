@@ -281,7 +281,7 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
         Returns:
             Return ``True`` is calibration can be provided.
         """
-        return isinstance(node_op, SECRGate) and self._inst_map.has("cx", qubits)
+        return isinstance(node_op, SECRGate) and (self._inst_map.has("cx", qubits) or self._inst_map.has("ecr", qubits))
 
     def get_calibration(
         self, node_op: CircuitInst, qubits: List
@@ -296,6 +296,7 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
         except TypeError as ex:
             raise QiskitError("Target rotation angle is not assigned.") from ex
 
+        import pdb; pdb.set_trace()
         op_plus = CircuitInst(
             name="rzx", num_qubits=2, num_clbits=0, params=[theta / 2.0]
         )
