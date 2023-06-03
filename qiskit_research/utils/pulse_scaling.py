@@ -281,7 +281,9 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
         Returns:
             Return ``True`` is calibration can be provided.
         """
-        return isinstance(node_op, SECRGate) and (self._inst_map.has("cx", qubits) or self._inst_map.has("ecr", qubits))
+        return isinstance(node_op, SECRGate) and (
+            self._inst_map.has("cx", qubits) or self._inst_map.has("ecr", qubits)
+        )
 
     def get_calibration(
         self, node_op: CircuitInst, qubits: List

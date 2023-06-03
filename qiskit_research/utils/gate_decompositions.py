@@ -29,6 +29,7 @@ from qiskit.circuit.library import (
     XXPlusYYGate,
 )
 from qiskit.dagcircuit import DAGCircuit
+from qiskit.exceptions import QiskitError
 from qiskit.providers.backend import Backend
 from qiskit.pulse import ControlChannel, InstructionScheduleMap, Play
 from qiskit.qasm import pi
@@ -75,6 +76,7 @@ def cr_forward_direction(
         return False
 
     raise ValueError(f"Qubits {control} and {target} are not a cross resonance pair.")
+
 
 class RZXtoEchoedCR(TransformationPass):
     """
