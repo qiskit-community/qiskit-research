@@ -296,7 +296,6 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
         except TypeError as ex:
             raise QiskitError("Target rotation angle is not assigned.") from ex
 
-        import pdb; pdb.set_trace()
         op_plus = CircuitInst(
             name="rzx", num_qubits=2, num_clbits=0, params=[theta / 2.0]
         )
