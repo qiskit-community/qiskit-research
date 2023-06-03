@@ -1,5 +1,3 @@
-# This code is part of Qiskit.
-#
 # (C) Copyright IBM 2022.
 #
 # This code is licensed under the Apache License, Version 2.0. You may
