@@ -17,7 +17,7 @@ from typing import Any, Iterable, Optional
 from copy import deepcopy
 import numpy as np
 from qiskit.circuit import QuantumRegister
-from qiskit.circuit.library import IGate, XGate, YGate, ZGate
+from qiskit.circuit.library import IGate, RXXGate, RYYGate, RZXGate, RZZGate, XGate, YGate, ZGate
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.passes import (
@@ -25,6 +25,7 @@ from qiskit.transpiler.passes import (
     Optimize1qGatesDecomposition,
 )
 from qiskit.quantum_info import Pauli, pauli_basis
+from qiskit_research.utils.gate_decompositions import SECRGate
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 I = IGate()
@@ -39,24 +40,11 @@ Z = ZGate()
 # "before" and "after" are tuples of single-qubit gates to be applied
 # before and after the gate to be twirled
 TWIRL_GATES = {
-    "rzx": (
-        ((I, I), (I, I)),
-        ((X, Z), (X, Z)),
-        ((Y, Y), (Y, Y)),
-        ((Z, X), (Z, X)),
-    ),
-    "secr": (
-        ((I, I), (I, I)),
-        ((X, Z), (X, Z)),
-        ((X, Y), (X, Y)),
-        ((Z, Z), (Z, Z)),
-    ),
-    "rzz": (
-        ((I, I), (I, I)),
-        ((X, X), (X, X)),
-        ((Y, Y), (Y, Y)),
-        ((Z, Z), (Z, Z)),
-    ),
+    "secr": {},
+    "rxx": {},
+    "ryy": {},
+    "rzx" : {},
+    "rzz" : {},
     "cx": (
         ((I, I), (I, I)),
         ((I, X), (I, X)),
@@ -111,7 +99,8 @@ class PauliTwirl(TransformationPass):
     ) -> DAGCircuit:
         for run in dag.collect_runs(list(self.gates_to_twirl)):
             for node in run:
-                if len(node.op.params) == 1:  # supersede the parameterized list
+                # import pdb; pdb.set_trace()
+                if len(node.op.params): 
                     mini_dag = DAGCircuit()
                     q0, q1 = node.qargs
                     mini_dag.add_qreg(q0.register)
@@ -120,13 +109,13 @@ class PauliTwirl(TransformationPass):
                     this_pauli = Pauli(
                         self.rng.choice(pauli_basis(2).to_labels())
                     ).to_instruction()
-                    if node.op.name[0] == "r":
+                    if isinstance(node.op, SECRGate):
+                        if Pauli("XZ").anticommutes(this_pauli):
+                            theta *= -1
+                    else: # explicily consider rotations gates somehow
                         if Pauli(node.op.name.split("r")[1].upper()[::-1]).anticommutes(
                             this_pauli
                         ):
-                            theta *= -1
-                    elif node.op.name == "secr":
-                        if Pauli("XZ").anticommutes(this_pauli):
                             theta *= -1
 
                     new_op = deepcopy(node.op)  # maybe not necessary
@@ -134,10 +123,10 @@ class PauliTwirl(TransformationPass):
 
                     mini_dag.apply_operation_back(this_pauli, [q0, q1])
                     mini_dag.apply_operation_back(new_op, [q0, q1])
-                    if node.op.name == "secr":
+                    if isinstance(node.op, SECRGate):
                         mini_dag.apply_operation_back(X, [q0])
                     mini_dag.apply_operation_back(this_pauli, [q0, q1])
-                    if node.op.name == "secr":
+                    if isinstance(node.op, SECRGate):
                         mini_dag.apply_operation_back(X, [q0])
 
                     dag.substitute_node_with_dag(node, mini_dag, wires=[q0, q1])
