@@ -26,7 +26,7 @@ from qiskit.transpiler.instruction_durations import InstructionDurationsType
 from qiskit.transpiler.passes import PadDynamicalDecoupling
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
-from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate
+from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate, PiPhiGate
 from qiskit_research.utils.periodic_dynamical_decoupling import (
     PeriodicDynamicalDecoupling,
 )
@@ -40,6 +40,7 @@ Ym = YmGate()
 
 
 DD_SEQUENCE = {
+    "URDD": {},
     "X2": (X, X),
     "X2pm": (Xp, Xm),
     "XY4": (X, Y, X, Y),
@@ -50,13 +51,21 @@ DD_SEQUENCE = {
 
 
 def dynamical_decoupling_passes(
-    backend: Backend, dd_str: str, scheduler: BaseScheduler = ALAPScheduleAnalysis
+    backend: Backend, 
+    dd_str: str, 
+    urdd_pulse_num: int = 4,
+    scheduler: BaseScheduler = ALAPScheduleAnalysis
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for dynamical decoupling."""
     durations = get_instruction_durations(backend)
     pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
 
     sequence = DD_SEQUENCE[dd_str]
+    if sequence == "URDD":
+        phis = get_urdd_phis(urdd_pulse_num) 
+        sequence = []
+        for phi in phis:
+            sequence.append(PiPhiGate(phi)) # probably need to convert to strings
     yield scheduler(durations)
     yield PadDynamicalDecoupling(
         durations, list(sequence), pulse_alignment=pulse_alignment
@@ -182,3 +191,53 @@ def add_pulse_calibrations(
                 pulse.play(inverted_pulse, x_instruction.channel)
             for circ in circuits:
                 circ.add_calibration("ym", [qubit], sched)
+
+def get_urdd_phis(urdd_pulse_num: int = 4):
+    """Gets \phi_k values for n pulse UR sequence"""
+    if urdd_pulse_num % 2 == 1:
+        raise ValueError("urdd_pulse_num must be even")
+    elif urdd_pulse_num < 4:
+        raise ValueError("urdd_pulse_num must be >= 4")
+    # phi1 = 0 by convention
+    phis = [0]
+
+    # get capital Phi value
+    if urdd_pulse_num % 4 == 0:
+        m_divisor = int(urdd_pulse_num / 4)
+        big_phi = np.pi / m_divisor
+    else:
+        m_divisor = int((urdd_pulse_num - 2) / 4)
+        big_phi = (2 * m_divisor * np.pi) / (2 * m_divisor + 1)
+
+    # keep track of unique phi added; we choose phi2 = big_phi by convention--
+    # only real requirement is (n * big_phi = 2pi * j for j int)
+    unique_phi = [0, big_phi]
+    # map each phi in [phis] to location (by index) of corresponding [unique_phi]
+    phi_indices = [0, 1]
+    # populate remaining phi values
+    for kk in range(3, urdd_pulse_num + 1):
+        phi_k = (kk * (kk - 1) * big_phi) / 2
+        # values only matter modulo 2 pi
+        phi_k = (phi_k) % (2 * np.pi)
+        if np.isclose(phi_k, 0):
+            phi_k = 0
+        elif np.isclose(phi_k, 2 * np.pi):
+            phi_k = 0
+
+        added_new = False
+        for idx, u_phi in enumerate(unique_phi):
+            if np.isclose(u_phi, phi_k, atol=0.001):
+                added_new = True
+                phi_indices.append(idx)
+
+        if added_new == False:
+            unique_phi.append(phi_k)
+            phi_indices.append(len(unique_phi) - 1)
+
+    # construct phi list
+    phis = []
+    for idx in phi_indices:
+        phis.append(unique_phi[idx])
+
+    # return (phis, unique_phi, phi_indices)
+    return phis # ntb - let's see if this works
