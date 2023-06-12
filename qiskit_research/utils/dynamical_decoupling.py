@@ -12,7 +12,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Union
+from typing import Iterable, List, Optional, Sequence, Union
 
 from qiskit import QuantumCircuit, pulse
 from qiskit.circuit import Gate
@@ -194,7 +194,7 @@ def add_pulse_calibrations(
                 circ.add_calibration("ym", [qubit], sched)
 
 
-def get_urdd_phis(urdd_pulse_num: int = 4) -> list[float]:
+def get_urdd_phis(urdd_pulse_num: int = 4) -> Sequence[float]:
     """Gets \\phi_k values for n pulse UR sequence"""
     if urdd_pulse_num % 2 == 1:
         raise ValueError("urdd_pulse_num must be even")
