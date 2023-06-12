@@ -67,9 +67,9 @@ def dynamical_decoupling_passes(
     sequence = DD_SEQUENCE[dd_str]
     if dd_str == "URDD":
         phis = get_urdd_phis(urdd_pulse_num)
-        sequence = []
+        sequence = tuple()
         for phi in phis:
-            sequence.append(PiPhiGate(phi))
+            sequence += PiPhiGate(phi)
     yield scheduler(durations)
     yield PadDynamicalDecoupling(
         durations, list(sequence), pulse_alignment=pulse_alignment
@@ -197,7 +197,7 @@ def add_pulse_calibrations(
                 circ.add_calibration("ym", [qubit], sched)
 
 
-def get_urdd_phis(urdd_pulse_num: int = 4):
+def get_urdd_phis(urdd_pulse_num: int = 4) -> List[float]:
     """Gets \\phi_k values for n pulse UR sequence"""
     if urdd_pulse_num % 2 == 1:
         raise ValueError("urdd_pulse_num must be even")
@@ -244,5 +244,4 @@ def get_urdd_phis(urdd_pulse_num: int = 4):
     for idx in phi_indices:
         phis.append(unique_phi[idx])
 
-    # return (phis, unique_phi, phi_indices)
-    return phis  # ntb - let's see if this works
+    return phis
