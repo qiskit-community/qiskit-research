@@ -17,7 +17,16 @@ from typing import Any, Iterable, Optional
 from copy import deepcopy
 import numpy as np
 from qiskit.circuit import QuantumRegister
-from qiskit.circuit.library import IGate, RXXGate, RYYGate, RZXGate, RZZGate, XGate, YGate, ZGate
+from qiskit.circuit.library import (
+    IGate,
+    RXXGate,
+    RYYGate,
+    RZXGate,
+    RZZGate,
+    XGate,
+    YGate,
+    ZGate,
+)
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.passes import (
@@ -33,6 +42,14 @@ X = XGate()
 Y = YGate()
 Z = ZGate()
 
+# this list consists of the 2-qubit rotation gates
+TWO_QUBIT_ROTATION_GATES = (
+    RXXGate,
+    RYYGate,
+    RZXGate,
+    RZZGate,
+)
+
 # this dictionary stores the twirl sets for each supported gate
 # each key is the name of a supported gate
 # each value is a tuple that represents the twirl set for the gate
@@ -43,8 +60,8 @@ TWIRL_GATES = {
     "secr": {},
     "rxx": {},
     "ryy": {},
-    "rzx" : {},
-    "rzz" : {},
+    "rzx": {},
+    "rzz": {},
     "cx": (
         ((I, I), (I, I)),
         ((I, X), (I, X)),
@@ -99,8 +116,7 @@ class PauliTwirl(TransformationPass):
     ) -> DAGCircuit:
         for run in dag.collect_runs(list(self.gates_to_twirl)):
             for node in run:
-                # import pdb; pdb.set_trace()
-                if len(node.op.params): 
+                if len(node.op.params):
                     mini_dag = DAGCircuit()
                     q0, q1 = node.qargs
                     mini_dag.add_qreg(q0.register)
@@ -112,11 +128,13 @@ class PauliTwirl(TransformationPass):
                     if isinstance(node.op, SECRGate):
                         if Pauli("XZ").anticommutes(this_pauli):
                             theta *= -1
-                    else: # explicily consider rotations gates somehow
+                    elif isinstance(node.op, TWO_QUBIT_ROTATION_GATES):
                         if Pauli(node.op.name.split("r")[1].upper()[::-1]).anticommutes(
                             this_pauli
                         ):
                             theta *= -1
+                    else:
+                        raise TypeError(f"Unknown how to twirl Instruction {node.op}.")
 
                     new_op = deepcopy(node.op)  # maybe not necessary
                     new_op.params[0] = theta
