@@ -26,6 +26,9 @@ from qiskit.transpiler.instruction_durations import InstructionDurationsType
 from qiskit.transpiler.passes import PadDynamicalDecoupling
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
+
+import numpy as np
+
 from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate, PiPhiGate
 from qiskit_research.utils.periodic_dynamical_decoupling import (
     PeriodicDynamicalDecoupling,
@@ -40,7 +43,7 @@ Ym = YmGate()
 
 
 DD_SEQUENCE = {
-    "URDD": {},
+    "URDD": (),
     "X2": (X, X),
     "X2pm": (Xp, Xm),
     "XY4": (X, Y, X, Y),
@@ -51,21 +54,22 @@ DD_SEQUENCE = {
 
 
 def dynamical_decoupling_passes(
-    backend: Backend, 
-    dd_str: str, 
+    backend: Backend,
+    dd_str: str,
+    scheduler: BaseScheduler = ALAPScheduleAnalysis,
     urdd_pulse_num: int = 4,
-    scheduler: BaseScheduler = ALAPScheduleAnalysis
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for dynamical decoupling."""
     durations = get_instruction_durations(backend)
     pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
 
+    # import pdb; pdb.set_trace()
     sequence = DD_SEQUENCE[dd_str]
-    if sequence == "URDD":
-        phis = get_urdd_phis(urdd_pulse_num) 
+    if dd_str == "URDD":
+        phis = get_urdd_phis(urdd_pulse_num)
         sequence = []
         for phi in phis:
-            sequence.append(PiPhiGate(phi)) # probably need to convert to strings
+            sequence.append(PiPhiGate(phi))
     yield scheduler(durations)
     yield PadDynamicalDecoupling(
         durations, list(sequence), pulse_alignment=pulse_alignment
@@ -123,7 +127,7 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
 
             # create DD pulses from CR echo 'x' pulse
             if inst_str == "x":
-                for new_gate in ["xp", "xm", "y", "yp", "ym"]:
+                for new_gate in ["xp", "xm", "y", "yp", "ym", "\\pi_{\\phi}"]:
                     inst_durs.append((new_gate, qubit, inst.duration))
 
     # two qubit gates
@@ -192,11 +196,12 @@ def add_pulse_calibrations(
             for circ in circuits:
                 circ.add_calibration("ym", [qubit], sched)
 
+
 def get_urdd_phis(urdd_pulse_num: int = 4):
-    """Gets \phi_k values for n pulse UR sequence"""
+    """Gets \\phi_k values for n pulse UR sequence"""
     if urdd_pulse_num % 2 == 1:
         raise ValueError("urdd_pulse_num must be even")
-    elif urdd_pulse_num < 4:
+    if urdd_pulse_num < 4:
         raise ValueError("urdd_pulse_num must be >= 4")
     # phi1 = 0 by convention
     phis = [0]
@@ -230,7 +235,7 @@ def get_urdd_phis(urdd_pulse_num: int = 4):
                 added_new = True
                 phi_indices.append(idx)
 
-        if added_new == False:
+        if added_new is False:
             unique_phi.append(phi_k)
             phi_indices.append(len(unique_phi) - 1)
 
@@ -240,4 +245,4 @@ def get_urdd_phis(urdd_pulse_num: int = 4):
         phis.append(unique_phi[idx])
 
     # return (phis, unique_phi, phi_indices)
-    return phis # ntb - let's see if this works
+    return phis  # ntb - let's see if this works

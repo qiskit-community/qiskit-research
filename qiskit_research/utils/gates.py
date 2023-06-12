@@ -134,39 +134,41 @@ class YmGate(Gate):
     def __array__(self, dtype=None):
         """Gate matrix."""
         return np.array([[0, -1j], [1j, 0]], dtype=dtype)
-    
+
+
 class PiPhiGate(Gate):
     r"""The single-qubit X gate (:math:`\sigma_x`), implemented
-    with an angle :math:`\phi` relative to the X-axis.
+    with an angle :math:`\\phi` relative to the X-axis.
     """
 
     def __init__(self, phi: ParameterValueType, label: Optional[str] = None):
         """Create new PiPhi gate."""
-        super().__init__("$\\pi_{\\phi}$", 1, [phi], label=label)
+        super().__init__("\\pi_{\\phi}", 1, [phi], label=label)
+        self.phi = phi
 
     def _define(self):
         q = QuantumRegister(1, "q")
         qc = QuantumCircuit(q, name=self.name)
         # rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])] # FIX
-        rulse = [
-            RZGate(phi, [q[0], []]),
-            XGate([q[0]], []),
-            RZGate(-phi, [q[0]], [])
-        ] # maybe this is right
+        rules = [
+            (RZGate(self.phi), [q[0], []]),
+            (XGate(), [q[0]], []),
+            (RZGate(-self.phi), [q[0]], []),
+        ]  # maybe this is right
         for instr, qargs, cargs in rules:
             qc.append(instr, qargs, cargs)
 
         self.definition = qc
 
-    # def inverse(self):
-    #     r"""Return inverted Ym gate (:math:`Y{\dagger} = Y`)"""
-    #     return YpGate()  # self-inverse
+    def inverse(self):
+        r"""Return inverted Ym gate (:math:`Y{\dagger} = Y`)"""
+        return PiPhiGate(-self.phi)  # self-inverse
 
     def __array__(self, dtype=None):
         """Gate matrix."""
-        return np.cos(phi)*np.array([[0, 1], [1, 0]], dtype=dtype) + \
-            np.sin(phi)*np.array([[0, -1j], [1j, 0]], dtype=dtype)
-
+        return np.cos(self.phi) * np.array([[0, 1], [1, 0]], dtype=dtype) + np.sin(
+            self.phi
+        ) * np.array([[0, -1j], [1j, 0]], dtype=dtype)
 
 
 class SECRGate(Gate):

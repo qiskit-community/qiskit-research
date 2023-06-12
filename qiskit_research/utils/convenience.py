@@ -38,6 +38,7 @@ def add_dynamical_decoupling(
     dd_str: str,
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
     add_pulse_cals: bool = False,
+    urdd_pulse_num: int = 4,
 ) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """Add dynamical decoupling sequences and calibrations to circuits.
 
@@ -45,7 +46,11 @@ def add_dynamical_decoupling(
     to run them on an IBM backend.
     """
     pass_manager = PassManager(
-        list(dynamical_decoupling_passes(backend, dd_str, scheduler))
+        list(
+            dynamical_decoupling_passes(
+                backend, dd_str, scheduler, urdd_pulse_num=urdd_pulse_num
+            )
+        )
     )
     if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
         circuits_dd = pass_manager.run(circuits)
