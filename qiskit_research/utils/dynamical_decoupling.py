@@ -43,7 +43,6 @@ Ym = YmGate()
 
 
 DD_SEQUENCE = {
-    "URDD": (),
     "X2": (X, X),
     "X2pm": (Xp, Xm),
     "XY4": (X, Y, X, Y),
@@ -64,12 +63,13 @@ def dynamical_decoupling_passes(
     pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
 
     # import pdb; pdb.set_trace()
-    sequence = DD_SEQUENCE[dd_str]
-    if dd_str == "URDD":
+    if dd_str in DD_SEQUENCE:
+        sequence = DD_SEQUENCE[dd_str]
+    elif dd_str == "URDD":
+        sequence = []
         phis = get_urdd_phis(urdd_pulse_num)
-        sequence = tuple()
         for phi in phis:
-            sequence += PiPhiGate(phi)
+            sequence.append(PiPhiGate(phi))
     yield scheduler(durations)
     yield PadDynamicalDecoupling(
         durations, list(sequence), pulse_alignment=pulse_alignment
