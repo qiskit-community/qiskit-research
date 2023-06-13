@@ -237,8 +237,8 @@ def get_urdd_phis(urdd_pulse_num: int = 4) -> Sequence[float]:
             phi_indices.append(len(unique_phi) - 1)
 
     # construct phi list
-    phis = []
+    phis: List[float] = []
     for idx in phi_indices:
-        phis.append(float(unique_phi[idx]))
+        phis.append(unique_phi[idx])
 
     return phis
