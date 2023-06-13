@@ -200,8 +200,6 @@ def get_urdd_phis(urdd_pulse_num: int = 4) -> Sequence[float]:
         raise ValueError("urdd_pulse_num must be even")
     if urdd_pulse_num < 4:
         raise ValueError("urdd_pulse_num must be >= 4")
-    # phi1 = 0 by convention
-    phis = [0]
 
     # get capital Phi value
     if urdd_pulse_num % 4 == 0:
