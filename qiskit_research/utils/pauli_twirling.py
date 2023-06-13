@@ -57,11 +57,11 @@ TWO_QUBIT_ROTATION_GATES = (
 # "before" and "after" are tuples of single-qubit gates to be applied
 # before and after the gate to be twirled
 TWIRL_GATES = {
-    "secr": {},
-    "rxx": {},
-    "ryy": {},
-    "rzx": {},
-    "rzz": {},
+    "secr": (),
+    "rxx": (),
+    "ryy": (),
+    "rzx": (),
+    "rzz": (),
     "cx": (
         ((I, I), (I, I)),
         ((I, X), (I, X)),
