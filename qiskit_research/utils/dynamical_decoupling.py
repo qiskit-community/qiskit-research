@@ -66,7 +66,7 @@ def dynamical_decoupling_passes(
         sequence = DD_SEQUENCE[dd_str]
     elif dd_str == "URDD":
         phis = get_urdd_phis(urdd_pulse_num)
-        sequence = (PiPhiGate(phi) for phi in phis)
+        sequence = tuple(PiPhiGate(phi) for phi in phis)
     yield scheduler(durations)
     yield PadDynamicalDecoupling(
         durations, list(sequence), pulse_alignment=pulse_alignment
@@ -239,6 +239,6 @@ def get_urdd_phis(urdd_pulse_num: int = 4) -> Sequence[float]:
     # construct phi list
     phis = []
     for idx in phi_indices:
-        phis.append(unique_phi[idx])
+        phis.append(float(unique_phi[idx]))
 
     return phis
