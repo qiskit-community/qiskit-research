@@ -10,7 +10,7 @@
 
 """Convenience functions."""
 
-from typing import Any, Iterable, List, Optional, Union
+from typing import Any, Iterable, List, Optional, overload, Union
 
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit import Gate
@@ -138,13 +138,35 @@ def add_pauli_twirls(
     ]
 
 
+@overload
 def scale_cr_pulses(
-    circuits: Union[QuantumCircuit, List[QuantumCircuit]],
+    circuits: QuantumCircuit,
     backend: Backend,
     unroll_rzx_to_ecr: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
-) -> Union[QuantumCircuit, List[QuantumCircuit]]:
+) -> QuantumCircuit:
+    ...
+
+
+@overload
+def scale_cr_pulses(
+    circuits: List[QuantumCircuit],
+    backend: Backend,
+    unroll_rzx_to_ecr: Optional[bool] = True,
+    force_zz_matches: Optional[bool] = True,
+    param_bind: Optional[dict] = None,
+) -> List[QuantumCircuit]:
+    ...
+
+
+def scale_cr_pulses(
+    circuits,
+    backend,
+    unroll_rzx_to_ecr: Optional[bool] = True,
+    force_zz_matches: Optional[bool] = True,
+    param_bind: Optional[dict] = None,
+):
     """
     Scale circuits using Pulse scaling technique from
     http://arxiv.org/abs/2012.11660. If parameters are
