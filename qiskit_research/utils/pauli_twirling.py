@@ -12,7 +12,6 @@
 
 from typing import Any, Iterable, Optional
 
-from copy import deepcopy
 import numpy as np
 from qiskit.circuit import QuantumRegister
 from qiskit.circuit.library import (
@@ -28,7 +27,6 @@ from qiskit.transpiler.passes import (
     Optimize1qGatesDecomposition,
 )
 from qiskit.quantum_info import Pauli, pauli_basis
-from qiskit_research.utils.gate_decompositions import SECRGate
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 I = IGate()
@@ -95,7 +93,7 @@ class PauliTwirl(TransformationPass):
             seed: Seed for the pseudorandom number generator.
         """
         if gates_to_twirl is None:
-            gates_to_twirl = TWIRL_GATES.keys()
+            gates_to_twirl = (TWIRL_GATES | TWO_QUBIT_PAULI_GENERATORS).keys()
         self.gates_to_twirl = gates_to_twirl
         self.rng = parse_random_seed(seed)
         super().__init__()
@@ -120,15 +118,15 @@ class PauliTwirl(TransformationPass):
                     ):
                         theta *= -1
 
-                    new_op = deepcopy(node.op)
+                    new_op = node.op.copy()
                     new_op.params[0] = theta
 
                     mini_dag.apply_operation_back(this_pauli, [q0, q1])
                     mini_dag.apply_operation_back(new_op, [q0, q1])
-                    if isinstance(node.op, SECRGate):
+                    if node.op.name == "secr":
                         mini_dag.apply_operation_back(X, [q0])
                     mini_dag.apply_operation_back(this_pauli, [q0, q1])
-                    if isinstance(node.op, SECRGate):
+                    if node.op.name == "secr":
                         mini_dag.apply_operation_back(X, [q0])
 
                     dag.substitute_node_with_dag(node, mini_dag, wires=[q0, q1])
