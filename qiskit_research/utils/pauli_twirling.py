@@ -93,7 +93,7 @@ class PauliTwirl(TransformationPass):
             seed: Seed for the pseudorandom number generator.
         """
         if gates_to_twirl is None:
-            gates_to_twirl = [*(TWIRL_GATES | TWO_QUBIT_PAULI_GENERATORS).keys()]
+            gates_to_twirl = TWIRL_GATES.keys() | TWO_QUBIT_PAULI_GENERATORS.keys()
         self.gates_to_twirl = gates_to_twirl
         self.rng = parse_random_seed(seed)
         super().__init__()
