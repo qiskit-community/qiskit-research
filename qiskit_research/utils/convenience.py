@@ -140,23 +140,23 @@ def add_pauli_twirls(
 
 @overload
 def scale_cr_pulses(
-    circuits: QuantumCircuit,
-    backend: Backend,
-    unroll_rzx_to_ecr: Optional[bool] = True,
-    force_zz_matches: Optional[bool] = True,
-    param_bind: Optional[dict] = None,
-) -> QuantumCircuit:
-    ...
-
-
-@overload
-def scale_cr_pulses(
     circuits: List[QuantumCircuit],
     backend: Backend,
     unroll_rzx_to_ecr: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
 ) -> List[QuantumCircuit]:
+    ...
+
+
+@overload
+def scale_cr_pulses(
+    circuits: QuantumCircuit,
+    backend: Backend,
+    unroll_rzx_to_ecr: Optional[bool] = True,
+    force_zz_matches: Optional[bool] = True,
+    param_bind: Optional[dict] = None,
+) -> QuantumCircuit:
     ...
 
 
