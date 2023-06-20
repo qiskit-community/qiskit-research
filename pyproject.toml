@@ -42,7 +42,7 @@ dev = [
     "ddt~=1.5",
     "importlib_metadata",
     "ipywidgets",
-    "mypy==0.961",
+    "mypy==1.3.0",
     "jupyter-sphinx",
     "matplotlib",
     "nbmake",

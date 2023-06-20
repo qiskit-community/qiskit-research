@@ -14,19 +14,34 @@ from typing import Any, Iterable, Optional
 
 import numpy as np
 from qiskit.circuit import QuantumRegister
-from qiskit.circuit.library import IGate, XGate, YGate, ZGate
+from qiskit.circuit.library import (
+    IGate,
+    XGate,
+    YGate,
+    ZGate,
+)
 from qiskit.dagcircuit import DAGCircuit
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.passes import (
     CXCancellation,
     Optimize1qGatesDecomposition,
 )
+from qiskit.quantum_info import Pauli, pauli_basis
 from qiskit_research.utils.pulse_scaling import BASIS_GATES
 
 I = IGate()
 X = XGate()
 Y = YGate()
 Z = ZGate()
+
+# this list consists of the 2-qubit rotation gates
+TWO_QUBIT_PAULI_GENERATORS = {
+    "rxx": Pauli("XX"),
+    "ryy": Pauli("YY"),
+    "rzx": Pauli("XZ"),
+    "rzz": Pauli("ZZ"),
+    "secr": Pauli("XZ"),
+}
 
 # this dictionary stores the twirl sets for each supported gate
 # each key is the name of a supported gate
@@ -35,24 +50,6 @@ Z = ZGate()
 # "before" and "after" are tuples of single-qubit gates to be applied
 # before and after the gate to be twirled
 TWIRL_GATES = {
-    "rzx": (
-        ((I, I), (I, I)),
-        ((X, Z), (X, Z)),
-        ((Y, Y), (Y, Y)),
-        ((Z, X), (Z, X)),
-    ),
-    "secr": (
-        ((I, I), (I, I)),
-        ((X, Z), (X, Z)),
-        ((X, Y), (X, Y)),
-        ((Z, Z), (Z, Z)),
-    ),
-    "rzz": (
-        ((I, I), (I, I)),
-        ((X, X), (X, X)),
-        ((Y, Y), (Y, Y)),
-        ((Z, Z), (Z, Z)),
-    ),
     "cx": (
         ((I, I), (I, I)),
         ((I, X), (I, X)),
@@ -96,7 +93,7 @@ class PauliTwirl(TransformationPass):
             seed: Seed for the pseudorandom number generator.
         """
         if gates_to_twirl is None:
-            gates_to_twirl = TWIRL_GATES.keys()
+            gates_to_twirl = TWIRL_GATES.keys() | TWO_QUBIT_PAULI_GENERATORS.keys()
         self.gates_to_twirl = gates_to_twirl
         self.rng = parse_random_seed(seed)
         super().__init__()
@@ -107,19 +104,49 @@ class PauliTwirl(TransformationPass):
     ) -> DAGCircuit:
         for run in dag.collect_runs(list(self.gates_to_twirl)):
             for node in run:
-                twirl_gates = TWIRL_GATES[node.op.name]
-                (before0, before1), (after0, after1) = twirl_gates[
-                    self.rng.integers(len(twirl_gates))
-                ]
-                mini_dag = DAGCircuit()
-                register = QuantumRegister(2)
-                mini_dag.add_qreg(register)
-                mini_dag.apply_operation_back(before0, [register[0]])
-                mini_dag.apply_operation_back(before1, [register[1]])
-                mini_dag.apply_operation_back(node.op, [register[0], register[1]])
-                mini_dag.apply_operation_back(after0, [register[0]])
-                mini_dag.apply_operation_back(after1, [register[1]])
-                dag.substitute_node_with_dag(node, mini_dag)
+                if node.op.name in TWO_QUBIT_PAULI_GENERATORS:
+                    mini_dag = DAGCircuit()
+                    q0, q1 = node.qargs
+                    mini_dag.add_qreg(q0.register)
+
+                    theta = node.op.params[0]
+                    this_pauli = Pauli(
+                        self.rng.choice(pauli_basis(2).to_labels())
+                    ).to_instruction()
+                    if TWO_QUBIT_PAULI_GENERATORS[node.op.name].anticommutes(
+                        this_pauli
+                    ):
+                        theta *= -1
+
+                    new_op = node.op.copy()
+                    new_op.params[0] = theta
+
+                    mini_dag.apply_operation_back(this_pauli, [q0, q1])
+                    mini_dag.apply_operation_back(new_op, [q0, q1])
+                    if node.op.name == "secr":
+                        mini_dag.apply_operation_back(X, [q0])
+                    mini_dag.apply_operation_back(this_pauli, [q0, q1])
+                    if node.op.name == "secr":
+                        mini_dag.apply_operation_back(X, [q0])
+
+                    dag.substitute_node_with_dag(node, mini_dag, wires=[q0, q1])
+
+                elif node.op.name in TWIRL_GATES:
+                    twirl_gates = TWIRL_GATES[node.op.name]
+                    (before0, before1), (after0, after1) = twirl_gates[
+                        self.rng.integers(len(twirl_gates))
+                    ]
+                    mini_dag = DAGCircuit()
+                    register = QuantumRegister(2)
+                    mini_dag.add_qreg(register)
+                    mini_dag.apply_operation_back(before0, [register[0]])
+                    mini_dag.apply_operation_back(before1, [register[1]])
+                    mini_dag.apply_operation_back(node.op, [register[0], register[1]])
+                    mini_dag.apply_operation_back(after0, [register[0]])
+                    mini_dag.apply_operation_back(after1, [register[1]])
+                    dag.substitute_node_with_dag(node, mini_dag)
+                else:
+                    raise TypeError(f"Unknown how to twirl Instruction {node.op}.")
         return dag
 
 
