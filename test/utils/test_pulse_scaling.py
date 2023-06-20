@@ -12,10 +12,13 @@
 
 import unittest
 
+from ddt import data, ddt
+
 import numpy as np
 from qiskit import schedule
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.converters import circuit_to_dag
+from qiskit.providers import Backend
 from qiskit.providers.fake_provider import FakeMumbai
 from qiskit.pulse import Play
 from qiskit.quantum_info import Operator
@@ -30,12 +33,13 @@ from qiskit_research.utils.pulse_scaling import (
 )
 
 
+@ddt
 class TestPulseScaling(unittest.TestCase):
     """Test pulse scaling."""
 
-    def test_rzx_to_secr_forward(self):
+    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    def test_rzx_to_secr_forward(self, backend: Backend):
         """Test pulse scaling RZX with forward SECR."""
-        backend = FakeMumbai()
         rng = np.random.default_rng()
 
         JJ = Parameter("$J$")
@@ -63,9 +67,9 @@ class TestPulseScaling(unittest.TestCase):
 
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    def test_rzx_to_secr_reverse(self):
+    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    def test_rzx_to_secr_reverse(self, backend: Backend):
         """Test pulse scaling RZX with reverse SECR."""
-        backend = FakeMumbai()
         rng = np.random.default_rng()
 
         JJ = Parameter("$J$")
@@ -94,9 +98,9 @@ class TestPulseScaling(unittest.TestCase):
 
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    def test_rzx_to_secr(self):
+    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    def test_rzx_to_secr(self, backend: Backend):
         """Test pulse scaling with RZX gates."""
-        backend = FakeMumbai()
         rng = np.random.default_rng()
         theta = rng.uniform(-np.pi, np.pi)
 
@@ -112,9 +116,9 @@ class TestPulseScaling(unittest.TestCase):
         scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True, param_bind={})
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    def test_forced_rzz_template_match(self):
+    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    def test_forced_rzz_template_match(self, backend: Backend):
         """Test forced template optimization for CX-RZ(1)-CX matches"""
-        backend = FakeMumbai()
         theta = Parameter("$\\theta$")
         rng = np.random.default_rng(12345)
 
@@ -167,14 +171,14 @@ class TestPulseScaling(unittest.TestCase):
         self.assertAlmostEqual(qc2_s.data[0].operation.params[0], -1.9822971502571)
         self.assertAlmostEqual(qc3_s.data[0].operation.params[0], -np.pi)
 
-    def test_secr_calibration_builder(self):
+    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    def test_secr_calibration_builder(self, backend: Backend):
         """
         Test SECR Calibration Builder
 
         Note the circuit must first pass through the RZXtoEchoedCR pass to correct
         for the direction of the native CR operation.
         """
-        backend = FakeMumbai()
         inst_sched_map = backend.defaults().instruction_schedule_map
         ctrl_chans = backend.configuration().control_channels
 
