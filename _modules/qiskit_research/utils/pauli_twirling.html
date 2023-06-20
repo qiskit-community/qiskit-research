@@ -51,19 +51,34 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">QuantumRegister</span>
-<span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">IGate</span><span class="p">,</span> <span class="n">XGate</span><span class="p">,</span> <span class="n">YGate</span><span class="p">,</span> <span class="n">ZGate</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">IGate</span><span class="p">,</span>
+    <span class="n">XGate</span><span class="p">,</span>
+    <span class="n">YGate</span><span class="p">,</span>
+    <span class="n">ZGate</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span><span class="p">,</span> <span class="n">TransformationPass</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">CXCancellation</span><span class="p">,</span>
     <span class="n">Optimize1qGatesDecomposition</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">qiskit.quantum_info</span> <span class="kn">import</span> <span class="n">Pauli</span><span class="p">,</span> <span class="n">pauli_basis</span>
 <span class="kn">from</span> <span class="nn">qiskit_research.utils.pulse_scaling</span> <span class="kn">import</span> <span class="n">BASIS_GATES</span>
 
 <span class="n">I</span> <span class="o">=</span> <span class="n">IGate</span><span class="p">()</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">XGate</span><span class="p">()</span>
 <span class="n">Y</span> <span class="o">=</span> <span class="n">YGate</span><span class="p">()</span>
 <span class="n">Z</span> <span class="o">=</span> <span class="n">ZGate</span><span class="p">()</span>
+
+<span class="c1"># this list consists of the 2-qubit rotation gates</span>
+<span class="n">TWO_QUBIT_PAULI_GENERATORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;rxx&quot;</span><span class="p">:</span> <span class="n">Pauli</span><span class="p">(</span><span class="s2">&quot;XX&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;ryy&quot;</span><span class="p">:</span> <span class="n">Pauli</span><span class="p">(</span><span class="s2">&quot;YY&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;rzx&quot;</span><span class="p">:</span> <span class="n">Pauli</span><span class="p">(</span><span class="s2">&quot;XZ&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;rzz&quot;</span><span class="p">:</span> <span class="n">Pauli</span><span class="p">(</span><span class="s2">&quot;ZZ&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;secr&quot;</span><span class="p">:</span> <span class="n">Pauli</span><span class="p">(</span><span class="s2">&quot;XZ&quot;</span><span class="p">),</span>
+<span class="p">}</span>
 
 <span class="c1"># this dictionary stores the twirl sets for each supported gate</span>
 <span class="c1"># each key is the name of a supported gate</span>
@@ -72,24 +87,6 @@
 <span class="c1"># &quot;before&quot; and &quot;after&quot; are tuples of single-qubit gates to be applied</span>
 <span class="c1"># before and after the gate to be twirled</span>
 <span class="n">TWIRL_GATES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;rzx&quot;</span><span class="p">:</span> <span class="p">(</span>
-        <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Y</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Z</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
-    <span class="p">),</span>
-    <span class="s2">&quot;secr&quot;</span><span class="p">:</span> <span class="p">(</span>
-        <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Z</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-    <span class="p">),</span>
-    <span class="s2">&quot;rzz&quot;</span><span class="p">:</span> <span class="p">(</span>
-        <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Y</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Z</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-    <span class="p">),</span>
     <span class="s2">&quot;cx&quot;</span><span class="p">:</span> <span class="p">(</span>
         <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
         <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
@@ -133,7 +130,7 @@
 <span class="sd">            seed: Seed for the pseudorandom number generator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">gates_to_twirl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">gates_to_twirl</span> <span class="o">=</span> <span class="n">TWIRL_GATES</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="n">gates_to_twirl</span> <span class="o">=</span> <span class="n">TWIRL_GATES</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">|</span> <span class="n">TWO_QUBIT_PAULI_GENERATORS</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gates_to_twirl</span> <span class="o">=</span> <span class="n">gates_to_twirl</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">parse_random_seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -144,19 +141,49 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gates_to_twirl</span><span class="p">)):</span>
             <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">run</span><span class="p">:</span>
-                <span class="n">twirl_gates</span> <span class="o">=</span> <span class="n">TWIRL_GATES</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
-                <span class="p">(</span><span class="n">before0</span><span class="p">,</span> <span class="n">before1</span><span class="p">),</span> <span class="p">(</span><span class="n">after0</span><span class="p">,</span> <span class="n">after1</span><span class="p">)</span> <span class="o">=</span> <span class="n">twirl_gates</span><span class="p">[</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">twirl_gates</span><span class="p">))</span>
-                <span class="p">]</span>
-                <span class="n">mini_dag</span> <span class="o">=</span> <span class="n">DAGCircuit</span><span class="p">()</span>
-                <span class="n">register</span> <span class="o">=</span> <span class="n">QuantumRegister</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-                <span class="n">mini_dag</span><span class="o">.</span><span class="n">add_qreg</span><span class="p">(</span><span class="n">register</span><span class="p">)</span>
-                <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">before0</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-                <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">before1</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
-                <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">register</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
-                <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">after0</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
-                <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">after1</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
-                <span class="n">dag</span><span class="o">.</span><span class="n">substitute_node_with_dag</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mini_dag</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">TWO_QUBIT_PAULI_GENERATORS</span><span class="p">:</span>
+                    <span class="n">mini_dag</span> <span class="o">=</span> <span class="n">DAGCircuit</span><span class="p">()</span>
+                    <span class="n">q0</span><span class="p">,</span> <span class="n">q1</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">qargs</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">add_qreg</span><span class="p">(</span><span class="n">q0</span><span class="o">.</span><span class="n">register</span><span class="p">)</span>
+
+                    <span class="n">theta</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">this_pauli</span> <span class="o">=</span> <span class="n">Pauli</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">pauli_basis</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_labels</span><span class="p">())</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">to_instruction</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">TWO_QUBIT_PAULI_GENERATORS</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">anticommutes</span><span class="p">(</span>
+                        <span class="n">this_pauli</span>
+                    <span class="p">):</span>
+                        <span class="n">theta</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+
+                    <span class="n">new_op</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">new_op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">theta</span>
+
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">this_pauli</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">])</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">new_op</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;secr&quot;</span><span class="p">:</span>
+                        <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">])</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">this_pauli</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;secr&quot;</span><span class="p">:</span>
+                        <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">[</span><span class="n">q0</span><span class="p">])</span>
+
+                    <span class="n">dag</span><span class="o">.</span><span class="n">substitute_node_with_dag</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mini_dag</span><span class="p">,</span> <span class="n">wires</span><span class="o">=</span><span class="p">[</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">])</span>
+
+                <span class="k">elif</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">TWIRL_GATES</span><span class="p">:</span>
+                    <span class="n">twirl_gates</span> <span class="o">=</span> <span class="n">TWIRL_GATES</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                    <span class="p">(</span><span class="n">before0</span><span class="p">,</span> <span class="n">before1</span><span class="p">),</span> <span class="p">(</span><span class="n">after0</span><span class="p">,</span> <span class="n">after1</span><span class="p">)</span> <span class="o">=</span> <span class="n">twirl_gates</span><span class="p">[</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">integers</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">twirl_gates</span><span class="p">))</span>
+                    <span class="p">]</span>
+                    <span class="n">mini_dag</span> <span class="o">=</span> <span class="n">DAGCircuit</span><span class="p">()</span>
+                    <span class="n">register</span> <span class="o">=</span> <span class="n">QuantumRegister</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">add_qreg</span><span class="p">(</span><span class="n">register</span><span class="p">)</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">before0</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">before1</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">register</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">after0</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">apply_operation_back</span><span class="p">(</span><span class="n">after1</span><span class="p">,</span> <span class="p">[</span><span class="n">register</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                    <span class="n">dag</span><span class="o">.</span><span class="n">substitute_node_with_dag</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">mini_dag</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown how to twirl Instruction </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">dag</span></div></div>
 
 
