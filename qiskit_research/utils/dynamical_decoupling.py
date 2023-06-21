@@ -285,7 +285,7 @@ def get_urdd_angles(num_pulses: int = 4) -> Sequence[float]:
             phi_indices.append(len(unique_phi) - 1)
 
     # construct phi list
-    phis: List[float] = []
+    phis: list[float] = []
     for idx in phi_indices:
         phis.append(unique_phi[idx])
 

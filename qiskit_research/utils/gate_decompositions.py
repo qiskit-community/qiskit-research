@@ -55,7 +55,7 @@ def cr_forward_direction(
     elif inst_sched_map.has("ecr", qubits=[target, control]):
         return False
     else:
-        raise QiskitError(f"{repr(cr_sched)} native direction cannot be determined.")
+        raise QiskitError(f"Native direction cannot be determined between qubits {control} and {target}.")
     cr_ctrl_chan = (
         cr_sched.filter(
             channels=[
