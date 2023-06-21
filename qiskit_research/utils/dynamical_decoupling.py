@@ -17,8 +17,9 @@ from typing import Iterable, List, Optional, Sequence, Union
 from qiskit import QuantumCircuit, pulse
 from qiskit.circuit import Gate
 from qiskit.circuit.library import XGate, YGate
+from qiskit.converters import circuit_to_dag
 from qiskit.providers.backend import Backend
-from qiskit.pulse import Drag
+from qiskit.pulse import Drag, Waveform
 from qiskit.qasm import pi
 from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
@@ -58,14 +59,26 @@ def dynamical_decoupling_passes(
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
     urdd_pulse_num: int = 4,
 ) -> Iterable[BasePass]:
-    """Yields transpilation passes for dynamical decoupling."""
+    """
+    Yield transpilation passes for dynamical decoupling.
+
+    Args:
+        backend (Backend): Backend to run on; gate timing is required for this method.
+        dd_str (str): String describing DD sequence to use.
+        scheduler (BaseScheduler, optional): Scheduler, defaults to ALAPScheduleAnalysis.
+        urdd_pulse_num (int, optional): URDD pulse number must be even and at least 4.
+            Defaults to 4.
+
+    Yields:
+        Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.
+    """
     durations = get_instruction_durations(backend)
     pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
 
     if dd_str in DD_SEQUENCE:
         sequence = DD_SEQUENCE[dd_str]
     elif dd_str == "URDD":
-        phis = get_urdd_phis(urdd_pulse_num)
+        phis = get_urdd_angles(urdd_pulse_num)
         sequence = tuple(PiPhiGate(phi) for phi in phis)
     yield scheduler(durations)
     yield PadDynamicalDecoupling(
@@ -141,6 +154,7 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
 def add_pulse_calibrations(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Backend,
+    urdd_pulse_method: str = "phase_shift",
 ) -> None:
     """Add pulse calibrations for custom gates to circuits in-place."""
     inst_sched_map = backend.defaults().instruction_schedule_map
@@ -193,20 +207,56 @@ def add_pulse_calibrations(
             for circ in circuits:
                 circ.add_calibration("ym", [qubit], sched)
 
+    for circuit in circuits:
+        dag = circuit_to_dag(circuit)
+        for run in dag.collect_runs(["\\pi_{\\phi}"]):
+            for node in run:
+                qubit = node.qargs[0].index
+                phi = node.op.params[0]
+                x_sched = inst_sched_map.get("x", qubits=[qubit])
+                _, x_instruction = x_sched.instructions[0]
 
-def get_urdd_phis(urdd_pulse_num: int = 4) -> Sequence[float]:
+                with pulse.build(f"PiPhi gate for qubit {qubit}") as sched:
+                    if urdd_pulse_method == "phase_shift":
+                        with pulse.phase_offset(phi, x_instruction.channel):
+                            pulse.play(x_instruction.pulse, x_instruction.channel)
+                    elif urdd_pulse_method == "amp_flip":
+                        amp_flip_pulse = Drag(
+                            duration=x_instruction.pulse.duration,
+                            amp=(-1) ** (phi // (pi / 2)) * x_instruction.pulse.amp,
+                            sigma=x_instruction.pulse.sigma,
+                            beta=(-1) ** (phi // (pi / 2)) * x_instruction.pulse.beta,
+                        )
+                        phi %= pi / 2
+                        with pulse.phase_offset(phi, x_instruction.channel):
+                            pulse.play(amp_flip_pulse, x_instruction.channel)
+                    elif urdd_pulse_method == "complex_sum":
+                        wf_array = x_instruction.pulse.get_waveform().samples
+                        iq_waveform = Waveform(
+                            wf_array * (np.cos(phi) + 1j * np.sin(phi))
+                        )
+                        pulse.play(iq_waveform, x_instruction.channel)
+                    else:
+                        raise ValueError(
+                            f"{urdd_pulse_method} not a valid URDD pulse calibration type."
+                        )
+
+                circuit.add_calibration(r"\\pi_{\\phi}", [qubit], sched, params=[phi])
+
+
+def get_urdd_angles(num_pulses: int = 4) -> Sequence[float]:
     """Gets \\phi_k values for n pulse UR sequence"""
-    if urdd_pulse_num % 2 == 1:
-        raise ValueError("urdd_pulse_num must be even")
-    if urdd_pulse_num < 4:
-        raise ValueError("urdd_pulse_num must be >= 4")
+    if num_pulses % 2 == 1:
+        raise ValueError("num_pulses must be even")
+    if num_pulses < 4:
+        raise ValueError("num_pulses must be >= 4")
 
     # get capital Phi value
-    if urdd_pulse_num % 4 == 0:
-        m_divisor = int(urdd_pulse_num / 4)
+    if num_pulses % 4 == 0:
+        m_divisor = int(num_pulses / 4)
         big_phi = np.pi / m_divisor
     else:
-        m_divisor = int((urdd_pulse_num - 2) / 4)
+        m_divisor = int((num_pulses - 2) / 4)
         big_phi = (2 * m_divisor * np.pi) / (2 * m_divisor + 1)
 
     # keep track of unique phi added; we choose phi2 = big_phi by convention--
@@ -215,7 +265,7 @@ def get_urdd_phis(urdd_pulse_num: int = 4) -> Sequence[float]:
     # map each phi in [phis] to location (by index) of corresponding [unique_phi]
     phi_indices = [0, 1]
     # populate remaining phi values
-    for kk in range(3, urdd_pulse_num + 1):
+    for kk in range(3, num_pulses + 1):
         phi_k = (kk * (kk - 1) * big_phi) / 2
         # values only matter modulo 2 pi
         phi_k = (phi_k) % (2 * np.pi)

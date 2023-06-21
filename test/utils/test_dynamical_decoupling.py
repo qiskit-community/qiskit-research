@@ -60,14 +60,24 @@ class TestDynamicalDecoupling(unittest.TestCase):
         backend = FakeWashington()
         transpiled = transpile(circuit, backend)
         transpiled_urdd4 = add_dynamical_decoupling(
-            transpiled, backend, "URDD", add_pulse_cals=True, urdd_pulse_num=4
+            transpiled,
+            backend,
+            "URDD",
+            add_pulse_cals=True,
+            urdd_pulse_num=4,
+            urdd_pulse_method="amp_flip",
         )
         self.assertIsInstance(transpiled_urdd4, QuantumCircuit)
         self.assertIn("\\pi_{\\phi}", transpiled_urdd4.count_ops())
         self.assertEqual(transpiled_urdd4.count_ops()["\\pi_{\\phi}"] % 4, 0)
 
         transpiled_urdd8 = add_dynamical_decoupling(
-            transpiled, backend, "URDD", add_pulse_cals=True, urdd_pulse_num=8
+            transpiled,
+            backend,
+            "URDD",
+            add_pulse_cals=True,
+            urdd_pulse_num=8,
+            urdd_pulse_method="complex_sum",
         )
         self.assertIsInstance(transpiled_urdd8, QuantumCircuit)
         self.assertIn("\\pi_{\\phi}", transpiled_urdd8.count_ops())

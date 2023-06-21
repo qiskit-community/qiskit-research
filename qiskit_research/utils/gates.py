@@ -141,7 +141,11 @@ class PiPhiGate(Gate):
     with an angle :math:`\\phi` relative to the X-axis.
     """
 
-    def __init__(self, phi: ParameterValueType, label: Optional[str] = None):
+    def __init__(
+        self,
+        phi: ParameterValueType,
+        label: Optional[str] = None,
+    ):
         """Create new PiPhi gate."""
         super().__init__("\\pi_{\\phi}", 1, [phi], label=label)
         self.phi = phi
@@ -149,19 +153,18 @@ class PiPhiGate(Gate):
     def _define(self):
         q = QuantumRegister(1, "q")
         qc = QuantumCircuit(q, name=self.name)
-        # rules = [(U3Gate(pi, pi / 2, pi / 2), [q[0]], [])] # FIX
         rules = [
             (RZGate(self.phi), [q[0], []]),
             (XGate(), [q[0]], []),
             (RZGate(-self.phi), [q[0]], []),
-        ]  # maybe this is right
+        ]
         for instr, qargs, cargs in rules:
             qc.append(instr, qargs, cargs)
 
         self.definition = qc
 
     def inverse(self):
-        r"""Return inverted Ym gate (:math:`Y{\dagger} = Y`)"""
+        r"""Return inverted PiPhi gate (:math:`\pi_\phi{\dagger}(\phi) = \pi_\phi(-\phi)`)"""
         return PiPhiGate(-self.phi)  # self-inverse
 
     def __array__(self, dtype=None):

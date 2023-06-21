@@ -18,6 +18,7 @@ from qiskit.circuit.library import RZZGate, XXMinusYYGate, XXPlusYYGate
 from qiskit.quantum_info import Operator
 from qiskit.transpiler import PassManager
 
+from qiskit_research.utils.gates import PiPhiGate
 from qiskit_research.utils.gate_decompositions import (
     ControlledRZZToCX,
     RZXWeylDecomposition,
@@ -85,3 +86,13 @@ class TestPasses(unittest.TestCase):
         self.assertNotIn("rzz", qc_w.count_ops())
         self.assertIn("rzx", qc_w.count_ops())
         self.assertTrue(np.allclose(Operator(qc), Operator(qc_w), atol=1e-8))
+
+    def test_piphi_definition(self):
+        """Test PiPhi Definition and Decomposition"""
+
+        rng = np.random.default_rng()
+        phi = rng.uniform(-np.pi, np.pi)
+        qc = QuantumCircuit(1)
+        qc.append(PiPhiGate(phi), [0])
+
+        self.assertTrue(Operator(qc).equiv(PiPhiGate(phi).to_matrix()))
