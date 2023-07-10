@@ -137,8 +137,11 @@ class YmGate(Gate):
 
 
 class PiPhiGate(Gate):
-    r"""The single-qubit X gate (:math:`\sigma_x`), implemented
-    with an angle :math:`\\phi` relative to the X-axis.
+    r"""
+    Rotated X gate.
+
+    The 180-degree rotation about an axis offset by an angle :math:`\\phi` relative
+    to the X-axis in the XY-plane of the Bloch sphere.
     """
 
     def __init__(
@@ -147,7 +150,7 @@ class PiPhiGate(Gate):
         label: Optional[str] = None,
     ):
         """Create new PiPhi gate."""
-        super().__init__("\\pi_{\\phi}", 1, [phi], label=label)
+        super().__init__("pi_phi", 1, [phi], label=label)
         self.phi = phi
 
     def _define(self):

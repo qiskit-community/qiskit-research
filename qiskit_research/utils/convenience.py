@@ -29,7 +29,10 @@ from qiskit_research.utils import (
     pulse_attaching_passes,
     add_pulse_calibrations,
 )
-from qiskit_research.utils.dynamical_decoupling import periodic_dynamical_decoupling
+from qiskit_research.utils.dynamical_decoupling import (
+    periodic_dynamical_decoupling,
+    PulseMethod,
+)
 
 
 def add_dynamical_decoupling(
@@ -39,7 +42,7 @@ def add_dynamical_decoupling(
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
     add_pulse_cals: bool = False,
     urdd_pulse_num: int = 4,
-    urdd_pulse_method: Optional[str] = "phase_shift",
+    pulse_method: PulseMethod = PulseMethod.PHASESHIFT,
 ) -> Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]:
     """Add dynamical decoupling sequences and calibrations to circuits.
 
@@ -56,7 +59,7 @@ def add_dynamical_decoupling(
             gates? Defaults to False.
         urdd_pulse_num (int, optional): URDD pulse number must be even and at least 4.
             Defaults to 4.
-        urdd_pulse_method (Optional[str], optional): Pulse calibration method for URDD
+        pulse_method (Optional[str], optional): Pulse calibration method for URDD
             sequences (if add_pulse cals). Defaults to "phase_shift".
 
     Returns:
@@ -75,16 +78,12 @@ def add_dynamical_decoupling(
     if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
         circuits_dd = pass_manager.run(circuits)
         if add_pulse_cals:
-            add_pulse_calibrations(
-                circuits_dd, backend, urdd_pulse_method=urdd_pulse_method
-            )
+            add_pulse_calibrations(circuits_dd, backend, pulse_method=pulse_method)
     else:
         circuits_dd = [pass_manager.run(circs) for circs in circuits]
         if add_pulse_cals:
             for circs_dd in circuits_dd:
-                add_pulse_calibrations(
-                    circs_dd, backend, urdd_pulse_method=urdd_pulse_method
-                )
+                add_pulse_calibrations(circs_dd, backend, pulse_method=pulse_method)
 
     return circuits_dd
 

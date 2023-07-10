@@ -12,6 +12,8 @@
 
 from __future__ import annotations
 
+from enum import Enum
+
 from typing import Iterable, List, Optional, Sequence, Union
 
 from qiskit import QuantumCircuit, pulse
@@ -51,6 +53,15 @@ DD_SEQUENCE = {
     "XY8": (X, Y, X, Y, Y, X, Y, X),
     "XY8pm": (Xp, Yp, Xm, Ym, Ym, Xm, Yp, Xp),
 }
+
+
+class PulseMethod(Enum):
+    """Class for enumerating way of implementing custom gates."""
+
+    GATEBASED = "decompose operation into standard gates"
+    PHASESHIFT = "pulse implementation with phase-offset pulses"
+    AMPLITUDEINVERT = "pulse implementation with positive/negative amplitudes"
+    IQSUM = "complex sum of signals with no phase offset"
 
 
 def dynamical_decoupling_passes(
@@ -137,7 +148,7 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
 
             # create DD pulses from CR echo 'x' pulse
             if inst_str == "x":
-                for new_gate in ["xp", "xm", "y", "yp", "ym", "\\pi_{\\phi}"]:
+                for new_gate in ["xp", "xm", "y", "yp", "ym", "pi_phi"]:
                     inst_durs.append((new_gate, qubit, inst.duration))
 
     # two qubit gates
@@ -154,9 +165,22 @@ def get_instruction_durations(backend: Backend) -> InstructionDurations:
 def add_pulse_calibrations(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
     backend: Backend,
-    urdd_pulse_method: str = "phase_shift",
+    pulse_method: PulseMethod = PulseMethod.PHASESHIFT,
 ) -> None:
-    """Add pulse calibrations for custom gates to circuits in-place."""
+    """
+    Add pulse calibrations for custom gates to circuits in-place.
+
+    Args:
+        circuits (Union[QuantumCircuit, List[QuantumCircuit]]): Circuits which need pulse schedules
+            attached to the non-basis gates.
+        backend (Backend): Backend from which pulse information is obtained.
+        pulse_method (PulseMethod, optional): Exact method of implemeting pulse schedules given by
+            PulseMethod enumeration. These should all be equivalent but in practice they may differ.
+            Defaults to PulseMethod.PHASESHIFT.
+
+    Raises:
+        ValueError: Not a defined method for implementing pulse schedules for URDD gates.
+    """
     inst_sched_map = backend.defaults().instruction_schedule_map
     num_qubits = backend.configuration().num_qubits
 
@@ -209,7 +233,7 @@ def add_pulse_calibrations(
 
     for circuit in circuits:
         dag = circuit_to_dag(circuit)
-        for run in dag.collect_runs(["\\pi_{\\phi}"]):
+        for run in dag.collect_runs(["pi_phi"]):
             for node in run:
                 qubit = node.qargs[0].index
                 phi = node.op.params[0]
@@ -217,10 +241,10 @@ def add_pulse_calibrations(
                 _, x_instruction = x_sched.instructions[0]
 
                 with pulse.build(f"PiPhi gate for qubit {qubit}") as sched:
-                    if urdd_pulse_method == "phase_shift":
+                    if pulse_method == PulseMethod.PHASESHIFT:
                         with pulse.phase_offset(phi, x_instruction.channel):
                             pulse.play(x_instruction.pulse, x_instruction.channel)
-                    elif urdd_pulse_method == "amp_flip":
+                    elif pulse_method == PulseMethod.AMPLITUDEINVERT:
                         amp_flip_pulse = Drag(
                             duration=x_instruction.pulse.duration,
                             amp=(-1) ** (phi // (pi / 2)) * x_instruction.pulse.amp,
@@ -230,7 +254,7 @@ def add_pulse_calibrations(
                         phi %= pi / 2
                         with pulse.phase_offset(phi, x_instruction.channel):
                             pulse.play(amp_flip_pulse, x_instruction.channel)
-                    elif urdd_pulse_method == "complex_sum":
+                    elif pulse_method == PulseMethod.IQSUM:
                         wf_array = x_instruction.pulse.get_waveform().samples
                         iq_waveform = Waveform(
                             wf_array * (np.cos(phi) + 1j * np.sin(phi))
@@ -238,10 +262,10 @@ def add_pulse_calibrations(
                         pulse.play(iq_waveform, x_instruction.channel)
                     else:
                         raise ValueError(
-                            f"{urdd_pulse_method} not a valid URDD pulse calibration type."
+                            f"{pulse_method} not a valid URDD pulse calibration type."
                         )
 
-                circuit.add_calibration(r"\\pi_{\\phi}", [qubit], sched, params=[phi])
+                circuit.add_calibration("pi_phi", [qubit], sched, params=[phi])
 
 
 def get_urdd_angles(num_pulses: int = 4) -> Sequence[float]:

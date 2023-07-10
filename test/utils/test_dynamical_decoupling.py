@@ -19,6 +19,7 @@ from qiskit_research.utils.convenience import (
     add_dynamical_decoupling,
     add_pulse_calibrations,
 )
+from qiskit_research.utils.dynamical_decoupling import PulseMethod
 
 
 class TestDynamicalDecoupling(unittest.TestCase):
@@ -65,11 +66,11 @@ class TestDynamicalDecoupling(unittest.TestCase):
             "URDD",
             add_pulse_cals=True,
             urdd_pulse_num=4,
-            urdd_pulse_method="amp_flip",
+            pulse_method=PulseMethod.AMPLITUDEINVERT,
         )
         self.assertIsInstance(transpiled_urdd4, QuantumCircuit)
-        self.assertIn("\\pi_{\\phi}", transpiled_urdd4.count_ops())
-        self.assertEqual(transpiled_urdd4.count_ops()["\\pi_{\\phi}"] % 4, 0)
+        self.assertIn("pi_phi", transpiled_urdd4.count_ops())
+        self.assertEqual(transpiled_urdd4.count_ops()["pi_phi"] % 4, 0)
 
         transpiled_urdd8 = add_dynamical_decoupling(
             transpiled,
@@ -77,11 +78,11 @@ class TestDynamicalDecoupling(unittest.TestCase):
             "URDD",
             add_pulse_cals=True,
             urdd_pulse_num=8,
-            urdd_pulse_method="complex_sum",
+            pulse_method=PulseMethod.IQSUM,
         )
         self.assertIsInstance(transpiled_urdd8, QuantumCircuit)
-        self.assertIn("\\pi_{\\phi}", transpiled_urdd8.count_ops())
-        self.assertEqual(transpiled_urdd8.count_ops()["\\pi_{\\phi}"] % 8, 0)
+        self.assertIn("pi_phi", transpiled_urdd8.count_ops())
+        self.assertEqual(transpiled_urdd8.count_ops()["pi_phi"] % 8, 0)
 
     def test_add_pulse_calibrations(self):
         """Test adding dynamical decoupling."""
