@@ -17,7 +17,7 @@ from typing import Optional
 import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
-from qiskit.circuit.library import RZXGate, U3Gate, XGate
+from qiskit.circuit.library import RZXGate, RZGate, U3Gate, XGate
 from qiskit.circuit.parameterexpression import ParameterValueType
 from qiskit.qasm import pi
 
@@ -134,6 +134,47 @@ class YmGate(Gate):
     def __array__(self, dtype=None):
         """Gate matrix."""
         return np.array([[0, -1j], [1j, 0]], dtype=dtype)
+
+
+class PiPhiGate(Gate):
+    r"""
+    Rotated X gate.
+
+    The 180-degree rotation about an axis offset by an angle :math:`\\phi` relative
+    to the X-axis in the XY-plane of the Bloch sphere.
+    """
+
+    def __init__(
+        self,
+        phi: ParameterValueType,
+        label: Optional[str] = None,
+    ):
+        """Create new PiPhi gate."""
+        super().__init__("pi_phi", 1, [phi], label=label)
+        self.phi = phi
+
+    def _define(self):
+        q = QuantumRegister(1, "q")
+        qc = QuantumCircuit(q, name=self.name)
+        rules = [
+            (RZGate(self.phi), [q[0], []]),
+            (XGate(), [q[0]], []),
+            (RZGate(-self.phi), [q[0]], []),
+        ]
+        for instr, qargs, cargs in rules:
+            qc.append(instr, qargs, cargs)
+
+        self.definition = qc
+
+    def inverse(self):
+        r"""Return inverted PiPhi gate (:math:`\pi_\phi{\dagger}(\phi) = \pi_\phi(-\phi)`)"""
+        return PiPhiGate(-self.phi)  # self-inverse
+
+    def __array__(self, dtype=None):
+        """Gate matrix."""
+        return np.cos(self.phi) * np.array([[0, 1], [1, 0]], dtype=dtype) + np.sin(
+            self.phi
+        ) * np.array([[0, -1j], [1j, 0]], dtype=dtype)
 
 
 class SECRGate(Gate):
