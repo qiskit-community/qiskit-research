@@ -49,13 +49,16 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">pulse</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">Gate</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">XGate</span><span class="p">,</span> <span class="n">YGate</span>
+<span class="kn">from</span> <span class="nn">qiskit.converters</span> <span class="kn">import</span> <span class="n">circuit_to_dag</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers.backend</span> <span class="kn">import</span> <span class="n">Backend</span>
-<span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="n">Drag</span>
+<span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="n">Drag</span><span class="p">,</span> <span class="n">Waveform</span>
 <span class="kn">from</span> <span class="nn">qiskit.qasm</span> <span class="kn">import</span> <span class="n">pi</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler</span> <span class="kn">import</span> <span class="n">InstructionDurations</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span>
@@ -63,7 +66,10 @@
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="n">PadDynamicalDecoupling</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.scheduling</span> <span class="kn">import</span> <span class="n">ALAPScheduleAnalysis</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.scheduling.scheduling.base_scheduler</span> <span class="kn">import</span> <span class="n">BaseScheduler</span>
-<span class="kn">from</span> <span class="nn">qiskit_research.utils.gates</span> <span class="kn">import</span> <span class="n">XmGate</span><span class="p">,</span> <span class="n">XpGate</span><span class="p">,</span> <span class="n">YmGate</span><span class="p">,</span> <span class="n">YpGate</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">qiskit_research.utils.gates</span> <span class="kn">import</span> <span class="n">XmGate</span><span class="p">,</span> <span class="n">XpGate</span><span class="p">,</span> <span class="n">YmGate</span><span class="p">,</span> <span class="n">YpGate</span><span class="p">,</span> <span class="n">PiPhiGate</span>
 <span class="kn">from</span> <span class="nn">qiskit_research.utils.periodic_dynamical_decoupling</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">PeriodicDynamicalDecoupling</span><span class="p">,</span>
 <span class="p">)</span>
@@ -86,14 +92,42 @@
 <span class="p">}</span>
 
 
+<span class="k">class</span> <span class="nc">PulseMethod</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for enumerating way of implementing custom gates.&quot;&quot;&quot;</span>
+
+    <span class="n">GATEBASED</span> <span class="o">=</span> <span class="s2">&quot;decompose operation into standard gates&quot;</span>
+    <span class="n">PHASESHIFT</span> <span class="o">=</span> <span class="s2">&quot;pulse implementation with phase-offset pulses&quot;</span>
+    <span class="n">AMPLITUDEINVERT</span> <span class="o">=</span> <span class="s2">&quot;pulse implementation with positive/negative amplitudes&quot;</span>
+    <span class="n">IQSUM</span> <span class="o">=</span> <span class="s2">&quot;complex sum of signals with no phase offset&quot;</span>
+
+
 <div class="viewcode-block" id="dynamical_decoupling_passes"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.dynamical_decoupling_passes">[docs]</a><span class="k">def</span> <span class="nf">dynamical_decoupling_passes</span><span class="p">(</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span> <span class="n">dd_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scheduler</span><span class="p">:</span> <span class="n">BaseScheduler</span> <span class="o">=</span> <span class="n">ALAPScheduleAnalysis</span>
+    <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
+    <span class="n">dd_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">BaseScheduler</span> <span class="o">=</span> <span class="n">ALAPScheduleAnalysis</span><span class="p">,</span>
+    <span class="n">urdd_pulse_num</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Yields transpilation passes for dynamical decoupling.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Yield transpilation passes for dynamical decoupling.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        backend (Backend): Backend to run on; gate timing is required for this method.</span>
+<span class="sd">        dd_str (str): String describing DD sequence to use.</span>
+<span class="sd">        scheduler (BaseScheduler, optional): Scheduler, defaults to ALAPScheduleAnalysis.</span>
+<span class="sd">        urdd_pulse_num (int, optional): URDD pulse number must be even and at least 4.</span>
+<span class="sd">            Defaults to 4.</span>
+
+<span class="sd">    Yields:</span>
+<span class="sd">        Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">durations</span> <span class="o">=</span> <span class="n">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
     <span class="n">pulse_alignment</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">timing_constraints</span><span class="p">[</span><span class="s2">&quot;pulse_alignment&quot;</span><span class="p">]</span>
 
-    <span class="n">sequence</span> <span class="o">=</span> <span class="n">DD_SEQUENCE</span><span class="p">[</span><span class="n">dd_str</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">dd_str</span> <span class="ow">in</span> <span class="n">DD_SEQUENCE</span><span class="p">:</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="n">DD_SEQUENCE</span><span class="p">[</span><span class="n">dd_str</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">dd_str</span> <span class="o">==</span> <span class="s2">&quot;URDD&quot;</span><span class="p">:</span>
+        <span class="n">phis</span> <span class="o">=</span> <span class="n">get_urdd_angles</span><span class="p">(</span><span class="n">urdd_pulse_num</span><span class="p">)</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">PiPhiGate</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">phis</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">scheduler</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">PadDynamicalDecoupling</span><span class="p">(</span>
         <span class="n">durations</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">sequence</span><span class="p">),</span> <span class="n">pulse_alignment</span><span class="o">=</span><span class="n">pulse_alignment</span>
@@ -151,7 +185,7 @@
 
             <span class="c1"># create DD pulses from CR echo &#39;x&#39; pulse</span>
             <span class="k">if</span> <span class="n">inst_str</span> <span class="o">==</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">new_gate</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xp&quot;</span><span class="p">,</span> <span class="s2">&quot;xm&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yp&quot;</span><span class="p">,</span> <span class="s2">&quot;ym&quot;</span><span class="p">]:</span>
+                <span class="k">for</span> <span class="n">new_gate</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xp&quot;</span><span class="p">,</span> <span class="s2">&quot;xm&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yp&quot;</span><span class="p">,</span> <span class="s2">&quot;ym&quot;</span><span class="p">,</span> <span class="s2">&quot;pi_phi&quot;</span><span class="p">]:</span>
                     <span class="n">inst_durs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_gate</span><span class="p">,</span> <span class="n">qubit</span><span class="p">,</span> <span class="n">inst</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
 
     <span class="c1"># two qubit gates</span>
@@ -168,8 +202,22 @@
 <div class="viewcode-block" id="add_pulse_calibrations"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.add_pulse_calibrations">[docs]</a><span class="k">def</span> <span class="nf">add_pulse_calibrations</span><span class="p">(</span>
     <span class="n">circuits</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]],</span>
     <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
+    <span class="n">pulse_method</span><span class="p">:</span> <span class="n">PulseMethod</span> <span class="o">=</span> <span class="n">PulseMethod</span><span class="o">.</span><span class="n">PHASESHIFT</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add pulse calibrations for custom gates to circuits in-place.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add pulse calibrations for custom gates to circuits in-place.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        circuits (Union[QuantumCircuit, List[QuantumCircuit]]): Circuits which need pulse schedules</span>
+<span class="sd">            attached to the non-basis gates.</span>
+<span class="sd">        backend (Backend): Backend from which pulse information is obtained.</span>
+<span class="sd">        pulse_method (PulseMethod, optional): Exact method of implemeting pulse schedules given by</span>
+<span class="sd">            PulseMethod enumeration. These should all be equivalent but in practice they may differ.</span>
+<span class="sd">            Defaults to PulseMethod.PHASESHIFT.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: Not a defined method for implementing pulse schedules for URDD gates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
     <span class="n">num_qubits</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">num_qubits</span>
 
@@ -218,7 +266,91 @@
                 <span class="p">)</span>
                 <span class="n">pulse</span><span class="o">.</span><span class="n">play</span><span class="p">(</span><span class="n">inverted_pulse</span><span class="p">,</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">circ</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
-                <span class="n">circ</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;ym&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">)</span></div>
+                <span class="n">circ</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;ym&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">circuit</span> <span class="ow">in</span> <span class="n">circuits</span><span class="p">:</span>
+        <span class="n">dag</span> <span class="o">=</span> <span class="n">circuit_to_dag</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">([</span><span class="s2">&quot;pi_phi&quot;</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">run</span><span class="p">:</span>
+                <span class="n">qubit</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">qargs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+                <span class="n">phi</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">x_sched</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">x_instruction</span> <span class="o">=</span> <span class="n">x_sched</span><span class="o">.</span><span class="n">instructions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;PiPhi gate for qubit </span><span class="si">{</span><span class="n">qubit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sched</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">pulse_method</span> <span class="o">==</span> <span class="n">PulseMethod</span><span class="o">.</span><span class="n">PHASESHIFT</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">phase_offset</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">):</span>
+                            <span class="n">pulse</span><span class="o">.</span><span class="n">play</span><span class="p">(</span><span class="n">x_instruction</span><span class="o">.</span><span class="n">pulse</span><span class="p">,</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">pulse_method</span> <span class="o">==</span> <span class="n">PulseMethod</span><span class="o">.</span><span class="n">AMPLITUDEINVERT</span><span class="p">:</span>
+                        <span class="n">amp_flip_pulse</span> <span class="o">=</span> <span class="n">Drag</span><span class="p">(</span>
+                            <span class="n">duration</span><span class="o">=</span><span class="n">x_instruction</span><span class="o">.</span><span class="n">pulse</span><span class="o">.</span><span class="n">duration</span><span class="p">,</span>
+                            <span class="n">amp</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">phi</span> <span class="o">//</span> <span class="p">(</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">pulse</span><span class="o">.</span><span class="n">amp</span><span class="p">,</span>
+                            <span class="n">sigma</span><span class="o">=</span><span class="n">x_instruction</span><span class="o">.</span><span class="n">pulse</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
+                            <span class="n">beta</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="n">phi</span> <span class="o">//</span> <span class="p">(</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">pulse</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="n">phi</span> <span class="o">%=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span>
+                        <span class="k">with</span> <span class="n">pulse</span><span class="o">.</span><span class="n">phase_offset</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">):</span>
+                            <span class="n">pulse</span><span class="o">.</span><span class="n">play</span><span class="p">(</span><span class="n">amp_flip_pulse</span><span class="p">,</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">pulse_method</span> <span class="o">==</span> <span class="n">PulseMethod</span><span class="o">.</span><span class="n">IQSUM</span><span class="p">:</span>
+                        <span class="n">wf_array</span> <span class="o">=</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">pulse</span><span class="o">.</span><span class="n">get_waveform</span><span class="p">()</span><span class="o">.</span><span class="n">samples</span>
+                        <span class="n">iq_waveform</span> <span class="o">=</span> <span class="n">Waveform</span><span class="p">(</span>
+                            <span class="n">wf_array</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span>
+                        <span class="p">)</span>
+                        <span class="n">pulse</span><span class="o">.</span><span class="n">play</span><span class="p">(</span><span class="n">iq_waveform</span><span class="p">,</span> <span class="n">x_instruction</span><span class="o">.</span><span class="n">channel</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pulse_method</span><span class="si">}</span><span class="s2"> not a valid URDD pulse calibration type.&quot;</span>
+                        <span class="p">)</span>
+
+                <span class="n">circuit</span><span class="o">.</span><span class="n">add_calibration</span><span class="p">(</span><span class="s2">&quot;pi_phi&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">sched</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="n">phi</span><span class="p">])</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_urdd_angles</span><span class="p">(</span><span class="n">num_pulses</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gets \\phi_k values for n pulse UR sequence&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">num_pulses</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;num_pulses must be even&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">num_pulses</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;num_pulses must be &gt;= 4&quot;</span><span class="p">)</span>
+
+    <span class="c1"># get capital Phi value</span>
+    <span class="k">if</span> <span class="n">num_pulses</span> <span class="o">%</span> <span class="mi">4</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">m_divisor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_pulses</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">big_phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="n">m_divisor</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">m_divisor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">num_pulses</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">big_phi</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">m_divisor</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">m_divisor</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># keep track of unique phi added; we choose phi2 = big_phi by convention--</span>
+    <span class="c1"># only real requirement is (n * big_phi = 2pi * j for j int)</span>
+    <span class="n">unique_phi</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">big_phi</span><span class="p">]</span>
+    <span class="c1"># map each phi in [phis] to location (by index) of corresponding [unique_phi]</span>
+    <span class="n">phi_indices</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="c1"># populate remaining phi values</span>
+    <span class="k">for</span> <span class="n">kk</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">num_pulses</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">phi_k</span> <span class="o">=</span> <span class="p">(</span><span class="n">kk</span> <span class="o">*</span> <span class="p">(</span><span class="n">kk</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">big_phi</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="c1"># values only matter modulo 2 pi</span>
+        <span class="n">phi_k</span> <span class="o">=</span> <span class="p">(</span><span class="n">phi_k</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">phi_k</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">phi_k</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">phi_k</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">):</span>
+            <span class="n">phi_k</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">added_new</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">u_phi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_phi</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">u_phi</span><span class="p">,</span> <span class="n">phi_k</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+                <span class="n">added_new</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">phi_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">added_new</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">unique_phi</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">phi_k</span><span class="p">)</span>
+            <span class="n">phi_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_phi</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># construct phi list</span>
+    <span class="n">phis</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">phi_indices</span><span class="p">:</span>
+        <span class="n">phis</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">unique_phi</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">phis</span>
 </pre></div>
 
           </div>

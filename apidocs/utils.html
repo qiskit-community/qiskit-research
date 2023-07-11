@@ -422,9 +422,22 @@ channel names that apply on that qubit.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.add_pulse_calibrations">
-<span class="sig-name descname"><span class="pre">add_pulse_calibrations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#add_pulse_calibrations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.add_pulse_calibrations" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_pulse_calibrations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PulseMethod.PHASESHIFT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#add_pulse_calibrations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.add_pulse_calibrations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add pulse calibrations for custom gates to circuits in-place.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>circuits</strong> (<em>Union</em><em>[</em><em>QuantumCircuit</em><em>, </em><em>List</em><em>[</em><em>QuantumCircuit</em><em>]</em><em>]</em>) – Circuits which need pulse schedules
+attached to the non-basis gates.</p></li>
+<li><p><strong>backend</strong> (<em>Backend</em>) – Backend from which pulse information is obtained.</p></li>
+<li><p><strong>pulse_method</strong> (<em>PulseMethod</em><em>, </em><em>optional</em>) – Exact method of implemeting pulse schedules given by
+PulseMethod enumeration. These should all be equivalent but in practice they may differ.
+Defaults to PulseMethod.PHASESHIFT.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – Not a defined method for implementing pulse schedules for URDD gates.</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></p>
 </dd>
@@ -444,9 +457,21 @@ channel names that apply on that qubit.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.dynamical_decoupling_passes">
-<span class="sig-name descname"><span class="pre">dynamical_decoupling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dd_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=&lt;class</span> <span class="pre">'qiskit.transpiler.passes.scheduling.scheduling.alap.ALAPScheduleAnalysis'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#dynamical_decoupling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.dynamical_decoupling_passes" title="Permalink to this definition">¶</a></dt>
-<dd><p>Yields transpilation passes for dynamical decoupling.</p>
+<span class="sig-name descname"><span class="pre">dynamical_decoupling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dd_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=&lt;class</span> <span class="pre">'qiskit.transpiler.passes.scheduling.scheduling.alap.ALAPScheduleAnalysis'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urdd_pulse_num=4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#dynamical_decoupling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.dynamical_decoupling_passes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield transpilation passes for dynamical decoupling.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>backend</strong> (<em>Backend</em>) – Backend to run on; gate timing is required for this method.</p></li>
+<li><p><strong>dd_str</strong> (<em>str</em>) – String describing DD sequence to use.</p></li>
+<li><p><strong>scheduler</strong> (<em>BaseScheduler</em><em>, </em><em>optional</em>) – Scheduler, defaults to ALAPScheduleAnalysis.</p></li>
+<li><p><strong>urdd_pulse_num</strong> (<em>int</em><em>, </em><em>optional</em>) – URDD pulse number must be even and at least 4.
+Defaults to 4.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Iterator[Iterable[BasePass]]</em> – Transpiler passes used for adding DD sequences.</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">BasePass</span></code>]</p>
 </dd>
