@@ -27,7 +27,7 @@ from qiskit.providers.backend import Backend
 from qiskit.pulse import Drag, Waveform
 from qiskit.qasm import pi
 from qiskit.quantum_info import OneQubitEulerDecomposer
-from qiskit.transpiler import InstructionDurations, Target
+from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.instruction_durations import InstructionDurationsType
@@ -127,10 +127,11 @@ def periodic_dynamical_decoupling(
         pulse_alignment=pulse_alignment,
     )
 
+
 def urdd_strategy_passes(
     backend: Backend,
-    pulse_nums: List[int] = [4],
-    min_delay_times: List[int] = [0],
+    pulse_nums: List[int] = None,
+    min_delay_times: List[int] = None,
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
 ) -> Iterable[BasePass]:
     """
@@ -138,8 +139,10 @@ def urdd_strategy_passes(
 
     Args:
         backend (Backend): Backend to run on; gate timing is required for this method.
-        pulse_nums (List[int]): Numbers of pulses to use for each minimum delay time, in decreasing order.
-        min_delay_times: (List[int]): Min delay times for each sequence of pulses, in decreasing order.
+        pulse_nums (List[int]): Numbers of pulses to use for each minimum delay time,
+            in decreasing order.
+        min_delay_times: (List[int]): Min delay times for each sequence of pulses,
+            in decreasing order.
         scheduler (BaseScheduler, optional): Scheduler, defaults to ALAPScheduleAnalysis.
 
     Yields:
@@ -151,8 +154,12 @@ def urdd_strategy_passes(
     yield scheduler(durations)
     for pparams in zip(pulse_nums, min_delay_times):
         yield URDDSequenceStrategy(
-            durations, pulse_alignment=pulse_alignment, num_pulses=pparams[0], min_delay_time=pparams[1]
+            durations,
+            pulse_alignment=pulse_alignment,
+            num_pulses=pparams[0],
+            min_delay_time=pparams[1],
         )
+
 
 # TODO this should take instruction schedule map instead of backend
 def get_instruction_durations(backend: Backend) -> InstructionDurations:
@@ -356,10 +363,10 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
     in decreasing order of delay time, a multiple-pulse-number DD
     strategy is achieved.
     """
+
     def __init__(
         self,
         durations: InstructionDurations = None,
-        # dd_sequence: List[Gate] = None,
         num_pulses: int = 4,
         min_delay_time: int = 0,
         qubits: Optional[List[int]] = None,
@@ -390,17 +397,16 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 satisfy this constraint.
             extra_slack_distribution: The option to control the behavior of DD sequence generation.
                 The duration of the DD sequence should be identical to an idle time in the
-                scheduled quantum circuit, however, the delay in between gates comprising the sequence
-                should be integer number in units of dt, and it might be further truncated
-                when ``pulse_alignment`` is specified. This sometimes results in the duration of
-                the created sequence being shorter than the idle time
+                scheduled quantum circuit, however, the delay in between gates comprising the
+                sequence should be integer number in units of dt, and it might be further
+                truncated when ``pulse_alignment`` is specified. This sometimes results in
+                the duration of the created sequence being shorter than the idle time
                 that you want to fill with the sequence, i.e. `extra slack`.
                 This option takes following values.
 
                     - "middle": Put the extra slack to the interval at the middle of the sequence.
                     - "edges": Divide the extra slack as evenly as possible into
                       intervals at beginning and end of the sequence.
-
 
         Raises:
             TranspilerError: When invalid DD sequence is specified.
@@ -418,22 +424,13 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
             skip_reset_qubits=skip_reset_qubits,
             pulse_alignment=pulse_alignment,
             extra_slack_distribution=extra_slack_distribution,
-            target=None, # TODO: check whether this is needed
         )
 
         self._min_delay_time = min_delay_time
 
-    def __gate_supported(self, gate: Gate, qarg: int) -> bool:
-        """A gate is supported on the qubit (qarg) or not."""
-        if self.target is None or self.target.instruction_supported(gate.name, qargs=(qarg,)):
-            return True
-        return False
-
     def __is_dd_qubit(self, qubit_index: int) -> bool:
         """DD can be inserted in the qubit or not."""
-        if (qubit_index in self._no_dd_qubits) or (
-            self._qubits and qubit_index not in self._qubits
-        ):
+        if self._qubits and qubit_index not in self._qubits:
             return False
         return True
 
@@ -446,54 +443,33 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
         next_node: DAGNode,
         prev_node: DAGNode,
     ):
-        # This routine takes care of the pulse alignment constraint for the DD sequence.
-        # Note that the alignment constraint acts on the t0 of the DAGOpNode.
-        # Now this constrained scheduling problem is simplified to the problem of
-        # finding a delay amount which is a multiple of the constraint value by assuming
-        # that the duration of every DAGOpNode is also a multiple of the constraint value.
-        #
-        # For example, given the constraint value of 16 and XY4 with 160 dt gates.
-        # Here we assume current interval is 992 dt.
-        #
-        # relative spacing := [0.125, 0.25, 0.25, 0.25, 0.125]
-        # slack = 992 dt - 4 x 160 dt = 352 dt
-        #
-        # unconstraind sequence: 44dt-X1-88dt-Y2-88dt-X3-88dt-Y4-44dt
-        # constraind sequence  : 32dt-X1-80dt-Y2-80dt-X3-80dt-Y4-32dt + extra slack 48 dt
-        #
-        # Now we evenly split extra slack into start and end of the sequence.
-        # The distributed slack should be multiple of 16.
-        # Start = +16, End += 32
-        #
-        # final sequence       : 48dt-X1-80dt-Y2-80dt-X3-80dt-Y4-64dt / in total 992 dt
-        #
-        # Now we verify t0 of every node starts from multiple of 16 dt.
-        #
-        # X1:  48 dt (3 x 16 dt)
-        # Y2:  48 dt + 160 dt + 80 dt = 288 dt (18 x 16 dt)
-        # Y3: 288 dt + 160 dt + 80 dt = 528 dt (33 x 16 dt)
-        # Y4: 368 dt + 160 dt + 80 dt = 768 dt (48 x 16 dt)
-        #
-        # As you can see, constraints on t0 are all satisfied without explicit scheduling.
+        # This routine takes care of the pulse alignment constraint for the URDD sequence.
+        # The only difference is that it will only execute for time_intervals larger than
+        # those specified by the internal property self._min_delay_time which is defined
+        # at initialization.
         time_interval = t_end - t_start
         if time_interval > self._min_delay_time:
             if time_interval % self._alignment != 0:
                 raise TranspilerError(
-                    f"Time interval {time_interval} is not divisible by alignment {self._alignment} "
-                    f"between DAGNode {prev_node.name} on qargs {prev_node.qargs} and {next_node.name} "
-                    f"on qargs {next_node.qargs}."
+                    f"Time interval {time_interval} is not divisible by alignment "
+                    f"{self._alignment} between DAGNode {prev_node.name} on qargs "
+                    f"{prev_node.qargs} and {next_node.name} on qargs {next_node.qargs}."
                 )
 
             if not self.__is_dd_qubit(dag.qubits.index(qubit)):
                 # Target physical qubit is not the target of this DD sequence.
-                self._apply_scheduled_op(dag, t_start, Delay(time_interval, dag.unit), qubit)
+                self._apply_scheduled_op(
+                    dag, t_start, Delay(time_interval, dag.unit), qubit
+                )
                 return
 
             if self._skip_reset_qubits and (
                 isinstance(prev_node, DAGInNode) or isinstance(prev_node.op, Reset)
             ):
                 # Previous node is the start edge or reset, i.e. qubit is ground state.
-                self._apply_scheduled_op(dag, t_start, Delay(time_interval, dag.unit), qubit)
+                self._apply_scheduled_op(
+                    dag, t_start, Delay(time_interval, dag.unit), qubit
+                )
                 return
 
             slack = time_interval - np.sum(self._dd_sequence_lengths[qubit])
@@ -501,21 +477,29 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
 
             if slack <= 0:
                 # Interval too short.
-                self._apply_scheduled_op(dag, t_start, Delay(time_interval, dag.unit), qubit)
+                self._apply_scheduled_op(
+                    dag, t_start, Delay(time_interval, dag.unit), qubit
+                )
                 return
 
             if len(self._dd_sequence) == 1:
                 # Special case of using a single gate for DD
                 u_inv = self._dd_sequence[0].inverse().to_matrix()
-                theta, phi, lam, phase = OneQubitEulerDecomposer().angles_and_phase(u_inv)
-                if isinstance(next_node, DAGOpNode) and isinstance(next_node.op, (UGate, U3Gate)):
+                theta, phi, lam, phase = OneQubitEulerDecomposer().angles_and_phase(
+                    u_inv
+                )
+                if isinstance(next_node, DAGOpNode) and isinstance(
+                    next_node.op, (UGate, U3Gate)
+                ):
                     # Absorb the inverse into the successor (from left in circuit)
                     theta_r, phi_r, lam_r = next_node.op.params
                     next_node.op.params = Optimize1qGates.compose_u3(
                         theta_r, phi_r, lam_r, theta, phi, lam
                     )
                     sequence_gphase += phase
-                elif isinstance(prev_node, DAGOpNode) and isinstance(prev_node.op, (UGate, U3Gate)):
+                elif isinstance(prev_node, DAGOpNode) and isinstance(
+                    prev_node.op, (UGate, U3Gate)
+                ):
                     # Absorb the inverse into the predecessor (from right in circuit)
                     theta_l, phi_l, lam_l = prev_node.op.params
                     prev_node.op.params = Optimize1qGates.compose_u3(
@@ -524,7 +508,9 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                     sequence_gphase += phase
                 else:
                     # Don't do anything if there's no single-qubit gate to absorb the inverse
-                    self._apply_scheduled_op(dag, t_start, Delay(time_interval, dag.unit), qubit)
+                    self._apply_scheduled_op(
+                        dag, t_start, Delay(time_interval, dag.unit), qubit
+                    )
                     return
 
             def _constrained_length(values):
@@ -550,7 +536,8 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 taus[-1] += extra_slack - to_begin_edge
             else:
                 raise TranspilerError(
-                    f"Option extra_slack_distribution = {self._extra_slack_distribution} is invalid."
+                    f"Option extra_slack_distribution = {self._extra_slack_distribution} "
+                    f"is invalid."
                 )
 
             # (3) Construct DD sequence with delays
@@ -560,7 +547,9 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 if dd_ind < len(taus):
                     tau = taus[dd_ind]
                     if tau > 0:
-                        self._apply_scheduled_op(dag, idle_after, Delay(tau, dag.unit), qubit)
+                        self._apply_scheduled_op(
+                            dag, idle_after, Delay(tau, dag.unit), qubit
+                        )
                         idle_after += tau
                 if dd_ind < len(self._dd_sequence):
                     gate = self._dd_sequence[dd_ind]
