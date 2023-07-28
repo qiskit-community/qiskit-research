@@ -128,39 +128,6 @@ def periodic_dynamical_decoupling(
     )
 
 
-def urdd_strategy_passes(
-    backend: Backend,
-    pulse_nums: List[int] = None,
-    min_delay_times: List[int] = None,
-    scheduler: BaseScheduler = ALAPScheduleAnalysis,
-) -> Iterable[BasePass]:
-    """
-    Yield transpilation passes for URDD timing strategy.
-
-    Args:
-        backend (Backend): Backend to run on; gate timing is required for this method.
-        pulse_nums (List[int]): Numbers of pulses to use for each minimum delay time,
-            in decreasing order.
-        min_delay_times: (List[int]): Min delay times for each sequence of pulses,
-            in decreasing order.
-        scheduler (BaseScheduler, optional): Scheduler, defaults to ALAPScheduleAnalysis.
-
-    Yields:
-        Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.
-    """
-    durations = get_instruction_durations(backend)
-    pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
-
-    yield scheduler(durations)
-    for pparams in zip(pulse_nums, min_delay_times):
-        yield URDDSequenceStrategy(
-            durations,
-            pulse_alignment=pulse_alignment,
-            num_pulses=pparams[0],
-            min_delay_time=pparams[1],
-        )
-
-
 # TODO this should take instruction schedule map instead of backend
 def get_instruction_durations(backend: Backend) -> InstructionDurations:
     """
@@ -367,8 +334,8 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
     def __init__(
         self,
         durations: InstructionDurations = None,
-        num_pulses: int = 4,
-        min_delay_time: int = 0,
+        num_pulses: List[int] = None,
+        min_delay_times: List[int] = None,
         qubits: Optional[List[int]] = None,
         spacing: Optional[List[float]] = None,
         skip_reset_qubits: bool = True,
@@ -413,7 +380,12 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
             TranspilerError: When pulse gate with the duration which is
                 non-multiple of the alignment constraint value is found.
         """
-        phis = get_urdd_angles(num_pulses)
+        if num_pulses is None:
+            num_pulses = [4]
+        if min_delay_times is None:
+            min_delay_times = [0]
+
+        phis = get_urdd_angles(min(num_pulses))
         dd_sequence = tuple(PiPhiGate(phi) for phi in phis)
 
         super().__init__(
@@ -426,13 +398,56 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
             extra_slack_distribution=extra_slack_distribution,
         )
 
-        self._min_delay_time = min_delay_time
+        self._num_pulses = num_pulses
+        self._min_delay_times = np.array(min_delay_times)
 
     def __is_dd_qubit(self, qubit_index: int) -> bool:
         """DD can be inserted in the qubit or not."""
         if self._qubits and qubit_index not in self._qubits:
             return False
         return True
+
+    def _compute_spacing(self, num_pulses):
+        mid = 1 / num_pulses
+        end = mid / 2
+        self._spacing = [end] + [mid] * (num_pulses - 1) + [end]
+
+    def _compute_dd_sequence_lengths(self, dd_sequence, dag: DAGCircuit) -> dict:
+        # Precompute qubit-wise DD sequence length for performance
+        dd_sequence_lengths = {}
+        for physical_index, qubit in enumerate(dag.qubits):
+            if not self.__is_dd_qubit(physical_index):
+                continue
+
+            sequence_lengths = []
+            for gate in dd_sequence:
+                try:
+                    # Check calibration.
+                    gate_length = dag.calibrations[gate.name][
+                        (physical_index, gate.params)
+                    ]
+                    if gate_length % self._alignment != 0:
+                        # This is necessary to implement lightweight scheduling logic for this pass.
+                        # Usually the pulse alignment constraint and pulse data chunk size take
+                        # the same value, however, we can intentionally violate this pattern
+                        # at the gate level. For example, we can create a schedule consisting of
+                        # a pi-pulse of 32 dt followed by a post buffer, i.e. delay, of 4 dt
+                        # on the device with 16 dt constraint. Note that the pi-pulse length
+                        # is multiple of 16 dt but the gate length of 36 is not multiple of it.
+                        # Such pulse gate should be excluded.
+                        raise TranspilerError(
+                            f"Pulse gate {gate.name} with length non-multiple of {self._alignment} "
+                            f"is not acceptable in {self.__class__.__name__} pass."
+                        )
+                except KeyError:
+                    gate_length = self._durations.get(gate, physical_index)
+                sequence_lengths.append(gate_length)
+                # Update gate duration. This is necessary for current timeline drawer,
+                # i.e. scheduled.
+                gate.duration = gate_length
+            dd_sequence_lengths[qubit] = sequence_lengths
+
+        return dd_sequence_lengths
 
     def _pad(
         self,
@@ -448,7 +463,18 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
         # those specified by the internal property self._min_delay_time which is defined
         # at initialization.
         time_interval = t_end - t_start
-        if time_interval > self._min_delay_time:
+        dd_indices = np.where(self._min_delay_times < time_interval)[0]
+        if len(dd_indices) > 0:
+            dd_idx = np.where(
+                self._min_delay_times[dd_indices]
+                == max(self._min_delay_times[dd_indices])
+            )[0][0]
+            urdd_num = self._num_pulses[dd_idx]
+            phis = get_urdd_angles(urdd_num)
+            dd_sequence = tuple(PiPhiGate(phi) for phi in phis)
+            dd_sequence_lengths = self._compute_dd_sequence_lengths(dd_sequence, dag)
+            self._compute_spacing(urdd_num)
+
             if time_interval % self._alignment != 0:
                 raise TranspilerError(
                     f"Time interval {time_interval} is not divisible by alignment "
@@ -472,7 +498,7 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 )
                 return
 
-            slack = time_interval - np.sum(self._dd_sequence_lengths[qubit])
+            slack = time_interval - np.sum(dd_sequence_lengths[qubit])
             sequence_gphase = self._sequence_phase
 
             if slack <= 0:
@@ -482,9 +508,9 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 )
                 return
 
-            if len(self._dd_sequence) == 1:
+            if len(dd_sequence) == 1:
                 # Special case of using a single gate for DD
-                u_inv = self._dd_sequence[0].inverse().to_matrix()
+                u_inv = dd_sequence[0].inverse().to_matrix()
                 theta, phi, lam, phase = OneQubitEulerDecomposer().angles_and_phase(
                     u_inv
                 )
@@ -541,7 +567,7 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 )
 
             # (3) Construct DD sequence with delays
-            num_elements = max(len(self._dd_sequence), len(taus))
+            num_elements = max(len(dd_sequence), len(taus))
             idle_after = t_start
             for dd_ind in range(num_elements):
                 if dd_ind < len(taus):
@@ -551,9 +577,9 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                             dag, idle_after, Delay(tau, dag.unit), qubit
                         )
                         idle_after += tau
-                if dd_ind < len(self._dd_sequence):
-                    gate = self._dd_sequence[dd_ind]
-                    gate_length = self._dd_sequence_lengths[qubit][dd_ind]
+                if dd_ind < len(dd_sequence):
+                    gate = dd_sequence[dd_ind]
+                    gate_length = dd_sequence_lengths[qubit][dd_ind]
                     self._apply_scheduled_op(dag, idle_after, gate, qubit)
                     idle_after += gate_length
 
