@@ -325,10 +325,10 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
     """URDD strategic timing dynamical decoupling insertion pass.
 
     This pass acts the same as PadDynamicalDecoupling, but only inserts
-    a number of URDD pulses specified by num_pulses only when there
-    is a delay greater than min_delay_time. By combining these passes
-    in decreasing order of delay time, a multiple-pulse-number DD
-    strategy is achieved.
+    a number of URDD pulses specified by a sequence of num_pulses only when there
+    is a delay greater than a sequence of min_delay_time. Each delay will be
+    considered and the large number of sequence will be given by that delay
+    specificied max(min_delay_time) < delay.
     """
 
     def __init__(
@@ -346,8 +346,9 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
 
         Args:
             durations: Durations of instructions to be used in scheduling.
-            num_pulses (int, optional): _description_. Defaults to 4.
-            min_delay_time (int, optional): _description_. Defaults to 0.
+            num_pulses Sequence[int]: Number of pulses to use corresponding
+                to min_delay_time. Defaults to 4.
+            min_delay_time Sequence[int]: Minimum delay for a given sequence length. In units of dt.
             qubits: Physical qubits on which to apply DD.
                 If None, all qubits will undergo DD (when possible).
             spacing: A list of spacings between the DD gates.
