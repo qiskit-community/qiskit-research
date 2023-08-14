@@ -157,7 +157,7 @@ class PiPhiGate(Gate):
         q = QuantumRegister(1, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [
-            (RZGate(self.phi), [q[0], []]),
+            (RZGate(self.phi), [q[0]], []),
             (XGate(), [q[0]], []),
             (RZGate(-self.phi), [q[0]], []),
         ]
