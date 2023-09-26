@@ -2,6 +2,11 @@
 Qiskit Research documentation
 =============================
 
+.. toctree:: 
+    :hidden: 
+ 
+    Home <self>
+
 Research using Qiskit, demonstrating best practices for running quantum computing experiments.
 
 .. toctree::

@@ -41,6 +41,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "reno.sphinxext",
     "nbsphinx",
+    'qiskit_sphinx_theme',
 ]
 templates_path = ["_templates"]
 numfig = True
@@ -60,3 +61,6 @@ nbsphinx_timeout = 1000
 nbsphinx_execute = "always"
 nbsphinx_widgets_path = ""
 exclude_patterns = ["_build", "**.ipynb_checkpoints", "getting_started.ipynb"]
+
+html_theme = "qiskit-ecosystem"
+html_title = f"{project} {release}"
