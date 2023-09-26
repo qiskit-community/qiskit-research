@@ -41,7 +41,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "reno.sphinxext",
     "nbsphinx",
-    'qiskit_sphinx_theme',
+    "qiskit_sphinx_theme",
 ]
 templates_path = ["_templates"]
 numfig = True
