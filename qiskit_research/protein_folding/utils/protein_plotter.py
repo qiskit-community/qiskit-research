@@ -11,9 +11,9 @@
 """An auxiliary class that plots aminoacids of a molecule
  in a ProteinFoldingResult."""
 from typing import Optional
+
 import numpy as np
 from qiskit.utils import optionals as _optionals
-
 
 from qiskit_research.protein_folding.utils.protein_shape_file_gen import (
     ProteinShapeFileGen,
@@ -21,8 +21,10 @@ from qiskit_research.protein_folding.utils.protein_shape_file_gen import (
 
 if _optionals.HAS_MATPLOTLIB:
     # pylint: disable=import-error,unused-import
-    from matplotlib.pyplot import figure
     from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
+    from mpl_toolkits.mplot3d.axes3d import Axes3D
+
 # pylint: disable=too-few-public-methods
 
 
@@ -53,7 +55,7 @@ class ProteinPlotter:
         )
 
         self._fig = plt.figure()
-        self._ax_graph = self._fig.add_subplot(projection="3d")
+        self._ax_graph: Axes3D = self._fig.add_subplot(projection="3d")
 
     def _draw_main_chain(self):
         """
@@ -146,7 +148,7 @@ class ProteinPlotter:
 
     def get_figure(
         self, title: str = "Protein Structure", ticks: bool = False, grid: bool = False
-    ) -> "figure":
+    ) -> Figure:
         """
         Plots the molecule in 3D.
 
