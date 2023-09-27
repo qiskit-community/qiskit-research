@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,9 +9,9 @@
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/jupyter-sphinx.css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/thebelab.css" />
-    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=c1dcd045"></script>
+    <script src="../../../_static/documentation_options.js?v=e3a6060d"></script>
     <script src="../../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
@@ -81,7 +81,9 @@
 <span class="n">BASIS_GATES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sx&quot;</span><span class="p">,</span> <span class="s2">&quot;rz&quot;</span><span class="p">,</span> <span class="s2">&quot;rzx&quot;</span><span class="p">,</span> <span class="s2">&quot;cx&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="cr_scaling_passes"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.cr_scaling_passes">[docs]</a><span class="k">def</span> <span class="nf">cr_scaling_passes</span><span class="p">(</span>
+<div class="viewcode-block" id="cr_scaling_passes">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.cr_scaling_passes">[docs]</a>
+<span class="k">def</span> <span class="nf">cr_scaling_passes</span><span class="p">(</span>
     <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
     <span class="n">templates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span>
     <span class="n">unroll_rzx_to_ecr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -103,7 +105,10 @@
         <span class="k">yield from</span> <span class="n">pulse_attaching_passes</span><span class="p">(</span><span class="n">backend</span><span class="p">,</span> <span class="n">param_bind</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="pulse_attaching_passes"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.pulse_attaching_passes">[docs]</a><span class="k">def</span> <span class="nf">pulse_attaching_passes</span><span class="p">(</span>
+
+<div class="viewcode-block" id="pulse_attaching_passes">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.pulse_attaching_passes">[docs]</a>
+<span class="k">def</span> <span class="nf">pulse_attaching_passes</span><span class="p">(</span>
     <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
     <span class="n">param_bind</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
@@ -118,7 +123,10 @@
     <span class="k">yield</span> <span class="n">RZXCalibrationBuilder</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">,</span> <span class="n">channel_map</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="CombineRuns"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.CombineRuns">[docs]</a><span class="k">class</span> <span class="nc">CombineRuns</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CombineRuns">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.CombineRuns">[docs]</a>
+<span class="k">class</span> <span class="nc">CombineRuns</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
     <span class="c1"># TODO: Check to see if this can be fixed in Optimize1qGatesDecomposition</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Combine consecutive gates of same type.</span>
 
@@ -135,7 +143,9 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gate_names</span> <span class="o">=</span> <span class="n">gate_names</span>
 
-<div class="viewcode-block" id="CombineRuns.run"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.CombineRuns.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
+<div class="viewcode-block" id="CombineRuns.run">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.CombineRuns.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">gate_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gate_names</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">([</span><span class="n">gate_name</span><span class="p">]):</span>
                 <span class="n">partition</span> <span class="o">=</span> <span class="p">[]</span>
@@ -166,7 +176,9 @@
                     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                         <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">chunk</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
                             <span class="n">dag</span><span class="o">.</span><span class="n">remove_op_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">dag</span></div></div>
+        <span class="k">return</span> <span class="n">dag</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">ReduceAngles</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
@@ -197,7 +209,9 @@
         <span class="k">return</span> <span class="n">dag</span>
 
 
-<div class="viewcode-block" id="BindParameters"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.BindParameters">[docs]</a><span class="k">class</span> <span class="nc">BindParameters</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
+<div class="viewcode-block" id="BindParameters">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.BindParameters">[docs]</a>
+<span class="k">class</span> <span class="nc">BindParameters</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Bind Parameters to circuit.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -207,14 +221,18 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_param_bind</span> <span class="o">=</span> <span class="n">param_bind</span>
 
-<div class="viewcode-block" id="BindParameters.run"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.BindParameters.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+<div class="viewcode-block" id="BindParameters.run">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.BindParameters.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
         <span class="c1"># TODO: Must this convert the DAG back to a QuantumCircuit?</span>
         <span class="n">circuit</span> <span class="o">=</span> <span class="n">dag_to_circuit</span><span class="p">(</span><span class="n">dag</span><span class="p">)</span>
         <span class="n">circuit</span><span class="o">.</span><span class="n">assign_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_bind</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">circuit_to_dag</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">circuit_to_dag</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span></div>
+</div>
+
 
 
 <span class="k">class</span> <span class="nc">ForceZZTemplateSubstitution</span><span class="p">(</span><span class="n">TransformationPass</span><span class="p">):</span>
@@ -301,14 +319,18 @@
         <span class="k">return</span> <span class="n">dag</span>
 
 
-<div class="viewcode-block" id="SECRCalibrationBuilder"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder">[docs]</a><span class="k">class</span> <span class="nc">SECRCalibrationBuilder</span><span class="p">(</span><span class="n">RZXCalibrationBuilderNoEcho</span><span class="p">):</span>
+<div class="viewcode-block" id="SECRCalibrationBuilder">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder">[docs]</a>
+<span class="k">class</span> <span class="nc">SECRCalibrationBuilder</span><span class="p">(</span><span class="n">RZXCalibrationBuilderNoEcho</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates calibrations for SECRGate(theta) by stretching and compressing</span>
 <span class="sd">    Gaussian square pulses in the CX gate. This is subclassed from RZXCalibrationBuilderNoEcho,</span>
 <span class="sd">    and builds the schedule from the scaled single (non-echoed) CR pulses.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="SECRCalibrationBuilder.supported"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder.supported">[docs]</a>    <span class="k">def</span> <span class="nf">supported</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_op</span><span class="p">:</span> <span class="n">CircuitInst</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<div class="viewcode-block" id="SECRCalibrationBuilder.supported">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder.supported">[docs]</a>
+    <span class="k">def</span> <span class="nf">supported</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_op</span><span class="p">:</span> <span class="n">CircuitInst</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Determine if a given node supports the calibration.</span>
 
 <span class="sd">        Args:</span>
@@ -322,7 +344,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_inst_map</span><span class="o">.</span><span class="n">has</span><span class="p">(</span><span class="s2">&quot;cx&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inst_map</span><span class="o">.</span><span class="n">has</span><span class="p">(</span><span class="s2">&quot;ecr&quot;</span><span class="p">,</span> <span class="n">qubits</span><span class="p">)</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="SECRCalibrationBuilder.get_calibration"><a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder.get_calibration">[docs]</a>    <span class="k">def</span> <span class="nf">get_calibration</span><span class="p">(</span>
+
+<div class="viewcode-block" id="SECRCalibrationBuilder.get_calibration">
+<a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder.get_calibration">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_calibration</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">node_op</span><span class="p">:</span> <span class="n">CircuitInst</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">List</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Schedule</span><span class="p">,</span> <span class="n">ScheduleBlock</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -352,7 +377,9 @@
                 <span class="n">pulse</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">echo_x_sched</span><span class="p">)</span>
                 <span class="n">pulse</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">cr_minus</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">secr_sched</span></div></div>
+        <span class="k">return</span> <span class="n">secr_sched</span></div>
+</div>
+
 
 
 <span class="k">def</span> <span class="nf">get_ecr_pairs_from_backend</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
@@ -443,7 +470,7 @@
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>

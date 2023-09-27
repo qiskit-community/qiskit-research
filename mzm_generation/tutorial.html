@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -11,9 +11,9 @@
     <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
     <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
-    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js?v=c1dcd045"></script>
+    <script src="../_static/documentation_options.js?v=e3a6060d"></script>
     <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
@@ -41,10 +41,10 @@
           <div class="body" role="main">
             
   <section id="Tutorial">
-<h1>Tutorial<a class="headerlink" href="#Tutorial" title="Permalink to this heading">¶</a></h1>
+<h1>Tutorial<a class="headerlink" href="#Tutorial" title="Link to this heading">¶</a></h1>
 <p>This experiment simulates Majorana zero modes on the IBM Quantum hardware. The results are published at <a class="reference external" href="https://arxiv.org/abs/2206.00563">arXiv:2206.00563</a>.</p>
 <section id="Background">
-<h2>Background<a class="headerlink" href="#Background" title="Permalink to this heading">¶</a></h2>
+<h2>Background<a class="headerlink" href="#Background" title="Link to this heading">¶</a></h2>
 <p>The Kitaev Hamiltonian is given by</p>
 <div class="math notranslate nohighlight">
 \[H =
@@ -61,7 +61,7 @@
 <p>The Kitaev Hamiltonian is quadratic in the fermionic ladder operators. Eigenstates of quadratic Hamiltonians are called <em>fermionic Gaussian states</em>. They can be efficiently prepared on a quantum computer.</p>
 </section>
 <section id="State-preparation">
-<h2>State preparation<a class="headerlink" href="#State-preparation" title="Permalink to this heading">¶</a></h2>
+<h2>State preparation<a class="headerlink" href="#State-preparation" title="Link to this heading">¶</a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">qiskit_research.mzm_generation</span></code> module contains a utility function for generating a Kitaev Hamiltonian. The object returned is an instance of the <code class="docutils literal notranslate"><span class="pre">QuadraticHamiltonian</span></code> class from Qiskit Nature. The general form of a quadratic Hamiltonian is</p>
 <div class="math notranslate nohighlight">
 \[H =
@@ -159,7 +159,7 @@ a_N
 </div>
 </section>
 <section id="Measurement">
-<h2>Measurement<a class="headerlink" href="#Measurement" title="Permalink to this heading">¶</a></h2>
+<h2>Measurement<a class="headerlink" href="#Measurement" title="Link to this heading">¶</a></h2>
 <p>All quantities of interest can be determined from the correlation matrix, which is defined as the block matrix</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align}
@@ -248,7 +248,7 @@ permuting the transformation matrix used to construct the circuit, which amounts
 </div>
 </section>
 <section id="Transpilation">
-<h2>Transpilation<a class="headerlink" href="#Transpilation" title="Permalink to this heading">¶</a></h2>
+<h2>Transpilation<a class="headerlink" href="#Transpilation" title="Link to this heading">¶</a></h2>
 <p>In order to execute a circuit on a hardware backend, it must be transpiled into gates supported by the backend.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
@@ -268,7 +268,7 @@ permuting the transformation matrix used to construct the circuit, which amounts
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-/tmp/ipykernel_3396/731090725.py:2: DeprecationWarning: The module &#39;qiskit.test.mock&#39; is deprecated since Qiskit Terra 0.21.0, and will be removed 3 months or more later. Instead, you should import the desired object directly &#39;qiskit.providers.fake_provider&#39;.
+/tmp/ipykernel_3184/731090725.py:2: DeprecationWarning: The module &#39;qiskit.test.mock&#39; is deprecated since Qiskit Terra 0.21.0, and will be removed 3 months or more later. Instead, you should import the desired object directly &#39;qiskit.providers.fake_provider&#39;.
   from qiskit.test.mock import FakeLima
 </pre></div></div>
 </div>
@@ -349,7 +349,7 @@ permuting the transformation matrix used to construct the circuit, which amounts
       &copy;2022.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
