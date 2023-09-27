@@ -21,7 +21,7 @@ from .utils.protein_shape_file_gen import ProteinShapeFileGen
 
 if _optionals.HAS_MATPLOTLIB:
     # pylint: disable=import-error,unused-import
-    from matplotlib.pyplot import figure
+    from matplotlib.figure import Figure
 
 
 class ProteinFoldingResult:
@@ -168,7 +168,7 @@ class ProteinFoldingResult:
     @_optionals.HAS_MATPLOTLIB.require_in_call
     def get_figure(
         self, title: str = "Protein Structure", ticks: bool = False, grid: bool = False
-    ) -> "figure":
+    ) -> Figure:
         """
         Generates a figure of the molecule in 3D.
 
