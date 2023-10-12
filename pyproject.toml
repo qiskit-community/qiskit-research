@@ -33,6 +33,7 @@ dependencies = [
     "qiskit-ibmq-provider",
     "qiskit-nature~=0.5",
     "qiskit-terra==0.23",
+    "qiskit_sphinx_theme~=1.16.0",
 ]
 
 [project.optional-dependencies]
