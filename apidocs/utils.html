@@ -1,51 +1,269 @@
-<!DOCTYPE html>
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Majorana zero modes experiment" href="mzm_generation.html" />
 
-<html lang="en" data-content_root="../">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <title>Utilities for running research experiments with Qiskit &#8212; Qiskit Research 0.0.2 documentation</title>
+    <!-- Generated with Sphinx 7.2.6 and Furo 2023.08.19 -->
+        <title>Utilities for running research experiments with Qiskit - Qiskit Research 0.0.2</title>
+      <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=82a976d7" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=039e1c02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-ecosystem.css?v=745c5aa7" />
     <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
-    <script src="../_static/documentation_options.js?v=e3a6060d"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/thebelab-helper.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="prev" title="Majorana zero modes experiment" href="mzm_generation.html" />
-   
-  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
 
-  </head><body>
-  
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+<style>
+  body {
+    --color-code-background: #ffffff;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="../_static/js/web-components/top-nav-bar.js"></script></head>
+  <body>
+    
+    <script>document.body.dataset.theme = "light";</script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <defs><style>.cls-1{fill:none;}</style></defs>
+      <path d="M28,4H4A2,2,0,0,0,2,6V26a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM4,6H20V26H4ZM28,26H22V6h6Z"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <defs><style>.cls-1{fill:none;}</style></defs>
+      <rect x="4" y="6" width="24" height="2"/>
+      <rect x="4" y="24" width="24" height="2"/>
+      <rect x="4" y="12" width="24" height="2"/>
+      <rect x="4" y="18" width="24" height="2"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg version="1.1" id="icon" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+         viewBox="0 0 32 32" style="enable-background:new 0 0 32 32;" xml:space="preserve"><polygon points="22,16 12,26 10.6,24.6 19.2,16 10.6,7.4 12,6 " stroke="currentColor"/>
+      <rect id="_x3C_Transparent_Rectangle_x3E_" fill="none" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-new-tab" viewBox="0 0 32 32">
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <defs>
+        <style>
+          .cls-1 {
+            fill: none;
+          }
+        </style>
+      </defs>
+      <path fill="#6929C4" d="M26,28H6a2.0027,2.0027,0,0,1-2-2V6A2.0027,2.0027,0,0,1,6,4H16V6H6V26H26V16h2V26A2.0027,2.0027,0,0,1,26,28Z"/>
+      <polygon fill="#6929C4" points="20 2 20 4 26.586 4 18 12.586 19.414 14 28 5.414 28 12 30 12 30 2 20 2"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Qiskit Research 0.0.2</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><div class="sidebar-brand">
+  <a href="https://www.qiskit.org/ecosystem">
+    <div class="sidebar-logo-container">
+      <img class="sidebar-logo" src="../_static/images/ecosystem-logo.svg" alt="Qiskit Ecosystem logo"/>
+    </div>
+  </a>
+  
+  <span class="sidebar-brand-text">Qiskit Research 0.0.2</span>
+</div><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../mzm_generation/index.html">Majorana zero mode generation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Majorana zero mode generation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mzm_generation/tutorial.html">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mzm_generation/data-collection.html">Data collection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mzm_generation/analysis.html">Data analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../protein_folding/index.html">Protein folding</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Protein folding</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../protein_folding/protein_folding.html">Protein Folding</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../tutorial_quantum_sim/index.html">Tutorial on quantum simulation</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Tutorial on quantum simulation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorial_quantum_sim/qsim-tight-binding-model.html">Quantum Simulation on Noisy Superconducting Quantum Computers</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Qiskit Research API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Qiskit Research API Reference</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html">Majorana zero modes experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianAnalysis"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianAnalysis</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperiment"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianExperiment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianExperimentParameters</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.kitaev_hamiltonian"><code class="docutils literal notranslate"><span class="pre">kitaev_hamiltonian()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.measure_interaction_op"><code class="docutils literal notranslate"><span class="pre">measure_interaction_op()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.transpilation_passes"><code class="docutils literal notranslate"><span class="pre">transpilation_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.transpile_circuit"><code class="docutils literal notranslate"><span class="pre">transpile_circuit()</span></code></a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Utilities for running research experiments with Qiskit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.BindParameters"><code class="docutils literal notranslate"><span class="pre">BindParameters</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.CombineRuns"><code class="docutils literal notranslate"><span class="pre">CombineRuns</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.PauliTwirl"><code class="docutils literal notranslate"><span class="pre">PauliTwirl</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.PeriodicDynamicalDecoupling"><code class="docutils literal notranslate"><span class="pre">PeriodicDynamicalDecoupling</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.RZXWeylDecomposition"><code class="docutils literal notranslate"><span class="pre">RZXWeylDecomposition</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.RZXtoEchoedCR"><code class="docutils literal notranslate"><span class="pre">RZXtoEchoedCR</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.SECRCalibrationBuilder"><code class="docutils literal notranslate"><span class="pre">SECRCalibrationBuilder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.XXMinusYYtoRZX"><code class="docutils literal notranslate"><span class="pre">XXMinusYYtoRZX</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.XXPlusYYtoRZX"><code class="docutils literal notranslate"><span class="pre">XXPlusYYtoRZX</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.add_pulse_calibrations"><code class="docutils literal notranslate"><span class="pre">add_pulse_calibrations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.cr_scaling_passes"><code class="docutils literal notranslate"><span class="pre">cr_scaling_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.dynamical_decoupling_passes"><code class="docutils literal notranslate"><span class="pre">dynamical_decoupling_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.get_backend"><code class="docutils literal notranslate"><span class="pre">get_backend()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.pauli_transpilation_passes"><code class="docutils literal notranslate"><span class="pre">pauli_transpilation_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.pulse_attaching_passes"><code class="docutils literal notranslate"><span class="pre">pulse_attaching_passes()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+</div></div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
           
-
-          <div class="body" role="main">
-            
-  <section id="utilities-for-running-research-experiments-with-qiskit">
-<span id="module-qiskit_research.utils"></span><h1>Utilities for running research experiments with Qiskit<a class="headerlink" href="#utilities-for-running-research-experiments-with-qiskit" title="Link to this heading">¶</a></h1>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="utilities-for-running-research-experiments-with-qiskit">
+<span id="module-qiskit_research.utils"></span><h1>Utilities for running research experiments with Qiskit<a class="headerlink" href="#utilities-for-running-research-experiments-with-qiskit" title="Link to this heading">#</a></h1>
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.BindParameters">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BindParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_bind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#BindParameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.BindParameters" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BindParameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">param_bind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#BindParameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.BindParameters" title="Link to this definition">#</a></dt>
 <dd><p>Bind Parameters to circuit.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.BindParameters.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#BindParameters.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.BindParameters.run" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#BindParameters.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.BindParameters.run" title="Link to this definition">#</a></dt>
 <dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -64,7 +282,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.CombineRuns">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CombineRuns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gate_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#CombineRuns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.CombineRuns" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">CombineRuns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gate_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#CombineRuns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.CombineRuns" title="Link to this definition">#</a></dt>
 <dd><p>Combine consecutive gates of same type.</p>
 <p>This works with Parameters whereas other transpiling passes do not.</p>
 <dl class="field-list simple">
@@ -75,7 +293,7 @@ of singe-parameter gates to combine.</p>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.CombineRuns.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#CombineRuns.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.CombineRuns.run" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#CombineRuns.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.CombineRuns.run" title="Link to this definition">#</a></dt>
 <dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -94,7 +312,7 @@ of singe-parameter gates to combine.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.PauliTwirl">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliTwirl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gates_to_twirl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#PauliTwirl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PauliTwirl" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PauliTwirl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gates_to_twirl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#PauliTwirl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PauliTwirl" title="Link to this definition">#</a></dt>
 <dd><p>Add Pauli twirls.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -107,7 +325,7 @@ supported gates.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.PauliTwirl.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#PauliTwirl.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PauliTwirl.run" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#PauliTwirl.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PauliTwirl.run" title="Link to this definition">#</a></dt>
 <dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -126,7 +344,7 @@ supported gates.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.PeriodicDynamicalDecoupling">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PeriodicDynamicalDecoupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">durations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dd_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_min_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_repeats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_reset_qubits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_alignment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_slack_distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'middle'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/periodic_dynamical_decoupling.html#PeriodicDynamicalDecoupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PeriodicDynamicalDecoupling" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PeriodicDynamicalDecoupling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">durations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_dd_sequence</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">avg_min_delay</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_repeats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_reset_qubits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_alignment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_slack_distribution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'middle'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/periodic_dynamical_decoupling.html#PeriodicDynamicalDecoupling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.PeriodicDynamicalDecoupling" title="Link to this definition">#</a></dt>
 <dd><p>Dynamical decoupling insertion pass.</p>
 <p>This pass works on a scheduled, physical circuit. It scans the circuit for
 idle periods of time (i.e. those containing delay instructions) and inserts
@@ -270,13 +488,13 @@ intervals at beginning and end of the sequence.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.RZXWeylDecomposition">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RZXWeylDecomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXWeylDecomposition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXWeylDecomposition" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RZXWeylDecomposition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXWeylDecomposition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXWeylDecomposition" title="Link to this definition">#</a></dt>
 <dd><p>Decompose XX, YY, ZZ rotation gates using the Weyl Chamber
 decomposition, this version accepts Parameter values.</p>
 <p>See <a class="reference external" href="https://arxiv.org/abs/2105.01063">https://arxiv.org/abs/2105.01063</a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.RZXWeylDecomposition.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXWeylDecomposition.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXWeylDecomposition.run" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXWeylDecomposition.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXWeylDecomposition.run" title="Link to this definition">#</a></dt>
 <dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -295,14 +513,14 @@ decomposition, this version accepts Parameter values.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.RZXtoEchoedCR">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RZXtoEchoedCR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RZXtoEchoedCR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR" title="Link to this definition">#</a></dt>
 <dd><p>Class for the RZXGate to echoed cross resonance gate pass. The RZXGate
 is equivalent to the SECR gate plus a second XGate on the control qubit
 to return it to the initial state.</p>
 <p>See: <a class="reference external" href="https://arxiv.org/abs/1603.04821">https://arxiv.org/abs/1603.04821</a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.RZXtoEchoedCR.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR.run" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR.run" title="Link to this definition">#</a></dt>
 <dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -321,7 +539,7 @@ to return it to the initial state.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SECRCalibrationBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction_schedule_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubit_channel_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SECRCalibrationBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instruction_schedule_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubit_channel_mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder" title="Link to this definition">#</a></dt>
 <dd><p>Creates calibrations for SECRGate(theta) by stretching and compressing
 Gaussian square pulses in the CX gate. This is subclassed from RZXCalibrationBuilderNoEcho,
 and builds the schedule from the scaled single (non-echoed) CR pulses.</p>
@@ -342,7 +560,7 @@ channel names that apply on that qubit.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder.get_calibration">
-<span class="sig-name descname"><span class="pre">get_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.get_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.get_calibration" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_calibration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.get_calibration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.get_calibration" title="Link to this definition">#</a></dt>
 <dd><p>Builds scaled echoed cross resonance (SECR) by doing echoing two single
 (unechoed) CR pulses of opposite amplitude.</p>
 <dl class="field-list simple">
@@ -354,7 +572,7 @@ channel names that apply on that qubit.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.SECRCalibrationBuilder.supported">
-<span class="sig-name descname"><span class="pre">supported</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.supported"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.supported" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">supported</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">node_op</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qubits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#SECRCalibrationBuilder.supported"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.SECRCalibrationBuilder.supported" title="Link to this definition">#</a></dt>
 <dd><p>Determine if a given node supports the calibration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -376,11 +594,11 @@ channel names that apply on that qubit.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.XXMinusYYtoRZX">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">XXMinusYYtoRZX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXMinusYYtoRZX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXMinusYYtoRZX" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">XXMinusYYtoRZX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXMinusYYtoRZX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXMinusYYtoRZX" title="Link to this definition">#</a></dt>
 <dd><p>Transformation pass to decompose XXMinusYYGate to RZXGate.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.XXMinusYYtoRZX.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXMinusYYtoRZX.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXMinusYYtoRZX.run" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXMinusYYtoRZX.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXMinusYYtoRZX.run" title="Link to this definition">#</a></dt>
 <dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -399,11 +617,11 @@ channel names that apply on that qubit.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.XXPlusYYtoRZX">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">XXPlusYYtoRZX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXPlusYYtoRZX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXPlusYYtoRZX" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">XXPlusYYtoRZX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXPlusYYtoRZX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXPlusYYtoRZX" title="Link to this definition">#</a></dt>
 <dd><p>Transformation pass to decompose XXPlusYYGate to RZXGate.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="qiskit_research.utils.XXPlusYYtoRZX.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXPlusYYtoRZX.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXPlusYYtoRZX.run" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#XXPlusYYtoRZX.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.XXPlusYYtoRZX.run" title="Link to this definition">#</a></dt>
 <dd><p>Run a pass on the DAGCircuit. This is implemented by the pass developer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -422,7 +640,7 @@ channel names that apply on that qubit.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.add_pulse_calibrations">
-<span class="sig-name descname"><span class="pre">add_pulse_calibrations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PulseMethod.PHASESHIFT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#add_pulse_calibrations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.add_pulse_calibrations" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_pulse_calibrations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PulseMethod.PHASESHIFT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#add_pulse_calibrations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.add_pulse_calibrations" title="Link to this definition">#</a></dt>
 <dd><p>Add pulse calibrations for custom gates to circuits in-place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -446,7 +664,7 @@ Defaults to PulseMethod.PHASESHIFT.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.cr_scaling_passes">
-<span class="sig-name descname"><span class="pre">cr_scaling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unroll_rzx_to_ecr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_zz_matches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#cr_scaling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.cr_scaling_passes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">cr_scaling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unroll_rzx_to_ecr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_zz_matches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#cr_scaling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.cr_scaling_passes" title="Link to this definition">#</a></dt>
 <dd><p>Yields transpilation passes for CR pulse scaling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -457,7 +675,7 @@ Defaults to PulseMethod.PHASESHIFT.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.dynamical_decoupling_passes">
-<span class="sig-name descname"><span class="pre">dynamical_decoupling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dd_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=&lt;class</span> <span class="pre">'qiskit.transpiler.passes.scheduling.scheduling.alap.ALAPScheduleAnalysis'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urdd_pulse_num=4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#dynamical_decoupling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.dynamical_decoupling_passes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">dynamical_decoupling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dd_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=&lt;class</span> <span class="pre">'qiskit.transpiler.passes.scheduling.scheduling.alap.ALAPScheduleAnalysis'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urdd_pulse_num=4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#dynamical_decoupling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.dynamical_decoupling_passes" title="Link to this definition">#</a></dt>
 <dd><p>Yield transpilation passes for dynamical decoupling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -480,7 +698,7 @@ Defaults to 4.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.get_backend">
-<span class="sig-name descname"><span class="pre">get_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed_simulator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/backend.html#get_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.get_backend" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed_simulator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/backend.html#get_backend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.get_backend" title="Link to this definition">#</a></dt>
 <dd><p>Retrieve a backend.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -491,7 +709,7 @@ Defaults to 4.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.pauli_transpilation_passes">
-<span class="sig-name descname"><span class="pre">pauli_transpilation_passes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#pauli_transpilation_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.pauli_transpilation_passes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pauli_transpilation_passes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pauli_twirling.html#pauli_transpilation_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.pauli_transpilation_passes" title="Link to this definition">#</a></dt>
 <dd><p>Yield simple transpilation steps after addition of Pauli gates.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -502,7 +720,7 @@ Defaults to 4.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.pulse_attaching_passes">
-<span class="sig-name descname"><span class="pre">pulse_attaching_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#pulse_attaching_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.pulse_attaching_passes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pulse_attaching_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#pulse_attaching_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.pulse_attaching_passes" title="Link to this definition">#</a></dt>
 <dd><p>Yields transpilation passes for attaching pulse schedules.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -512,102 +730,54 @@ Defaults to 4.</p></li>
 </dd></dl>
 
 
-
-          </div>
+        </article>
+      </div>
+      <footer>
+        <div class="related-pages">
           
+          <a class="prev-page" href="mzm_generation.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Majorana zero modes experiment</div>
+                
+              </div>
+            </a>
         </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">Qiskit Research</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../mzm_generation/index.html">Majorana zero mode generation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../protein_folding/index.html">Protein folding</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tutorial_quantum_sim/index.html">Tutorial on quantum simulation</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Qiskit Research API Reference</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html">Majorana zero modes experiment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianAnalysis"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianAnalysis</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperiment"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianExperiment</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianExperimentParameters</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.kitaev_hamiltonian"><code class="docutils literal notranslate"><span class="pre">kitaev_hamiltonian()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.measure_interaction_op"><code class="docutils literal notranslate"><span class="pre">measure_interaction_op()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.transpilation_passes"><code class="docutils literal notranslate"><span class="pre">transpilation_passes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="mzm_generation.html#qiskit_research.mzm_generation.transpile_circuit"><code class="docutils literal notranslate"><span class="pre">transpile_circuit()</span></code></a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Utilities for running research experiments with Qiskit</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.BindParameters"><code class="docutils literal notranslate"><span class="pre">BindParameters</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.CombineRuns"><code class="docutils literal notranslate"><span class="pre">CombineRuns</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.PauliTwirl"><code class="docutils literal notranslate"><span class="pre">PauliTwirl</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.PeriodicDynamicalDecoupling"><code class="docutils literal notranslate"><span class="pre">PeriodicDynamicalDecoupling</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.RZXWeylDecomposition"><code class="docutils literal notranslate"><span class="pre">RZXWeylDecomposition</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.RZXtoEchoedCR"><code class="docutils literal notranslate"><span class="pre">RZXtoEchoedCR</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.SECRCalibrationBuilder"><code class="docutils literal notranslate"><span class="pre">SECRCalibrationBuilder</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.XXMinusYYtoRZX"><code class="docutils literal notranslate"><span class="pre">XXMinusYYtoRZX</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.XXPlusYYtoRZX"><code class="docutils literal notranslate"><span class="pre">XXPlusYYtoRZX</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.add_pulse_calibrations"><code class="docutils literal notranslate"><span class="pre">add_pulse_calibrations()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.cr_scaling_passes"><code class="docutils literal notranslate"><span class="pre">cr_scaling_passes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.dynamical_decoupling_passes"><code class="docutils literal notranslate"><span class="pre">dynamical_decoupling_passes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.get_backend"><code class="docutils literal notranslate"><span class="pre">get_backend()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.pauli_transpilation_passes"><code class="docutils literal notranslate"><span class="pre">pauli_transpilation_passes()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#qiskit_research.utils.pulse_attaching_passes"><code class="docutils literal notranslate"><span class="pre">pulse_attaching_passes()</span></code></a></li>
-</ul>
-</li>
-</ul>
-
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="index.html">Qiskit Research API Reference</a><ul>
-      <li>Previous: <a href="mzm_generation.html" title="previous chapter">Majorana zero modes experiment</a></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
-
-
-
-
-
-
-
-
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
         </div>
-      </div>
-      <div class="clearer"></div>
+        
+      </footer>
     </div>
-    <div class="footer">
-      &copy;2022.
+    <aside class="toc-drawer no-toc">
       
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
-      |
-      <a href="../_sources/apidocs/utils.rst.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+      
+    </aside>
+  </div>
+</div><script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=e3a6060d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/qiskit-sphinx-theme.js?v=4d77b8ca"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    </body>
 </html>

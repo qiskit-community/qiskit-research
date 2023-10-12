@@ -1,94 +1,319 @@
-<!DOCTYPE html>
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Qiskit Research API Reference" href="../apidocs/index.html" /><link rel="prev" title="Tutorial on quantum simulation" href="index.html" />
 
-<html lang="en" data-content_root="../">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <title>Quantum Simulation on Noisy Superconducting Quantum Computers &#8212; Qiskit Research 0.0.2 documentation</title>
+    <!-- Generated with Sphinx 7.2.6 and Furo 2023.08.19 -->
+        <title>Quantum Simulation on Noisy Superconducting Quantum Computers - Qiskit Research 0.0.2</title>
+      <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=82a976d7" />
-    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=039e1c02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-sphinx-theme.css?v=fe84956c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/qiskit-ecosystem.css?v=745c5aa7" />
     <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
     <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css" />
-    <script src="../_static/documentation_options.js?v=e3a6060d"></script>
-    <script src="../_static/doctools.js?v=888ff710"></script>
-    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script src="../_static/thebelab-helper.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
-    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Qiskit Research API Reference" href="../apidocs/index.html" />
-    <link rel="prev" title="Tutorial on quantum simulation" href="index.html" />
-   
-  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
-  
-  
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
 
-  </head><body>
-  
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
+<style>
+  body {
+    --color-code-background: #ffffff;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<script src="../_static/js/web-components/top-nav-bar.js"></script></head>
+  <body>
+    
+    <script>document.body.dataset.theme = "light";</script>
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <defs><style>.cls-1{fill:none;}</style></defs>
+      <path d="M28,4H4A2,2,0,0,0,2,6V26a2,2,0,0,0,2,2H28a2,2,0,0,0,2-2V6A2,2,0,0,0,28,4ZM4,6H20V26H4ZM28,26H22V6h6Z"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+      <defs><style>.cls-1{fill:none;}</style></defs>
+      <rect x="4" y="6" width="24" height="2"/>
+      <rect x="4" y="24" width="24" height="2"/>
+      <rect x="4" y="12" width="24" height="2"/>
+      <rect x="4" y="18" width="24" height="2"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg version="1.1" id="icon" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
+         viewBox="0 0 32 32" style="enable-background:new 0 0 32 32;" xml:space="preserve"><polygon points="22,16 12,26 10.6,24.6 19.2,16 10.6,7.4 12,6 " stroke="currentColor"/>
+      <rect id="_x3C_Transparent_Rectangle_x3E_" fill="none" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-new-tab" viewBox="0 0 32 32">
+    <svg id="icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <defs>
+        <style>
+          .cls-1 {
+            fill: none;
+          }
+        </style>
+      </defs>
+      <path fill="#6929C4" d="M26,28H6a2.0027,2.0027,0,0,1-2-2V6A2.0027,2.0027,0,0,1,6,4H16V6H6V26H26V16h2V26A2.0027,2.0027,0,0,1,26,28Z"/>
+      <polygon fill="#6929C4" points="20 2 20 4 26.586 4 18 12.586 19.414 14 28 5.414 28 12 30 12 30 2 20 2"/>
+      <rect id="_Transparent_Rectangle_" data-name="&lt;Transparent Rectangle&gt;" class="cls-1" width="32" height="32"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Qiskit Research 0.0.2</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><div class="sidebar-brand">
+  <a href="https://www.qiskit.org/ecosystem">
+    <div class="sidebar-logo-container">
+      <img class="sidebar-logo" src="../_static/images/ecosystem-logo.svg" alt="Qiskit Ecosystem logo"/>
+    </div>
+  </a>
+  
+  <span class="sidebar-brand-text">Qiskit Research 0.0.2</span>
+</div><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../mzm_generation/index.html">Majorana zero mode generation</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Majorana zero mode generation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../mzm_generation/tutorial.html">Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mzm_generation/data-collection.html">Data collection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mzm_generation/analysis.html">Data analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../protein_folding/index.html">Protein folding</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Protein folding</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../protein_folding/protein_folding.html">Protein Folding</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="index.html">Tutorial on quantum simulation</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Tutorial on quantum simulation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Quantum Simulation on Noisy Superconducting Quantum Computers</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../apidocs/index.html">Qiskit Research API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Qiskit Research API Reference</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html">Majorana zero modes experiment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianAnalysis"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianAnalysis</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperiment"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianExperiment</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html#qiskit_research.mzm_generation.KitaevHamiltonianExperimentParameters"><code class="docutils literal notranslate"><span class="pre">KitaevHamiltonianExperimentParameters</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html#qiskit_research.mzm_generation.kitaev_hamiltonian"><code class="docutils literal notranslate"><span class="pre">kitaev_hamiltonian()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html#qiskit_research.mzm_generation.measure_interaction_op"><code class="docutils literal notranslate"><span class="pre">measure_interaction_op()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html#qiskit_research.mzm_generation.transpilation_passes"><code class="docutils literal notranslate"><span class="pre">transpilation_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/mzm_generation.html#qiskit_research.mzm_generation.transpile_circuit"><code class="docutils literal notranslate"><span class="pre">transpile_circuit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html">Utilities for running research experiments with Qiskit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.BindParameters"><code class="docutils literal notranslate"><span class="pre">BindParameters</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.CombineRuns"><code class="docutils literal notranslate"><span class="pre">CombineRuns</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.PauliTwirl"><code class="docutils literal notranslate"><span class="pre">PauliTwirl</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.PeriodicDynamicalDecoupling"><code class="docutils literal notranslate"><span class="pre">PeriodicDynamicalDecoupling</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.RZXWeylDecomposition"><code class="docutils literal notranslate"><span class="pre">RZXWeylDecomposition</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.RZXtoEchoedCR"><code class="docutils literal notranslate"><span class="pre">RZXtoEchoedCR</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.SECRCalibrationBuilder"><code class="docutils literal notranslate"><span class="pre">SECRCalibrationBuilder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.XXMinusYYtoRZX"><code class="docutils literal notranslate"><span class="pre">XXMinusYYtoRZX</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.XXPlusYYtoRZX"><code class="docutils literal notranslate"><span class="pre">XXPlusYYtoRZX</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.add_pulse_calibrations"><code class="docutils literal notranslate"><span class="pre">add_pulse_calibrations()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.cr_scaling_passes"><code class="docutils literal notranslate"><span class="pre">cr_scaling_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.dynamical_decoupling_passes"><code class="docutils literal notranslate"><span class="pre">dynamical_decoupling_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.get_backend"><code class="docutils literal notranslate"><span class="pre">get_backend()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.pauli_transpilation_passes"><code class="docutils literal notranslate"><span class="pre">pauli_transpilation_passes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../apidocs/utils.html#qiskit_research.utils.pulse_attaching_passes"><code class="docutils literal notranslate"><span class="pre">pulse_attaching_passes()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+</div></div>
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
           
-
-          <div class="body" role="main">
-            
-  <section id="Quantum-Simulation-on-Noisy-Superconducting-Quantum-Computers">
-<h1>Quantum Simulation on Noisy Superconducting Quantum Computers<a class="headerlink" href="#Quantum-Simulation-on-Noisy-Superconducting-Quantum-Computers" title="Link to this heading">¶</a></h1>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="Quantum-Simulation-on-Noisy-Superconducting-Quantum-Computers">
+<h1>Quantum Simulation on Noisy Superconducting Quantum Computers<a class="headerlink" href="#Quantum-Simulation-on-Noisy-Superconducting-Quantum-Computers" title="Link to this heading">#</a></h1>
 <section id="Introduction">
-<h2>Introduction<a class="headerlink" href="#Introduction" title="Link to this heading">¶</a></h2>
+<h2>Introduction<a class="headerlink" href="#Introduction" title="Link to this heading">#</a></h2>
 <p>This notebook is a companion to our paper [1] on quantum simulation. This notebook is not written as a research paper nor is it an introductory level tutorial; the context for some techniques will be missing as well as rigorous theoretical explanations. (These can be found in the paper [1] and subsequent citations.) Instead, this notebook aims to demonstrate minimal working examples of state-of-the-art techniques using Qiskit with the intent for you to build upon them. We demonstrate the time
 evolution of a simple tight binding model and various error mitigation techniques. Note that this tight-binding model can be solved exactly because it is a quadratic fermionic Hamiltonian, but we will be Trotterizing it for expository purposes. We hope you find the source code useful to jump start your own quantum research into more complicated models and methods.</p>
 <p>We would love to see how you build on these ideas and methods for your own work!</p>
 <p><a class="reference external" href="https://arxiv.org/abs/2209.02795">[1]</a> “Quantum Simulation on Noisy Quantum Computers”, Kaelyn J. Ferris, A.J. Rasmusson, Nicholas T. Bronn, Olivia Lanes. <a class="reference external" href="https://arxiv.org/abs/2209.02795">arXiv:2209.02795 [quant-ph]</a> (2022)</p>
 </section>
 <section id="The-Tight-Binding-Model">
-<h2>The Tight Binding Model<a class="headerlink" href="#The-Tight-Binding-Model" title="Link to this heading">¶</a></h2>
+<h2>The Tight Binding Model<a class="headerlink" href="#The-Tight-Binding-Model" title="Link to this heading">#</a></h2>
 <p>The <a class="reference external" href="https://en.wikipedia.org/wiki/Tight_binding">tight-binding model</a> is an exemplary model for physical systems with tightly bound particles. For example, physical systems where electrons are tightly bond to nuclei can be approximated by a tight binding model. It is also apart of other, more complicated, models, which we briefly discuss in the <a class="reference external" href="https://arxiv.org/abs/2209.02795">paper</a>. This makes it a nice minimal example, because it can be added upon in various ways to model many other
 types of systems.</p>
 <p>In this specific example, we’ll consider the case of a single particle that can “hop” between 5 lattice sites. There is a “hopping strength” <span class="math notranslate nohighlight">\(\tau\)</span> to hop between different binding sites. We ignore any spin degree of freedom to the particle. We include a defect in the way of a hopping term that has a different value <span class="math notranslate nohighlight">\(\tau_d\)</span>. The particle will initially start on the left most site of the lattice. <strong>Our goal is to measure the state dynamics of the particle.</strong></p>
 <p>The tight binding model (ignoring spin and no defect) follows the Hamiltonian</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[H = -\tau \sum_{\langle i, j\rangle}^{N} \left( c_{i}^{\dagger} c_{j} + c_{j}^{\dagger} c_{i} \right) \;.\]</div>
+</div>
 <p>Let’s consider a 1D chain of 5 sites. The Hamiltonian is then</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{align}
 H &amp;= -\tau \sum_{i=0}^{3} \left( c_{i}^{\dagger} c_{i+1} + c_{i+1}^{\dagger} c_{i} \right) \;.
 \end{align}\]</div>
+</div>
 <p>Now, let’s include the defect hopping term in the lattice, and set the values <span class="math notranslate nohighlight">\(\tau = 1\)</span> and <span class="math notranslate nohighlight">\(\tau_d = 0.5\)</span> with <span class="math notranslate nohighlight">\(\tau_d\)</span> between sites 2 and 3.</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{equation}
 H = -\tau \sum_{i=(0,1,3)} \left( c_{i}^{\dagger} c_{i+1} + c_{i+1}^{\dagger} c_{i} \right) - \tau_d \left( c_{2}^{\dagger} c_{3} + c_{3}^{\dagger} c_{2} \right) \;.
 \end{equation}\]</div>
+</div>
 <p>See the <a class="reference external" href="https://arxiv.org/abs/2209.02795">paper</a> for full details.</p>
 <p><img alt="img" src="../_images/lattice.png" /></p>
 <section id="Transformation-to-Pauli-Operators">
-<h3>Transformation to Pauli Operators<a class="headerlink" href="#Transformation-to-Pauli-Operators" title="Link to this heading">¶</a></h3>
+<h3>Transformation to Pauli Operators<a class="headerlink" href="#Transformation-to-Pauli-Operators" title="Link to this heading">#</a></h3>
 <p>We transform the fermionic Hamiltonian to a spin Hamiltonian, so it can be simulated on a quantum computer. (See the <a class="reference external" href="https://arxiv.org/abs/2209.02795">paper</a> and literature references for more details.)</p>
 <p>In mapping annihilation and creation operators to Pauli operators (labeled <span class="math notranslate nohighlight">\(X\)</span>, <span class="math notranslate nohighlight">\(Y\)</span>, <span class="math notranslate nohighlight">\(Z\)</span>, and the identity as <span class="math notranslate nohighlight">\(I\)</span>), we are mapping whether a site is occupied or not. Remember that we are ignoring any spin degree of freedom.</p>
 </section>
 <section id="Creation-and-Annihilation-Operators">
-<h3>Creation and Annihilation Operators<a class="headerlink" href="#Creation-and-Annihilation-Operators" title="Link to this heading">¶</a></h3>
+<h3>Creation and Annihilation Operators<a class="headerlink" href="#Creation-and-Annihilation-Operators" title="Link to this heading">#</a></h3>
 <p>The action of the creation operator on the vacuum state “creates” or “raises” the state <span class="math notranslate nohighlight">\(c^{\dagger}|0\rangle = |1\rangle\)</span>. Action of the annihilation operator on the vacuum “annihilates” or “lowers” the state to zero <span class="math notranslate nohighlight">\(c|1\rangle = |0\rangle\)</span>. Following the Jordan-Wigner transformation (but making adjustments to ignore the spin of the particle), the creation <span class="math notranslate nohighlight">\(c^{\dagger}\)</span> and annihilation <span class="math notranslate nohighlight">\(c\)</span> operators map to Pauli raising <span class="math notranslate nohighlight">\(\sigma_+\)</span> and lowering <span class="math notranslate nohighlight">\(\sigma_-\)</span>
 operators.</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align}
 c^{\dagger}_i &amp;= \sigma_{+} = Z_0 \dots Z_{i-1} \left( \dfrac{X_i - i Y_i}{2} \right) I_{i+1} \dots I_N \\
 c_i &amp;= \sigma_{-} = Z_0 \dots Z_{i-1} \left( \dfrac{X_i + i Y_i}{2} \right) I_{i+1} \dots I_N
 \end{align}\end{split}\]</div>
+</div>
 <p>Note that these definitions are typically switched when working in the spin-1/2 basis.</p>
 <p>Applying the transformation, and including the defect between sites 2 and 3 (as described in the paper), the Hamiltonian becomes</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{equation}
 H = -\frac{\tau}{2} \sum_{i=(0,1,3)} \left( X_i X_{i+1} + Y_i Y_{i+1} \right) -\frac{\tau_d}{2} \left( X_2 X_{3} + Y_2 Y_{3} \right)
 \end{equation}\]</div>
+</div>
 <p>We’re now ready to write this Hamiltonian in Qiskit.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -266,10 +491,12 @@ EvolvedOp(SummedOp([PauliOp(Pauli(&#39;IIIXX&#39;), coeff=-0.5), PauliOp(Pauli(&
 </pre></div></div>
 </div>
 <p>The observables we are interested in are the expectation values of the number operators <span class="math notranslate nohighlight">\(\langle n_i(t)\rangle\)</span> at a given site <span class="math notranslate nohighlight">\(i\)</span> after an evolution time <span class="math notranslate nohighlight">\(t\)</span>. In the case of a single particle, the number operator <span class="math notranslate nohighlight">\(\langle n_i(t)\rangle\)</span> is the probability of the particle to occupy site <span class="math notranslate nohighlight">\(i\)</span>. Using the same JW transformation we used on the Hamiltonian, <span class="math notranslate nohighlight">\(\langle n_i(t)\rangle\)</span> in terms of Pauli operators is</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{equation}
 n_i = c^{\dagger}_i c_i = \left(\dfrac{X_i - i Y_i}{2} \right) \left(\dfrac{X_i + i Y_i}{2}\right) = \left(\mathbb{1} - Z_i\right) / 2
 \end{equation}\]</div>
+</div>
 <p>We can construct these using Qiskit opflow as well.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
@@ -304,7 +531,7 @@ n_i = c^{\dagger}_i c_i = \left(\dfrac{X_i - i Y_i}{2} \right) \left(\dfrac{X_i 
 </div>
 </section>
 <section id="Classical-Simulation">
-<h3>Classical Simulation<a class="headerlink" href="#Classical-Simulation" title="Link to this heading">¶</a></h3>
+<h3>Classical Simulation<a class="headerlink" href="#Classical-Simulation" title="Link to this heading">#</a></h3>
 <p>We can now classically simulate the state evolution and measure the observables of interest.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -343,7 +570,7 @@ n_i = c^{\dagger}_i c_i = \left(\dfrac{X_i - i Y_i}{2} \right) \left(\dfrac{X_i 
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 50/50 [00:03&lt;00:00, 13.77it/s]
+100%|██████████| 50/50 [00:05&lt;00:00,  8.62it/s]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -401,7 +628,7 @@ n_i = c^{\dagger}_i c_i = \left(\dfrac{X_i - i Y_i}{2} \right) \left(\dfrac{X_i 
 </div>
 </div>
 <section id="Particle-conservation-check">
-<h4>Particle conservation check<a class="headerlink" href="#Particle-conservation-check" title="Link to this heading">¶</a></h4>
+<h4>Particle conservation check<a class="headerlink" href="#Particle-conservation-check" title="Link to this heading">#</a></h4>
 <p>It’s always a good idea to test if a computer is giving something that makes sense. One such test, and a rather low effort one, is to compute the probability of finding the particle across all sites at each time point. Since we know there is only one particle to begin with and particle number is conserved, we should calculate 1 for all time steps. We will later use this fact in post-processing our quantum computer data by throwing out any measurements that don’t preserve particle number.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
@@ -453,36 +680,46 @@ n_i = c^{\dagger}_i c_i = \left(\dfrac{X_i - i Y_i}{2} \right) \left(\dfrac{X_i 
 </section>
 </section>
 <section id="Trotterization">
-<h3>Trotterization<a class="headerlink" href="#Trotterization" title="Link to this heading">¶</a></h3>
+<h3>Trotterization<a class="headerlink" href="#Trotterization" title="Link to this heading">#</a></h3>
 <p>To simulate these state dynamics on a quantum computer, we’ve chosen to use the Trotter-Suzuki decomposition of the time evolution. Remember that this tight-binding model can be solved exactly because it is a quadratic fermionic Hamiltonian, but here, we will use it to illustrate the Trotter-Suzuki decomposition and subsequent techniques. This is covered more thoroughly in the <a class="reference external" href="https://arxiv.org/abs/2209.02795">paper</a> and the references therein.</p>
 <p>Trotterization of defect free Hamiltonian. (Defect version shown later on.)</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align}
 H &amp;= -\frac{t}{2} \sum_{i=0}^{3} \left( X_i X_{i+1} + Y_i Y_{i+1} \right) \\
 H &amp;= -\frac{t}{2}\left(X_0 X_1 + Y_0 Y_1 + X_1 X_2 + Y_1 Y_2 + X_2 X_3 + Y_2 Y_3 + X_3 X_4 + Y_3 Y_4 \right) \\
 \end{align}\end{split}\]</div>
+</div>
 <p>The time evolution is then</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align}
 U(\tau) &amp;= \exp \left[i\frac{\tau t}{2}\left(X_0 X_1 + Y_0 Y_1 + X_1 X_2 + Y_1 Y_2 + X_2 X_3 + Y_2 Y_3 + X_3 X_4 + Y_3 Y_4 \right) \right] \\
 U(\tau) &amp;\approx \prod_{n=0}^N \exp \left[i\frac{\tau t}{2n}\left(X_0 X_1 + Y_0 Y_1\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(X_1 X_2 + Y_1 Y_2 \right) \right]^n \exp \left[i\frac{\tau t}{2n}\left(X_2 X_3 + Y_2 Y_3 \right) \right]^n \exp \left[i\frac{\tau t}{2n}\left(X_3 X_4 + Y_3 Y_4 \right) \right]^n \\
 \end{align}\end{split}\]</div>
+</div>
 <p>Including defect</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{equation}
 U(\tau, \tau_d) \approx \prod_{n=0}^N \exp \left[i\frac{\tau t}{2n}\left(X_0 X_1 + Y_0 Y_1\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(X_1 X_2 + Y_1 Y_2 \right) \right]^n \exp \left[i\frac{\tau_d t}{2n}\left(X_2 X_3 + Y_2 Y_3 \right) \right]^n \exp \left[i\frac{\tau t}{2n}\left(X_3 X_4 + Y_3 Y_4 \right) \right]^n
 \end{equation}\]</div>
+</div>
 <p>Each pair of <span class="math notranslate nohighlight">\(XX\)</span> and <span class="math notranslate nohighlight">\(YY\)</span> interactions summed in the exponents do commute, so there could be further decomposition without need of trotterization. There is in fact efficient decompositions for such interactions (see the <a class="reference external" href="https://qiskit.org/documentation/apidoc/circuit_library.html">qiskit circuit library</a>), but we will not go that here. It also depends on the type of gates we can/want to apply at the hardware level. We’ll eventually work toward <span class="math notranslate nohighlight">\(R_{ZX}(\theta)\)</span> gates, so
 let’s stay in terms of separating <span class="math notranslate nohighlight">\(XX\)</span> and <span class="math notranslate nohighlight">\(YY\)</span>.</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align}
 U(\tau) &amp;\approx \prod_{n=0}^N \exp \left[i\frac{\tau t}{2n}\left(X_0 X_1\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(Y_0 Y_1\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(X_1 X_2\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(Y_1 Y_2 \right) \right]^n \exp \left[i\frac{\tau t}{2n}\left(X_2 X_3\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(Y_2 Y_3 \right) \right]^n \exp \left[i\frac{\tau t}{2n}\left(X_3 X_4\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(Y_3 Y_4 \right) \right]^n \\
 \end{align}\end{split}\]</div>
+</div>
 <p>Including defect is a simple parameter change at the correct operator</p>
+<div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{align}
 U(\tau) &amp;\approx \prod_{n=0}^N \exp \left[i\frac{\tau t}{2n}\left(X_0 X_1\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(Y_0 Y_1\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(X_1 X_2\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(Y_1 Y_2 \right) \right]^n \exp \left[i\frac{\tau_d t}{2n}\left(X_2 X_3\right)\right]^n \exp \left[i\frac{\tau_d t}{2n}\left(Y_2 Y_3 \right) \right]^n \exp \left[i\frac{\tau t}{2n}\left(X_3 X_4\right)\right]^n \exp \left[i\frac{\tau t}{2n}\left(Y_3 Y_4 \right) \right]^n \\
 \end{align}\end{split}\]</div>
+</div>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
@@ -551,7 +788,7 @@ ComposedOp([EvolvedOp(PauliOp(Pauli(&#39;IIIXX&#39;), coeff=-0.25), coeff=1.0), 
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 5/5 [00:12&lt;00:00,  2.57s/it]
+100%|██████████| 5/5 [00:21&lt;00:00,  4.26s/it]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -586,7 +823,7 @@ ComposedOp([EvolvedOp(PauliOp(Pauli(&#39;IIIXX&#39;), coeff=-0.25), coeff=1.0), 
 <p>The evolution above looks quite similar the exact evolution, but not quite. This is due to trotter error.</p>
 </section>
 <section id="Trotter-Error">
-<h3>Trotter Error<a class="headerlink" href="#Trotter-Error" title="Link to this heading">¶</a></h3>
+<h3>Trotter Error<a class="headerlink" href="#Trotter-Error" title="Link to this heading">#</a></h3>
 <p>The Suzuki-Trotter approximation is just that: an approximation. To illustrate how this might affect estimating the exact dynamics, let’s plot the evolution of the exact solution with various trotter steps.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
@@ -623,8 +860,8 @@ ComposedOp([EvolvedOp(PauliOp(Pauli(&#39;IIIXX&#39;), coeff=-0.25), coeff=1.0), 
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 5/5 [00:08&lt;00:00,  1.64s/it]
-100%|██████████| 5/5 [00:12&lt;00:00,  2.58s/it]
+100%|██████████| 5/5 [00:13&lt;00:00,  2.76s/it]
+100%|██████████| 5/5 [00:21&lt;00:00,  4.23s/it]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -677,10 +914,10 @@ ComposedOp([EvolvedOp(PauliOp(Pauli(&#39;IIIXX&#39;), coeff=-0.25), coeff=1.0), 
 </section>
 </section>
 <section id="Noisy-Quantum-Computer-Implementation">
-<h2>Noisy Quantum Computer Implementation<a class="headerlink" href="#Noisy-Quantum-Computer-Implementation" title="Link to this heading">¶</a></h2>
+<h2>Noisy Quantum Computer Implementation<a class="headerlink" href="#Noisy-Quantum-Computer-Implementation" title="Link to this heading">#</a></h2>
 <p>We know what to expect from the quantum computer, so we’re ready for a first-pass implementation! Let’s get started with the usual Qiskit imports, provider access, backends, and backend properties.</p>
 <section id="Import-Qiskit,-IBM-credentials,-and-helper-functions">
-<h3>Import Qiskit, IBM credentials, and helper functions<a class="headerlink" href="#Import-Qiskit,-IBM-credentials,-and-helper-functions" title="Link to this heading">¶</a></h3>
+<h3>Import Qiskit, IBM credentials, and helper functions<a class="headerlink" href="#Import-Qiskit,-IBM-credentials,-and-helper-functions" title="Link to this heading">#</a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
@@ -866,7 +1103,7 @@ ComposedOp([EvolvedOp(PauliOp(Pauli(&#39;IIIXX&#39;), coeff=-0.25), coeff=1.0), 
 </div>
 </section>
 <section id="Access-backends-and-their-info">
-<h3>Access backends and their info<a class="headerlink" href="#Access-backends-and-their-info" title="Link to this heading">¶</a></h3>
+<h3>Access backends and their info<a class="headerlink" href="#Access-backends-and-their-info" title="Link to this heading">#</a></h3>
 <p>We will work with the ibm_lagos device. To estimate circuit performance and other information, lagos’s properties, configuration, defaults, and native gate set can be accessed. In the paper, we accessed the real backend. For ease of access, we’ll implement everything with a simulator that emulates ibm_lagos’s noise profile.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
@@ -935,7 +1172,7 @@ Average single qubit X gate error: 0.00026
 </div>
 </section>
 <section id="Generate-quantum-circuits-for-trotterized-quantum-simulation">
-<h3>Generate quantum circuits for trotterized quantum simulation<a class="headerlink" href="#Generate-quantum-circuits-for-trotterized-quantum-simulation" title="Link to this heading">¶</a></h3>
+<h3>Generate quantum circuits for trotterized quantum simulation<a class="headerlink" href="#Generate-quantum-circuits-for-trotterized-quantum-simulation" title="Link to this heading">#</a></h3>
 <p>Qiskit has functionality to directly <a class="reference external" href="https://qiskit.org/documentation/tutorials/operators/01_operator_flow.html#Part-IV:-Converters">convert opflow objects into quantum circuits</a>. This means we can use the U_trot method we made earlier to compute the unitary time evolution operator and then have it directly converted to a quantum circuit. Below, we’ll use those functions defined earlier in the section.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
@@ -977,7 +1214,7 @@ Average single qubit X gate error: 0.00026
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 50/50 [00:00&lt;00:00, 401.94it/s]
+100%|██████████| 50/50 [00:00&lt;00:00, 281.76it/s]
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -990,7 +1227,7 @@ Average single qubit X gate error: 0.00026
 </div>
 </section>
 <section id="Quantify-improvement-from-transpiler-passes">
-<h3>Quantify improvement from transpiler passes<a class="headerlink" href="#Quantify-improvement-from-transpiler-passes" title="Link to this heading">¶</a></h3>
+<h3>Quantify improvement from transpiler passes<a class="headerlink" href="#Quantify-improvement-from-transpiler-passes" title="Link to this heading">#</a></h3>
 <p>Using the transpiler, we can reduce the total number of gates and duration of the circuit. This in turn reduces the total error in the quantum computation. Here we only show using the <code class="docutils literal notranslate"><span class="pre">optimization_level</span></code> argument. In later sections, we will demonstrate the exact transpiler passes that reduce the circuits. See the <a class="reference external" href="https://arxiv.org/abs/2209.02795">paper</a> for details on the heuristic we use to estimate circuit fidelity.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
@@ -1030,7 +1267,7 @@ Average single qubit X gate error: 0.00026
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 Circuit gate counts: OrderedDict([(&#39;rz&#39;, 91), (&#39;sx&#39;, 50), (&#39;cx&#39;, 16), (&#39;measure&#39;, 5)])
-Transpiled circuit gate counts: OrderedDict([(&#39;rz&#39;, 30), (&#39;sx&#39;, 20), (&#39;cx&#39;, 8), (&#39;measure&#39;, 5), (&#39;x&#39;, 2)])
+Transpiled circuit gate counts: OrderedDict([(&#39;rz&#39;, 22), (&#39;sx&#39;, 20), (&#39;cx&#39;, 8), (&#39;measure&#39;, 5), (&#39;x&#39;, 2)])
 
 --- Circuit gate error estimate ---
 CX gate error contribution: 0.1166
@@ -1045,7 +1282,7 @@ Total circuit fidelity: 0.9350
 </div>
 </section>
 <section id="Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(transpiler-optimization)">
-<h3>Estimate circuit error and circuit duration vs number of trotter steps (transpiler optimization)<a class="headerlink" href="#Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(transpiler-optimization)" title="Link to this heading">¶</a></h3>
+<h3>Estimate circuit error and circuit duration vs number of trotter steps (transpiler optimization)<a class="headerlink" href="#Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(transpiler-optimization)" title="Link to this heading">#</a></h3>
 <p>Let’s expand the circuit fidelity analysis we did in the above section to a range of trotter steps.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
@@ -1136,7 +1373,7 @@ Total circuit fidelity: 0.9350
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 12/12 [00:20&lt;00:00,  1.74s/it]
+100%|██████████| 12/12 [00:30&lt;00:00,  2.57s/it]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1227,7 +1464,7 @@ Total circuit fidelity: 0.9350
 </div>
 </section>
 <section id="Only-mitigating-by-transpilation">
-<h3>Only mitigating by transpilation<a class="headerlink" href="#Only-mitigating-by-transpilation" title="Link to this heading">¶</a></h3>
+<h3>Only mitigating by transpilation<a class="headerlink" href="#Only-mitigating-by-transpilation" title="Link to this heading">#</a></h3>
 <p>Just using the transpiler can dramatically improve quantum circuits (as seen in the plots above), but it’s not that only way, nor will it always be the most effective. It is ultimately a black box optimization. Diving more deeply into the hardware and considering more about what error mitigation might be most useful, we can get even better results. Let’s demonstrate this by running the transpiled circuit on the ibm_lagos now and compare it to when we combine many error mitigation techniques.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
@@ -1261,7 +1498,7 @@ Total circuit fidelity: 0.9350
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 50/50 [00:20&lt;00:00,  2.40it/s]
+100%|██████████| 50/50 [00:32&lt;00:00,  1.53it/s]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1283,7 +1520,7 @@ Total circuit fidelity: 0.9350
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Job ID 7d05d518-b555-4825-82fa-6f017bdac1ff
+Job ID 86662604-1134-42f3-9d5a-7c6e398a3b81
 Job Status: job has successfully run
 </pre></div></div>
 </div>
@@ -1368,9 +1605,9 @@ Job Status: job has successfully run
 </section>
 </section>
 <section id="Mitigated-Simulation">
-<h2>Mitigated Simulation<a class="headerlink" href="#Mitigated-Simulation" title="Link to this heading">¶</a></h2>
+<h2>Mitigated Simulation<a class="headerlink" href="#Mitigated-Simulation" title="Link to this heading">#</a></h2>
 <section id="Map-o-matic">
-<h3>Map-o-matic<a class="headerlink" href="#Map-o-matic" title="Link to this heading">¶</a></h3>
+<h3>Map-o-matic<a class="headerlink" href="#Map-o-matic" title="Link to this heading">#</a></h3>
 <p>We can find additional improvements by picking qubits with the best coherence times and lowest gate errors. The <a class="reference external" href="https://github.com/Qiskit-Partners/mapomatic">map-o-matic</a> tool does just that. In our case, we are using a 7-qubit device, but are only computing on 5 of them. Which 5 qubits do we choose? Based on the couplings of the system we want to simulate, having 5 qubits connected in a line would be the best option. Other configurations would require SWAP gates which come at the expense of
 3 CNOT gates each.</p>
 <p>There are four unique combinations where five of the seven qubits are in a line. Map-o-matic will calculate which is the best for us. We will store this list of qubits in the list <code class="docutils literal notranslate"><span class="pre">q_regs</span></code> for later use.</p>
@@ -1398,7 +1635,7 @@ map-o-matic (quantum registers, backend, score): ([6, 5, 3, 1, 2], &#39;fake_lag
 </div>
 </section>
 <section id="Measurement-Error-Mitigation">
-<h3>Measurement Error Mitigation<a class="headerlink" href="#Measurement-Error-Mitigation" title="Link to this heading">¶</a></h3>
+<h3>Measurement Error Mitigation<a class="headerlink" href="#Measurement-Error-Mitigation" title="Link to this heading">#</a></h3>
 <p>We directly follow the <a class="reference external" href="https://qiskit.org/documentation/partners/mthree/basic.html">mthree tutorial</a> for scalable measurement error mitigation. For further examples, see the <a class="reference external" href="https://qiskit.org/textbook/preface.html">Qiskit textbook’s</a> tutorial on <a class="reference external" href="https://qiskit.org/textbook/ch-quantum-hardware/measurement-error-mitigation.html#version-information">measurement error mitigation</a>. Below, we first demonstrate this technique on a simple example of a GHZ state
 <span class="math notranslate nohighlight">\(\left(|00000\rangle + |11111\rangle \right)/ \sqrt{2}\)</span>. We will use it for the quantum simulation at the very end.</p>
 <div class="nbinput nblast docutils container">
@@ -1463,7 +1700,7 @@ map-o-matic (quantum registers, backend, score): ([6, 5, 3, 1, 2], &#39;fake_lag
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Job ID 2f89df81-aa25-4b5b-9608-9f88bcb8877e
+Job ID 1381a97e-18c3-402f-ac5f-2a6e1eefd94d
 Job Status: job has successfully run
 </pre></div></div>
 </div>
@@ -1521,7 +1758,7 @@ Expected 50% +/- 0.5 % of |00000&gt; and |11111&gt;
 </div>
 </section>
 <section id="R_{ZX}(\theta)-Gate-Optimization">
-<h3><span class="math notranslate nohighlight">\(R_{ZX}(\theta)\)</span> Gate Optimization<a class="headerlink" href="#R_{ZX}(\theta)-Gate-Optimization" title="Link to this heading">¶</a></h3>
+<h3><span class="math notranslate nohighlight">\(R_{ZX}(\theta)\)</span> Gate Optimization<a class="headerlink" href="#R_{ZX}(\theta)-Gate-Optimization" title="Link to this heading">#</a></h3>
 <p>Two-qubit gate errors are the main source of error for current (NISQ era) quantum computers. One way to get a significant reduction in two-qubit errors is to dive closer to the physics of the underlying qubits and use the native two-qubit gates instead of CNOT gates. Read the <a class="reference external" href="https://arxiv.org/abs/2209.02795">paper</a> and references therein for more details. In short, we want to compose all two-qubit gates in terms of <cite>:math:`R_{ZX}(theta)</cite> gate
 operations &lt;<a class="reference external" href="https://qiskit.org/documentation/stubs/qiskit.circuit.library.RZXGate.html">https://qiskit.org/documentation/stubs/qiskit.circuit.library.RZXGate.html</a>&gt;`__.</p>
 <p>Compose the circuit in terms of <span class="math notranslate nohighlight">\(R_{ZX}(\theta)\)</span> gate operations instead of CNOT gates.</p>
@@ -1684,7 +1921,7 @@ operations &lt;<a class="reference external" href="https://qiskit.org/documentat
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Circuit operations: OrderedDict([(&#39;rz&#39;, 88), (&#39;sx&#39;, 46), (&#39;rzx&#39;, 32), (&#39;x&#39;, 23), (&#39;measure&#39;, 5)])
+Circuit operations: OrderedDict([(&#39;rz&#39;, 88), (&#39;sx&#39;, 46), (&#39;rzx&#39;, 32), (&#39;x&#39;, 24), (&#39;measure&#39;, 5)])
 </pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
@@ -1741,7 +1978,7 @@ Circuit operations: OrderedDict([(&#39;rz&#39;, 88), (&#39;sx&#39;, 46), (&#39;r
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 50/50 [00:25&lt;00:00,  1.96it/s]
+100%|██████████| 50/50 [00:39&lt;00:00,  1.26it/s]
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
@@ -1772,12 +2009,12 @@ Circuit operations: OrderedDict([(&#39;rz&#39;, 88), (&#39;sx&#39;, 46), (&#39;r
 <div class="highlight"><pre>
 Circuit fidelity: 0.3357
 Transpiled circuit fidelity: 0.5948
-RZX circuit fidelity: 0.8031
+RZX circuit fidelity: 0.8032
 </pre></div></div>
 </div>
 </section>
 <section id="Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(RZX-optimization)">
-<h3>Estimate circuit error and circuit duration vs number of trotter steps (RZX optimization)<a class="headerlink" href="#Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(RZX-optimization)" title="Link to this heading">¶</a></h3>
+<h3>Estimate circuit error and circuit duration vs number of trotter steps (RZX optimization)<a class="headerlink" href="#Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(RZX-optimization)" title="Link to this heading">#</a></h3>
 <p>Let’s expand this analysis to a range of trotter steps. The <span class="math notranslate nohighlight">\(R_{ZX}\)</span> optimized circuits will have a varying fidelity for different time points because different time points share a different amount of <span class="math notranslate nohighlight">\(R_{ZX}\)</span> evolution. We will average over those effects.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[46]:
@@ -1829,7 +2066,7 @@ RZX circuit fidelity: 0.8031
 </div>
 <div class="output_area stderr docutils container">
 <div class="highlight"><pre>
-100%|██████████| 12/12 [08:32&lt;00:00, 42.73s/it]
+100%|██████████| 12/12 [12:23&lt;00:00, 61.99s/it]
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1901,7 +2138,7 @@ RZX circuit fidelity: 0.8031
 <div class="output_area docutils container">
 <div class="highlight"><pre>
 One trotter step fidelities no opt: 0.8721 transpiled: 0.9346 rzx opt: 0.9687
-Ten trotter step fidelities no opt: 0.2556 transpiled: 0.5228 rzx opt: 0.7924
+Ten trotter step fidelities no opt: 0.2556 transpiled: 0.5228 rzx opt: 0.7923
 </pre></div></div>
 </div>
 <div class="nbinput docutils container">
@@ -1957,7 +2194,7 @@ Ten trotter step fidelities no opt: 0.2556 transpiled: 0.5228 rzx opt: 0.7924
 </section>
 </section>
 <section id="Execute-Quantum-Simulation-with-Combined-Techniques">
-<h2>Execute Quantum Simulation with Combined Techniques<a class="headerlink" href="#Execute-Quantum-Simulation-with-Combined-Techniques" title="Link to this heading">¶</a></h2>
+<h2>Execute Quantum Simulation with Combined Techniques<a class="headerlink" href="#Execute-Quantum-Simulation-with-Combined-Techniques" title="Link to this heading">#</a></h2>
 <p>Bring map-o-matic, measurement error mitigation, <span class="math notranslate nohighlight">\(R_{ZX}\)</span> gates, and particle conservation (more on that later) together and simulate the state dynamics! (This requires the upper sections to be executed.)</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[49]:
@@ -1978,7 +2215,7 @@ Ten trotter step fidelities no opt: 0.2556 transpiled: 0.5228 rzx opt: 0.7924
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Job ID 6505aead-ff88-49fa-a14e-b3abb7e74d7e
+Job ID e6632225-b01e-449b-98e0-7b380faf7468
 Job Status: job has successfully run
 </pre></div></div>
 </div>
@@ -2113,87 +2350,118 @@ Job Status: job has successfully run
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area rendered_html docutils container">
-<h3>Version Information</h3><table><tr><th>Qiskit Software</th><th>Version</th></tr><tr><td><code>qiskit-terra</code></td><td>0.23.0</td></tr><tr><td><code>qiskit-aer</code></td><td>0.12.2</td></tr><tr><td><code>qiskit-ibmq-provider</code></td><td>0.20.0</td></tr><tr><td><code>qiskit-nature</code></td><td>0.6.0</td></tr><tr><th>System information</th></tr><tr><td>Python version</td><td>3.9.18</td></tr><tr><td>Python compiler</td><td>GCC 11.4.0</td></tr><tr><td>Python build</td><td>main, Aug 28 2023 08:38:32</td></tr><tr><td>OS</td><td>Linux</td></tr><tr><td>CPUs</td><td>2</td></tr><tr><td>Memory (Gb)</td><td>6.759757995605469</td></tr><tr><td colspan='2'>Wed Sep 27 17:14:36 2023 UTC</td></tr></table></div>
+<h3>Version Information</h3><table><tr><th>Qiskit Software</th><th>Version</th></tr><tr><td><code>qiskit-terra</code></td><td>0.23.0</td></tr><tr><td><code>qiskit-aer</code></td><td>0.12.2</td></tr><tr><td><code>qiskit-ibmq-provider</code></td><td>0.20.0</td></tr><tr><td><code>qiskit-nature</code></td><td>0.6.0</td></tr><tr><th>System information</th></tr><tr><td>Python version</td><td>3.9.18</td></tr><tr><td>Python compiler</td><td>GCC 11.4.0</td></tr><tr><td>Python build</td><td>main, Aug 28 2023 08:38:32</td></tr><tr><td>OS</td><td>Linux</td></tr><tr><td>CPUs</td><td>2</td></tr><tr><td>Memory (Gb)</td><td>6.759757995605469</td></tr><tr><td colspan='2'>Thu Oct 12 14:46:45 2023 UTC</td></tr></table></div>
 </div>
 <script type="application/vnd.jupyter.widget-state+json">
-{"state": {"5a1fdb7501e440caab46db7e59ae450a": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 10px 0px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "2ac22c8307214ecfa677044a83748329": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "6989202070ce48bbadd9d1371bff6cf3": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_5a1fdb7501e440caab46db7e59ae450a", "placeholder": "\u200b", "style": "IPY_MODEL_2ac22c8307214ecfa677044a83748329", "tabbable": null, "tooltip": null, "value": "<p style='font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-size: 20px; font-weight: medium;'>Circuit Properties</p>"}}, "6f51bac1eb204b8a9acea1f1b8e7daf8": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": "right", "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": "0px 0px 0px 0px", "right": null, "top": null, "visibility": null, "width": "70px"}}, "4a2af41cbba349bc8dba1c5783d9f68a": {"model_name": "ButtonStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "button_color": null, "font_family": null, "font_size": null, "font_style": null, "font_variant": null, "font_weight": null, "text_color": null, "text_decoration": null}}, "64d7a38df8864b5d9be314b2b79913fb": {"model_name": "ButtonModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "ButtonView", "button_style": "primary", "description": "Clear", "disabled": false, "icon": "", "layout": "IPY_MODEL_6f51bac1eb204b8a9acea1f1b8e7daf8", "style": "IPY_MODEL_4a2af41cbba349bc8dba1c5783d9f68a", "tabbable": null, "tooltip": null}}, "1f108536f0b84693ae725082d9bcdab2": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": "\n                                       \". . . . right \"\n                                        ", "grid_template_columns": "20% 20% 20% 20% 20%", "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "100%"}}, "3e3bc1c8aee24ee48b37d8a7a1657714": {"model_name": "GridBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "GridBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "GridBoxView", "box_style": "", "children": ["IPY_MODEL_64d7a38df8864b5d9be314b2b79913fb"], "layout": "IPY_MODEL_1f108536f0b84693ae725082d9bcdab2", "tabbable": null, "tooltip": null}}, "03f405959b684f4994f34122b2033f7f": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "190px"}}, "97e31b462d314e90a64210f400e59dfe": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "53a79f3eadcd440c83d1ccfd680ae218": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_03f405959b684f4994f34122b2033f7f", "placeholder": "\u200b", "style": "IPY_MODEL_97e31b462d314e90a64210f400e59dfe", "tabbable": null, "tooltip": null, "value": "<h5>Job ID</h5>"}}, "5434cf9339114f0b941e707700ef8bf2": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "145px"}}, "2ea854599d3e44c283d06955fa05c1c5": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "15ee0709a6a84e61aecc6a13a4b32367": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_5434cf9339114f0b941e707700ef8bf2", "placeholder": "\u200b", "style": "IPY_MODEL_2ea854599d3e44c283d06955fa05c1c5", "tabbable": null, "tooltip": null, "value": "<h5>Backend</h5>"}}, "188a5cae5f784782930e97a29d1d233d": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "95px"}}, "17a7f4b803304941a1d1439b4a812d9f": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "3c7ace97df8a4a1092c307a44eb58d48": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_188a5cae5f784782930e97a29d1d233d", "placeholder": "\u200b", "style": "IPY_MODEL_17a7f4b803304941a1d1439b4a812d9f", "tabbable": null, "tooltip": null, "value": "<h5>Status</h5>"}}, "6795756afabd43848800481ae043b09c": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "70px"}}, "6cede72f4eb94ce38630fc8a6612e3bf": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "73809de763be471b9f9919c108ba9b2c": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_6795756afabd43848800481ae043b09c", "placeholder": "\u200b", "style": "IPY_MODEL_6cede72f4eb94ce38630fc8a6612e3bf", "tabbable": null, "tooltip": null, "value": "<h5>Queue</h5>"}}, "818c7abaf56b42119ec65ace1484def3": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "f5c4e4037e3a457b8ebfa4d2c9b031c7": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "4683439562f54524a027e3b4b59d13dc": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_818c7abaf56b42119ec65ace1484def3", "placeholder": "\u200b", "style": "IPY_MODEL_f5c4e4037e3a457b8ebfa4d2c9b031c7", "tabbable": null, "tooltip": null, "value": "<h5>Message</h5>"}}, "97a3112dabc54ba79570fb842a314f23": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 0px 37px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "600px"}}, "b0eaf8e46c204388bb98cce367c1b2f3": {"model_name": "HBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_53a79f3eadcd440c83d1ccfd680ae218", "IPY_MODEL_15ee0709a6a84e61aecc6a13a4b32367", "IPY_MODEL_3c7ace97df8a4a1092c307a44eb58d48", "IPY_MODEL_73809de763be471b9f9919c108ba9b2c", "IPY_MODEL_4683439562f54524a027e3b4b59d13dc"], "layout": "IPY_MODEL_97a3112dabc54ba79570fb842a314f23", "tabbable": null, "tooltip": null}}}, "version_major": 2, "version_minor": 0}
+{"state": {"21ba05169ed34b13a86dcd4e53dfd099": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 10px 0px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "9a1cc720fdd147d8b2493632f27351a9": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "e70538f7a0d5497ca3d8d79c27ad1472": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_21ba05169ed34b13a86dcd4e53dfd099", "placeholder": "\u200b", "style": "IPY_MODEL_9a1cc720fdd147d8b2493632f27351a9", "tabbable": null, "tooltip": null, "value": "<p style='font-family: IBM Plex Sans, Arial, Helvetica, sans-serif; font-size: 20px; font-weight: medium;'>Circuit Properties</p>"}}, "efeb406be23e4ac685b7958cf170847f": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": "right", "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": "0px 0px 0px 0px", "right": null, "top": null, "visibility": null, "width": "70px"}}, "024a2623589f4814813dd0acc57beee5": {"model_name": "ButtonStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "button_color": null, "font_family": null, "font_size": null, "font_style": null, "font_variant": null, "font_weight": null, "text_color": null, "text_decoration": null}}, "e1cb38c617134df5a71a07e39f3e3e60": {"model_name": "ButtonModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "ButtonModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "ButtonView", "button_style": "primary", "description": "Clear", "disabled": false, "icon": "", "layout": "IPY_MODEL_efeb406be23e4ac685b7958cf170847f", "style": "IPY_MODEL_024a2623589f4814813dd0acc57beee5", "tabbable": null, "tooltip": null}}, "5e7b6bae7aa7445783d5c22b1149251e": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": "\n                                       \". . . . right \"\n                                        ", "grid_template_columns": "20% 20% 20% 20% 20%", "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "100%"}}, "29dd5f7efade439facdd7bbfb4bbe859": {"model_name": "GridBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "GridBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "GridBoxView", "box_style": "", "children": ["IPY_MODEL_e1cb38c617134df5a71a07e39f3e3e60"], "layout": "IPY_MODEL_5e7b6bae7aa7445783d5c22b1149251e", "tabbable": null, "tooltip": null}}, "3ab2e5a671f84b0585653c2648cbc14d": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "190px"}}, "5b0c963bc3db4c3e83583e01f4546c32": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "08443467638d43999483853fd455e64c": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_3ab2e5a671f84b0585653c2648cbc14d", "placeholder": "\u200b", "style": "IPY_MODEL_5b0c963bc3db4c3e83583e01f4546c32", "tabbable": null, "tooltip": null, "value": "<h5>Job ID</h5>"}}, "f4279bdba36044ca87de4d8f5335124f": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "145px"}}, "834a5f8f581e4204985fbb36287346e6": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "858117417b6b4ef5b828b3fa5c328abe": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_f4279bdba36044ca87de4d8f5335124f", "placeholder": "\u200b", "style": "IPY_MODEL_834a5f8f581e4204985fbb36287346e6", "tabbable": null, "tooltip": null, "value": "<h5>Backend</h5>"}}, "6ce24388c3f14ff08d383c66b177e5a7": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "95px"}}, "3d15f8342b6d42079a02ef033d0944ad": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "76b37a21e94841fc8a3cc174c0621360": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_6ce24388c3f14ff08d383c66b177e5a7", "placeholder": "\u200b", "style": "IPY_MODEL_3d15f8342b6d42079a02ef033d0944ad", "tabbable": null, "tooltip": null, "value": "<h5>Status</h5>"}}, "590a629e8eb840d4bb3e7f05b40103d8": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "70px"}}, "a403bb69933540038a66d3e0ee6e1dbc": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "0d84fa4645de4ae3855a376e36429dd2": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_590a629e8eb840d4bb3e7f05b40103d8", "placeholder": "\u200b", "style": "IPY_MODEL_a403bb69933540038a66d3e0ee6e1dbc", "tabbable": null, "tooltip": null, "value": "<h5>Queue</h5>"}}, "43427c60eb3a438eb30403fad6162e4a": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "aa29992e71ac475c8985a5e3073fd532": {"model_name": "HTMLStyleModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "StyleView", "background": null, "description_width": "", "font_size": null, "text_color": null}}, "4759c58e3627443c8f90bdd64e88c425": {"model_name": "HTMLModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HTMLView", "description": "", "description_allow_html": false, "layout": "IPY_MODEL_43427c60eb3a438eb30403fad6162e4a", "placeholder": "\u200b", "style": "IPY_MODEL_aa29992e71ac475c8985a5e3073fd532", "tabbable": null, "tooltip": null, "value": "<h5>Message</h5>"}}, "41091fdaf3df4e53abad453d35e43a52": {"model_name": "LayoutModel", "model_module": "@jupyter-widgets/base", "model_module_version": "2.0.0", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "2.0.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "2.0.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border_bottom": null, "border_left": null, "border_right": null, "border_top": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": "0px 0px 0px 37px", "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "padding": null, "right": null, "top": null, "visibility": null, "width": "600px"}}, "ee74aec5ffe443b986cc75b8e4832028": {"model_name": "HBoxModel", "model_module": "@jupyter-widgets/controls", "model_module_version": "2.0.0", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "2.0.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "2.0.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_08443467638d43999483853fd455e64c", "IPY_MODEL_858117417b6b4ef5b828b3fa5c328abe", "IPY_MODEL_76b37a21e94841fc8a3cc174c0621360", "IPY_MODEL_0d84fa4645de4ae3855a376e36429dd2", "IPY_MODEL_4759c58e3627443c8f90bdd64e88c425"], "layout": "IPY_MODEL_41091fdaf3df4e53abad453d35e43a52", "tabbable": null, "tooltip": null}}}, "version_major": 2, "version_minor": 0}
 </script></section>
 </section>
 
-
-          </div>
-          
-        </div>
+        </article>
       </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-<h1 class="logo"><a href="../index.html">Qiskit Research</a></h1>
-
-
-
-
-
-
-
-
-<h3>Navigation</h3>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../mzm_generation/index.html">Majorana zero mode generation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../protein_folding/index.html">Protein folding</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorial on quantum simulation</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Quantum Simulation on Noisy Superconducting Quantum Computers</a></li>
+      <footer>
+        <div class="related-pages">
+          <a class="next-page" href="../apidocs/index.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Qiskit Research API Reference</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Tutorial on quantum simulation</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2022
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Quantum Simulation on Noisy Superconducting Quantum Computers</a><ul>
+<li><a class="reference internal" href="#Introduction">Introduction</a></li>
+<li><a class="reference internal" href="#The-Tight-Binding-Model">The Tight Binding Model</a><ul>
+<li><a class="reference internal" href="#Transformation-to-Pauli-Operators">Transformation to Pauli Operators</a></li>
+<li><a class="reference internal" href="#Creation-and-Annihilation-Operators">Creation and Annihilation Operators</a></li>
+<li><a class="reference internal" href="#Classical-Simulation">Classical Simulation</a><ul>
+<li><a class="reference internal" href="#Particle-conservation-check">Particle conservation check</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../apidocs/index.html">Qiskit Research API Reference</a></li>
+<li><a class="reference internal" href="#Trotterization">Trotterization</a></li>
+<li><a class="reference internal" href="#Trotter-Error">Trotter Error</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Noisy-Quantum-Computer-Implementation">Noisy Quantum Computer Implementation</a><ul>
+<li><a class="reference internal" href="#Import-Qiskit,-IBM-credentials,-and-helper-functions">Import Qiskit, IBM credentials, and helper functions</a></li>
+<li><a class="reference internal" href="#Access-backends-and-their-info">Access backends and their info</a></li>
+<li><a class="reference internal" href="#Generate-quantum-circuits-for-trotterized-quantum-simulation">Generate quantum circuits for trotterized quantum simulation</a></li>
+<li><a class="reference internal" href="#Quantify-improvement-from-transpiler-passes">Quantify improvement from transpiler passes</a></li>
+<li><a class="reference internal" href="#Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(transpiler-optimization)">Estimate circuit error and circuit duration vs number of trotter steps (transpiler optimization)</a></li>
+<li><a class="reference internal" href="#Only-mitigating-by-transpilation">Only mitigating by transpilation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Mitigated-Simulation">Mitigated Simulation</a><ul>
+<li><a class="reference internal" href="#Map-o-matic">Map-o-matic</a></li>
+<li><a class="reference internal" href="#Measurement-Error-Mitigation">Measurement Error Mitigation</a></li>
+<li><a class="reference internal" href="#R_{ZX}(\theta)-Gate-Optimization"><span class="math notranslate nohighlight">\(R_{ZX}(\theta)\)</span> Gate Optimization</a></li>
+<li><a class="reference internal" href="#Estimate-circuit-error-and-circuit-duration-vs-number-of-trotter-steps-(RZX-optimization)">Estimate circuit error and circuit duration vs number of trotter steps (RZX optimization)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#Execute-Quantum-Simulation-with-Combined-Techniques">Execute Quantum Simulation with Combined Techniques</a></li>
+</ul>
+</li>
 </ul>
 
-<div class="relations">
-<h3>Related Topics</h3>
-<ul>
-  <li><a href="../index.html">Documentation overview</a><ul>
-  <li><a href="index.html">Tutorial on quantum simulation</a><ul>
-      <li>Previous: <a href="index.html" title="previous chapter">Tutorial on quantum simulation</a></li>
-      <li>Next: <a href="../apidocs/index.html" title="next chapter">Qiskit Research API Reference</a></li>
-  </ul></li>
-  </ul></li>
-</ul>
-</div>
-<div id="searchbox" style="display: none" role="search">
-  <h3 id="searchlabel">Quick search</h3>
-    <div class="searchformwrapper">
-    <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
-      <input type="submit" value="Go" />
-    </form>
-    </div>
-</div>
-<script>document.getElementById('searchbox').style.display = "block"</script>
-
-
-
-
-
-
-
-
+          </div>
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="footer">
-      &copy;2022.
       
-      |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.6</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
-      |
-      <a href="../_sources/tutorial_quantum_sim/qsim-tight-binding-model.ipynb.txt"
-          rel="nofollow">Page source</a>
-    </div>
-
-    
-
-    
-  </body>
+    </aside>
+  </div>
+</div><script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=e3a6060d"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/qiskit-sphinx-theme.js?v=4d77b8ca"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    </body>
 </html>
