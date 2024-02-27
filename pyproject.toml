@@ -26,13 +26,13 @@ requires-python = ">=3.8"
 dependencies = [
     "mapomatic==0.8.0",
     "mthree==0.24",
-    "pylatexenc",
-    "qiskit-aer~=0.11",
+    "qiskit-aer==0.12",
     "qiskit-experiments==0.5.2",
-    "qiskit-ibm-runtime",
-    "qiskit-ibmq-provider",
-    "qiskit-nature~=0.5",
-    "qiskit-terra==0.23",
+    "qiskit-ibm-runtime==0.9.3",
+    "qiskit-ibmq-provider==0.20.2",
+    "qiskit-nature==0.5",
+    "qiskit-terra==0.23.3",
+    "qiskit==0.42.1",
     "qiskit_sphinx_theme~=1.16.0",
 ]
 
