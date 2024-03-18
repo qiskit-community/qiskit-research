@@ -12,7 +12,6 @@ Research using Qiskit, demonstrating best practices for running quantum computin
 .. toctree::
   :maxdepth: 2
 
-  tutorial_quantum_sim/index
   apidocs/index
 
 .. Hiding - Indices and tables
