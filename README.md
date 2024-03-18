@@ -1,10 +1,6 @@
 # Qiskit Research
 
-Research using Qiskit.
-
-This repository contains modules for running quantum computing research experiments
-using Qiskit and the IBM Quantum Services, demonstrating by example best practices
-for running such experiments.
+This repository contains useful software utilities for running quantum computing research experiments using Qiskit and the IBM Quantum Services.
 
 ## Installation
 
@@ -27,3 +23,11 @@ For information on how to contribute to this project, please take a look at our 
 [![DOI](https://zenodo.org/badge/498756635.svg)](https://zenodo.org/badge/latestdoi/498756635)
 
 Qiskit Research is automatically uploaded to Zenodo with every release. Click the badge above to see all citation formats for all versions, or just use [this BibTeX file](CITATION.bib).
+
+## Moved content
+
+Previously, this repository also contained the code for several research papers that used Qiskit and the IBM Quantum Services. The code for these papers has moved to the following locations:
+
+- Majorana zero mode generation: <https://github.com/qiskit-community/mzm-generation>
+- Protein folding: <https://github.com/qiskit-community/quantum-protein-folding>
+- Quantum simulation tutorial: <https://github.com/qiskit-community/tutorial-quantum-sim>
