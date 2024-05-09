@@ -7,5 +7,4 @@ Qiskit Research API Reference
 .. toctree::
    :maxdepth: 1
 
-   mzm_generation
    utils
