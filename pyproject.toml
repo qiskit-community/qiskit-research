@@ -25,7 +25,7 @@ requires-python = ">=3.8"
 
 dependencies = [
     "mapomatic==0.9",
-    "qiskit-aer==0.12",
+    "qiskit-aer",
     "qiskit==0.42.1",
 ]
 
