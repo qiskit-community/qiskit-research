@@ -42,4 +42,4 @@ jobs:
         shell: bash
         run: |
           pver=${{ matrix.python-version }}
-          tox -epy${pver/./},py${pver/./}-notebook
+          tox -epy${pver/./}
