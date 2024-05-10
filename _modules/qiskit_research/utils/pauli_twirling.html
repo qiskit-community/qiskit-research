@@ -345,7 +345,7 @@
                 <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">TWO_QUBIT_PAULI_GENERATORS</span><span class="p">:</span>
                     <span class="n">mini_dag</span> <span class="o">=</span> <span class="n">DAGCircuit</span><span class="p">()</span>
                     <span class="n">q0</span><span class="p">,</span> <span class="n">q1</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">qargs</span>
-                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">add_qreg</span><span class="p">(</span><span class="n">q0</span><span class="o">.</span><span class="n">register</span><span class="p">)</span>
+                    <span class="n">mini_dag</span><span class="o">.</span><span class="n">add_qubits</span><span class="p">([</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">])</span>
 
                     <span class="n">theta</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="n">this_pauli</span> <span class="o">=</span> <span class="n">Pauli</span><span class="p">(</span>

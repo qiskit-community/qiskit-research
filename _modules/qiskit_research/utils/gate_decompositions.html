@@ -340,8 +340,8 @@
         <span class="n">dag</span><span class="p">:</span> <span class="n">DAGCircuit</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DAGCircuit</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">rzx_run</span> <span class="ow">in</span> <span class="n">dag</span><span class="o">.</span><span class="n">collect_runs</span><span class="p">([</span><span class="s2">&quot;rzx&quot;</span><span class="p">]):</span>
-            <span class="n">control</span> <span class="o">=</span> <span class="n">rzx_run</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
-            <span class="n">target</span> <span class="o">=</span> <span class="n">rzx_run</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">control</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dag</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">rzx_run</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">target</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dag</span><span class="o">.</span><span class="n">find_bit</span><span class="p">(</span><span class="n">rzx_run</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">qargs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="n">cr_forward_dir</span> <span class="o">=</span> <span class="n">cr_forward_direction</span><span class="p">(</span>
                 <span class="n">control</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inst_map</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ctrl_chans</span>
             <span class="p">)</span>
@@ -349,7 +349,7 @@
             <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">rzx_run</span><span class="p">:</span>
                 <span class="n">mini_dag</span> <span class="o">=</span> <span class="n">DAGCircuit</span><span class="p">()</span>
                 <span class="n">q0</span><span class="p">,</span> <span class="n">q1</span> <span class="o">=</span> <span class="n">QuantumRegister</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-                <span class="n">mini_dag</span><span class="o">.</span><span class="n">add_qreg</span><span class="p">(</span><span class="n">q0</span><span class="o">.</span><span class="n">register</span><span class="p">)</span>
+                <span class="n">mini_dag</span><span class="o">.</span><span class="n">add_qubits</span><span class="p">([</span><span class="n">q0</span><span class="p">,</span> <span class="n">q1</span><span class="p">])</span>
 
                 <span class="n">rzx_angle</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
