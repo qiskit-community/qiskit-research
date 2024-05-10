@@ -253,18 +253,12 @@ class ForceZZTemplateSubstitution(TransformationPass):
                         gp1 = next(dag.bfs_successors(rz_node))
                         if cx2_node in gp1[1]:
                             if (
-                                (
-                                    dag.find_bit(cx1_node.qargs[0]).index
-                                    == dag.find_bit(cx2_node.qargs[0]).index
-                                )
-                                and (
-                                    dag.find_bit(cx1_node.qargs[1]).index
-                                    == dag.find_bit(cx2_node.qargs[1]).index
-                                )
-                                and (
-                                    dag.find_bit(cx2_node.qargs[1]).index
-                                    == dag.find_bit(rz_node.qargs[0]).index
-                                )
+                                dag.find_bit(cx1_node.qargs[0]).index
+                                == dag.find_bit(cx2_node.qargs[0]).index
+                                and dag.find_bit(cx1_node.qargs[1]).index
+                                == dag.find_bit(cx2_node.qargs[1]).index
+                                and dag.find_bit(cx2_node.qargs[1]).index
+                                == dag.find_bit(rz_node.qargs[0]).index
                             ):
                                 dag = self.sub_zz_in_dag(
                                     dag, cx1_node, rz_node, cx2_node
