@@ -173,8 +173,7 @@ def scale_cr_pulses(
     unroll_rzx_to_ecr: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
-) -> List[QuantumCircuit]:
-    ...
+) -> List[QuantumCircuit]: ...
 
 
 @overload
@@ -184,8 +183,7 @@ def scale_cr_pulses(
     unroll_rzx_to_ecr: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
-) -> QuantumCircuit:
-    ...
+) -> QuantumCircuit: ...
 
 
 def scale_cr_pulses(
