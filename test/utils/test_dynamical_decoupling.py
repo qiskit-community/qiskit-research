@@ -14,7 +14,8 @@ import unittest
 
 from qiskit import transpile
 from qiskit.circuit import QuantumCircuit
-from qiskit.providers.fake_provider import FakeWashington
+from qiskit_ibm_runtime.fake_provider import FakeWashington
+
 from qiskit_research.utils.convenience import (
     add_dynamical_decoupling,
     add_pulse_calibrations,
