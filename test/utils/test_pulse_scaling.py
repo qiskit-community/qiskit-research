@@ -12,18 +12,18 @@
 
 import unittest
 
-from ddt import data, ddt
-
 import numpy as np
+from ddt import data, ddt
 from qiskit import schedule
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.converters import circuit_to_dag
 from qiskit.providers import Backend
-from qiskit.providers.fake_provider import FakeMumbai
 from qiskit.pulse import Play
 from qiskit.quantum_info import Operator
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.passes import Optimize1qGatesDecomposition
+from qiskit_ibm_runtime.fake_provider import FakeMumbai
+
 from qiskit_research.utils.convenience import scale_cr_pulses
 from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
 from qiskit_research.utils.pulse_scaling import (

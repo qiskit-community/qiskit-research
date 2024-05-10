@@ -17,7 +17,7 @@ import numpy as np
 
 from qiskit import transpile
 from qiskit.circuit import Parameter, QuantumCircuit
-from qiskit.providers.fake_provider import FakeWashington
+from qiskit_ibm_runtime.fake_provider import FakeWashington
 
 from qiskit_research.utils.gates import SECRGate
 from qiskit_research.utils.convenience import (
