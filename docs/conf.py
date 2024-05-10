@@ -39,7 +39,6 @@ extensions = [
     "sphinx.ext.extlinks",
     "jupyter_sphinx",
     "sphinx_autodoc_typehints",
-    "reno.sphinxext",
     "nbsphinx",
     "qiskit_sphinx_theme",
 ]
