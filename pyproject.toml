@@ -24,8 +24,8 @@ classifiers = [
 requires-python = ">=3.8"
 
 dependencies = [
-    "mapomatic==0.8.0",
-    "qiskit-aer==0.12",
+    "mapomatic",
+    "qiskit-aer",
     "qiskit-terra==0.23.3",
     "qiskit==0.42.1",
 ]
