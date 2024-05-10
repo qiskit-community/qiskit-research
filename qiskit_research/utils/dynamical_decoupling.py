@@ -13,31 +13,29 @@
 from __future__ import annotations
 
 from enum import Enum
-
 from typing import Iterable, List, Optional, Sequence, Union
 
+import numpy as np
 from qiskit import QuantumCircuit, pulse
 from qiskit.circuit import Gate, Qubit
 from qiskit.circuit.delay import Delay
-from qiskit.circuit.library import XGate, YGate, UGate, U3Gate
+from qiskit.circuit.library import U3Gate, UGate, XGate, YGate
 from qiskit.circuit.reset import Reset
 from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGCircuit, DAGInNode, DAGNode, DAGOpNode
 from qiskit.providers.backend import Backend
 from qiskit.pulse import Drag, Waveform
 from qiskit.qasm import pi
-from qiskit.quantum_info import OneQubitEulerDecomposer
+from qiskit.synthesis import OneQubitEulerDecomposer
 from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.exceptions import TranspilerError
 from qiskit.transpiler.instruction_durations import InstructionDurationsType
-from qiskit.transpiler.passes import PadDynamicalDecoupling, Optimize1qGates
+from qiskit.transpiler.passes import Optimize1qGates, PadDynamicalDecoupling
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
 
-import numpy as np
-
-from qiskit_research.utils.gates import XmGate, XpGate, YmGate, YpGate, PiPhiGate
+from qiskit_research.utils.gates import PiPhiGate, XmGate, XpGate, YmGate, YpGate
 from qiskit_research.utils.periodic_dynamical_decoupling import (
     PeriodicDynamicalDecoupling,
 )

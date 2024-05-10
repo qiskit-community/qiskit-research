@@ -10,10 +10,8 @@
 
 """Utilities for dealing with backends."""
 
-
 from typing import Optional
 
-from qiskit import BasicAer
 from qiskit.providers import Backend, Provider
 from qiskit_aer import AerSimulator
 
@@ -26,6 +24,4 @@ def get_backend(
         return provider.get_backend(name)
     if name == "aer_simulator":
         return AerSimulator(seed_simulator=seed_simulator)
-    if name == "statevector_simulator":
-        return BasicAer.get_backend("statevector_simulator")
     raise ValueError("The given name does not match any supported backends.")
