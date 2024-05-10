@@ -263,6 +263,7 @@ class ForceZZTemplateSubstitution(TransformationPass):
 
         return dag
 
+
 # pylint: disable-next=too-many-ancestors
 class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
     """
