@@ -48,4 +48,4 @@ dev = [
 
 [tool.autoflake]
 remove-unused-variables = true
-imports = ["qiskit", "qiskit_aer", "qiskit_nature", "qiskit_ibm_runtime"]
+imports = ["qiskit", "qiskit_aer"]
