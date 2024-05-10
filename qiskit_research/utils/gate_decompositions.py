@@ -102,8 +102,6 @@ class RZXtoEchoedCR(TransformationPass):
         dag: DAGCircuit,
     ) -> DAGCircuit:
         for rzx_run in dag.collect_runs(["rzx"]):
-            # control = rzx_run[0].qargs[0].index
-            # target = rzx_run[0].qargs[1].index
             control = dag.find_bit(rzx_run[0].qargs[0]).index
             target = dag.find_bit(rzx_run[0].qargs[1]).index
             cr_forward_dir = cr_forward_direction(
