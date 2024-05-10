@@ -247,31 +247,29 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">pulse</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">Qubit</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.delay</span> <span class="kn">import</span> <span class="n">Delay</span>
-<span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">XGate</span><span class="p">,</span> <span class="n">YGate</span><span class="p">,</span> <span class="n">UGate</span><span class="p">,</span> <span class="n">U3Gate</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">U3Gate</span><span class="p">,</span> <span class="n">UGate</span><span class="p">,</span> <span class="n">XGate</span><span class="p">,</span> <span class="n">YGate</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.reset</span> <span class="kn">import</span> <span class="n">Reset</span>
 <span class="kn">from</span> <span class="nn">qiskit.converters</span> <span class="kn">import</span> <span class="n">circuit_to_dag</span>
 <span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span><span class="p">,</span> <span class="n">DAGInNode</span><span class="p">,</span> <span class="n">DAGNode</span><span class="p">,</span> <span class="n">DAGOpNode</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers.backend</span> <span class="kn">import</span> <span class="n">Backend</span>
 <span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="n">Drag</span><span class="p">,</span> <span class="n">Waveform</span>
 <span class="kn">from</span> <span class="nn">qiskit.qasm</span> <span class="kn">import</span> <span class="n">pi</span>
-<span class="kn">from</span> <span class="nn">qiskit.quantum_info</span> <span class="kn">import</span> <span class="n">OneQubitEulerDecomposer</span>
+<span class="kn">from</span> <span class="nn">qiskit.synthesis</span> <span class="kn">import</span> <span class="n">OneQubitEulerDecomposer</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler</span> <span class="kn">import</span> <span class="n">InstructionDurations</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.exceptions</span> <span class="kn">import</span> <span class="n">TranspilerError</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.instruction_durations</span> <span class="kn">import</span> <span class="n">InstructionDurationsType</span>
-<span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="n">PadDynamicalDecoupling</span><span class="p">,</span> <span class="n">Optimize1qGates</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="n">Optimize1qGates</span><span class="p">,</span> <span class="n">PadDynamicalDecoupling</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.scheduling</span> <span class="kn">import</span> <span class="n">ALAPScheduleAnalysis</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.scheduling.scheduling.base_scheduler</span> <span class="kn">import</span> <span class="n">BaseScheduler</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
-<span class="kn">from</span> <span class="nn">qiskit_research.utils.gates</span> <span class="kn">import</span> <span class="n">XmGate</span><span class="p">,</span> <span class="n">XpGate</span><span class="p">,</span> <span class="n">YmGate</span><span class="p">,</span> <span class="n">YpGate</span><span class="p">,</span> <span class="n">PiPhiGate</span>
+<span class="kn">from</span> <span class="nn">qiskit_research.utils.gates</span> <span class="kn">import</span> <span class="n">PiPhiGate</span><span class="p">,</span> <span class="n">XmGate</span><span class="p">,</span> <span class="n">XpGate</span><span class="p">,</span> <span class="n">YmGate</span><span class="p">,</span> <span class="n">YpGate</span>
 <span class="kn">from</span> <span class="nn">qiskit_research.utils.periodic_dynamical_decoupling</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">PeriodicDynamicalDecoupling</span><span class="p">,</span>
 <span class="p">)</span>
