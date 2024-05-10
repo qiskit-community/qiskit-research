@@ -107,7 +107,7 @@ class PauliTwirl(TransformationPass):
                 if node.op.name in TWO_QUBIT_PAULI_GENERATORS:
                     mini_dag = DAGCircuit()
                     q0, q1 = node.qargs
-                    mini_dag.add_qreg(q0.register)
+                    mini_dag.add_qubits([q0, q1])
 
                     theta = node.op.params[0]
                     this_pauli = Pauli(

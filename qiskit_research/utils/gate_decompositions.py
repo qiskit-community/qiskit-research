@@ -102,8 +102,8 @@ class RZXtoEchoedCR(TransformationPass):
         dag: DAGCircuit,
     ) -> DAGCircuit:
         for rzx_run in dag.collect_runs(["rzx"]):
-            control = rzx_run[0].qargs[0].index
-            target = rzx_run[0].qargs[1].index
+            control, _ = dag.find_bit(rzx_run[0].qargs[0])
+            target, _ = dag.find_bit(rzx_run[0].qargs[1])
             cr_forward_dir = cr_forward_direction(
                 control, target, self._inst_map, self._ctrl_chans
             )
@@ -111,7 +111,7 @@ class RZXtoEchoedCR(TransformationPass):
             for node in rzx_run:
                 mini_dag = DAGCircuit()
                 q0, q1 = QuantumRegister(2)
-                mini_dag.add_qreg(q0.register)
+                mini_dag.add_qubits([q0, q1])
 
                 rzx_angle = node.op.params[0]
 
