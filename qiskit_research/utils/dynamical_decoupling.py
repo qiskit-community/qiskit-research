@@ -238,7 +238,7 @@ def add_pulse_calibrations(
         dag = circuit_to_dag(circuit)
         for run in dag.collect_runs(["pi_phi"]):
             for node in run:
-                qubit = node.qargs[0].index
+                qubit, _ = dag.find_bit(node.qargs[0])
                 phi = node.op.params[0]
                 x_sched = inst_sched_map.get("x", qubits=[qubit])
                 _, x_instruction = x_sched.instructions[0]

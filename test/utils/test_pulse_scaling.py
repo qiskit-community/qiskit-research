@@ -146,8 +146,8 @@ class TestPulseScaling(unittest.TestCase):
 
         theta_set = rng.uniform(-np.pi, np.pi)
         self.assertTrue(
-            Operator(qc.bind_parameters({theta: theta_set})).equiv(
-                Operator(scale_qc_match.bind_parameters({theta: theta_set}))
+            Operator(qc.assign_parameters({theta: theta_set})).equiv(
+                Operator(scale_qc_match.assign_parameters({theta: theta_set}))
             )
         )
 
