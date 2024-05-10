@@ -8,7 +8,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 1 * * *'
+    - cron: "0 1 * * *"
 
 jobs:
   tests:
@@ -17,12 +17,12 @@ jobs:
       max-parallel: 4
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.8, 3.9, '3.10']
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
         include:
           - os: macos-latest
-            python-version: 3.8
+            python-version: "3.12"
           - os: windows-latest
-            python-version: 3.8
+            python-version: "3.12"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
