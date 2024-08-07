@@ -32,10 +32,11 @@ from qiskit.dagcircuit import DAGCircuit
 from qiskit.exceptions import QiskitError
 from qiskit.providers.backend import Backend
 from qiskit.pulse import ControlChannel, InstructionScheduleMap, Play
-from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import TransformationPass
 
 from .gates import SECRGate
+
+from math import pi
 
 
 def cr_forward_direction(

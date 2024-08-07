@@ -15,10 +15,31 @@ from __future__ import annotations
 from typing import List, Tuple
 
 from qiskit.circuit import QuantumCircuit
+from qiskit.converters import circuit_to_dag
 from qiskit.providers.backend import Backend
-from qiskit.qasm import pi
+from qiskit.transpiler import Target
+from qiskit.transpiler.passes.layout.vf2_utils import (
+    build_average_error_map,
+    build_interaction_graph,
+    score_layout,
+)
 
+from math import pi
 import numpy as np
+
+
+def avg_error_score(qc_isa: QuantumCircuit, target: Target) -> float:
+    init_layout = qc_isa.layout.final_index_layout()
+    dag = circuit_to_dag(qc_isa)
+
+    layout = {idx: init_layout[idx] for idx in range(len(init_layout))}
+    avg_error_map = build_average_error_map(target, None, None)
+    im_graph, im_graph_node_map, reverse_im_graph_node_map, _ = build_interaction_graph(
+        dag, strict_direction=False
+    )
+    return score_layout(
+        avg_error_map, layout, im_graph_node_map, reverse_im_graph_node_map, im_graph
+    )
 
 
 def cost_func_scaled_cr(

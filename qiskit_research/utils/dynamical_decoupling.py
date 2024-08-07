@@ -25,7 +25,6 @@ from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGCircuit, DAGInNode, DAGNode, DAGOpNode
 from qiskit.providers.backend import Backend
 from qiskit.pulse import Drag, Waveform
-from qiskit.qasm import pi
 from qiskit.synthesis import OneQubitEulerDecomposer
 from qiskit.transpiler import InstructionDurations
 from qiskit.transpiler.basepasses import BasePass
@@ -39,6 +38,8 @@ from qiskit_research.utils.gates import PiPhiGate, XmGate, XpGate, YmGate, YpGat
 from qiskit_research.utils.periodic_dynamical_decoupling import (
     PeriodicDynamicalDecoupling,
 )
+
+from math import pi
 
 X = XGate()
 Xp = XpGate()
@@ -86,8 +87,10 @@ def dynamical_decoupling_passes(
     Yields:
         Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.
     """
-    durations = get_instruction_durations(backend)
-    pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
+    target = backend.target
+    for new_gate in [Xp, Xm, Yp, Ym]:
+        target.add_instruction(new_gate, target["x"])
+    durations = target.durations()
 
     if dd_str in DD_SEQUENCE:
         sequence = DD_SEQUENCE[dd_str]
@@ -95,9 +98,7 @@ def dynamical_decoupling_passes(
         phis = get_urdd_angles(urdd_pulse_num)
         sequence = tuple(PiPhiGate(phi) for phi in phis)
     yield scheduler(durations)
-    yield PadDynamicalDecoupling(
-        durations, list(sequence), pulse_alignment=pulse_alignment
-    )
+    yield PadDynamicalDecoupling(durations, list(sequence))
 
 
 def periodic_dynamical_decoupling(
@@ -126,42 +127,47 @@ def periodic_dynamical_decoupling(
     )
 
 
-# TODO this should take instruction schedule map instead of backend
-def get_instruction_durations(backend: Backend) -> InstructionDurations:
-    """
-    Retrieves gate timing information for the backend from the instruction
-    schedule map, and returns the type InstructionDurations for use by
-    Qiskit's scheduler (i.e., ALAP) and DynamicalDecoupling passes.
+# # TODO this should take instruction schedule map instead of backend
+# def get_instruction_durations(backend: Backend) -> InstructionDurations:
+#     """
+#     Retrieves gate timing information for the backend from the instruction
+#     schedule map, and returns the type InstructionDurations for use by
+#     Qiskit's scheduler (i.e., ALAP) and DynamicalDecoupling passes.
 
-    This method relies on IBM backend knowledge such as
+#     This method relies on IBM backend knowledge such as
 
-      - all single qubit gates durations are the same
-      - the 'x' gate, used for echoed cross resonance, is also the basis for
-        all othe dynamical decoupling gates (currently)
-    """
-    inst_durs: InstructionDurationsType = []
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    num_qubits = backend.configuration().num_qubits
+#       - all single qubit gates durations are the same
+#       - the 'x' gate, used for echoed cross resonance, is also the basis for
+#         all othe dynamical decoupling gates (currently)
+#     """
+#     inst_durs: InstructionDurationsType = []
+#     # inst_sched_map = backend.defaults().instruction_schedule_map
+#     target = backend.target
+#     inst_sched_map = target.instruction_schedule_map()
+#     num_qubits = target.num_qubits
 
-    # single qubit gates
-    for qubit in range(num_qubits):
-        for inst_str in inst_sched_map.qubit_instructions(qubits=[qubit]):
-            inst = inst_sched_map.get(inst_str, qubits=[qubit])
-            inst_durs.append((inst_str, qubit, inst.duration))
+#     # for new_gate in ["xp", "xm", "y", "yp", "ym", "pi_phi"]:
+#     #     target.add_instruction(new_gate, target["x"])
 
-            # create DD pulses from CR echo 'x' pulse
-            if inst_str == "x":
-                for new_gate in ["xp", "xm", "y", "yp", "ym", "pi_phi"]:
-                    inst_durs.append((new_gate, qubit, inst.duration))
+#     # single qubit gates
+#     for qubit in range(num_qubits):
+#         for inst_str in inst_sched_map.qubit_instructions(qubits=[qubit]):
+#             inst = inst_sched_map.get(inst_str, qubits=[qubit])
+#             inst_durs.append((inst_str, qubit, inst.duration))
 
-    # two qubit gates
-    for qc in range(num_qubits):
-        for qt in range(num_qubits):
-            for inst_str in inst_sched_map.qubit_instructions(qubits=[qc, qt]):
-                inst = inst_sched_map.get(inst_str, qubits=[qc, qt])
-                inst_durs.append((inst_str, [qc, qt], inst.duration))
+#             # create DD pulses from CR echo 'x' pulse
+#             if inst_str == "x":
+#                 for new_gate in ["xp", "xm", "y", "yp", "ym", "pi_phi"]:
+#                     inst_durs.append((new_gate, qubit, inst.duration))
 
-    return InstructionDurations(inst_durs)
+#     # two qubit gates
+#     for qc in range(num_qubits):
+#         for qt in range(num_qubits):
+#             for inst_str in inst_sched_map.qubit_instructions(qubits=[qc, qt]):
+#                 inst = inst_sched_map.get(inst_str, qubits=[qc, qt])
+#                 inst_durs.append((inst_str, [qc, qt], inst.duration))
+
+#     return InstructionDurations(inst_durs)
 
 
 # TODO refactor this as a CalibrationBuilder transpilation pass

@@ -19,7 +19,8 @@ from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import RZXGate, RZGate, U3Gate, XGate
 from qiskit.circuit.parameterexpression import ParameterValueType
-from qiskit.qasm import pi
+
+from math import pi
 
 
 class XpGate(Gate):

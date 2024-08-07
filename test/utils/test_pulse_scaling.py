@@ -22,7 +22,7 @@ from qiskit.pulse import Play
 from qiskit.quantum_info import Operator
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.passes import Optimize1qGatesDecomposition
-from qiskit_ibm_runtime.fake_provider import FakeMumbai
+from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 
 from qiskit_research.utils.convenience import scale_cr_pulses
 from qiskit_research.utils.gate_decompositions import RZXtoEchoedCR
@@ -37,7 +37,7 @@ from qiskit_research.utils.pulse_scaling import (
 class TestPulseScaling(unittest.TestCase):
     """Test pulse scaling."""
 
-    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    @data(FakeSherbrooke())
     def test_rzx_to_secr_forward(self, backend: Backend):
         """Test pulse scaling RZX with forward SECR."""
         rng = np.random.default_rng()
@@ -67,7 +67,7 @@ class TestPulseScaling(unittest.TestCase):
 
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    @data(FakeSherbrooke())
     def test_rzx_to_secr_reverse(self, backend: Backend):
         """Test pulse scaling RZX with reverse SECR."""
         rng = np.random.default_rng()
@@ -98,7 +98,7 @@ class TestPulseScaling(unittest.TestCase):
 
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    @data(FakeSherbrooke())
     def test_rzx_to_secr(self, backend: Backend):
         """Test pulse scaling with RZX gates."""
         rng = np.random.default_rng()
@@ -116,7 +116,7 @@ class TestPulseScaling(unittest.TestCase):
         scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True, param_bind={})
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    @data(FakeSherbrooke())
     def test_forced_rzz_template_match(self, backend: Backend):
         """Test forced template optimization for CX-RZ(1)-CX matches"""
         theta = Parameter("$\\theta$")
@@ -171,7 +171,7 @@ class TestPulseScaling(unittest.TestCase):
         self.assertAlmostEqual(qc2_s.data[0].operation.params[0], -1.9822971502571)
         self.assertAlmostEqual(qc3_s.data[0].operation.params[0], -np.pi)
 
-    @data(FakeMumbai())  # TODO: add backend with ecr basis gate
+    @data(FakeSherbrooke())
     def test_secr_calibration_builder(self, backend: Backend):
         """
         Test SECR Calibration Builder

@@ -26,7 +26,6 @@ from qiskit.pulse import (
     Schedule,
     ScheduleBlock,
 )
-from qiskit.qasm import pi
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.passes import (
     CXCancellation,
@@ -40,6 +39,8 @@ from qiskit_research.utils.gate_decompositions import (
     RZXtoEchoedCR,
 )
 from qiskit_research.utils.gates import SECRGate
+
+from math import pi
 
 BASIS_GATES = ["sx", "rz", "rzx", "cx"]
 
@@ -71,14 +72,17 @@ def pulse_attaching_passes(
     param_bind: dict,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for attaching pulse schedules."""
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    channel_map = backend.configuration().qubit_channel_mapping
+    # inst_sched_map = backend.defaults().instruction_schedule_map
+    # channel_map = backend.configuration().qubit_channel_mapping
+    target = backend.target
 
     yield BindParameters(param_bind)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
     yield CXCancellation()
-    yield SECRCalibrationBuilder(inst_sched_map, channel_map)
-    yield RZXCalibrationBuilder(inst_sched_map, channel_map)
+    # yield SECRCalibrationBuilder(inst_sched_map, channel_map)
+    # yield RZXCalibrationBuilder(inst_sched_map, channel_map)
+    yield SECRCalibrationBuilder(target=target)
+    yield RZXCalibrationBuilder(target=target)
 
 
 class CombineRuns(TransformationPass):

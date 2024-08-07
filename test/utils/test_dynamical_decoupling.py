@@ -14,7 +14,7 @@ import unittest
 
 from qiskit import transpile
 from qiskit.circuit import QuantumCircuit
-from qiskit_ibm_runtime.fake_provider import FakeWashington
+from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 
 from qiskit_research.utils.convenience import (
     add_dynamical_decoupling,
@@ -37,7 +37,7 @@ class TestDynamicalDecoupling(unittest.TestCase):
         circuit.cx(0, 1)
         circuit.rx(1.0, [0, 1, 2])
 
-        backend = FakeWashington()
+        backend = FakeSherbrooke()
         transpiled = transpile(circuit, backend)
         transpiled_dd = add_dynamical_decoupling(
             transpiled, backend, "XY4pm", add_pulse_cals=True
@@ -59,7 +59,7 @@ class TestDynamicalDecoupling(unittest.TestCase):
         circuit.cx(0, 1)
         circuit.rx(1.0, [0, 1, 2])
 
-        backend = FakeWashington()
+        backend = FakeSherbrooke()
         transpiled = transpile(circuit, backend)
         transpiled_urdd4 = add_dynamical_decoupling(
             transpiled,
@@ -88,7 +88,7 @@ class TestDynamicalDecoupling(unittest.TestCase):
     def test_add_pulse_calibrations(self):
         """Test adding dynamical decoupling."""
         circuit = QuantumCircuit(2)
-        backend = FakeWashington()
+        backend = FakeSherbrooke()
         add_pulse_calibrations(circuit, backend)
         for key in circuit.calibrations["xp"]:
             drag_xp = circuit.calibrations["xp"][key].instructions[0][1].operands[0]
