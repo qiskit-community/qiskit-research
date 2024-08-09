@@ -15,7 +15,7 @@ from typing import Any, Iterable, List, Optional, overload, Union
 from qiskit.circuit import QuantumCircuit
 from qiskit.circuit import Gate
 from qiskit.circuit.library import XGate
-from qiskit.providers.backend import Backend
+from qiskit.providers import Backend
 from qiskit.transpiler import PassManager, Target
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
@@ -47,12 +47,12 @@ def add_dynamical_decoupling(
     """Add dynamical decoupling sequences and calibrations to circuits.
 
     Adds dynamical decoupling sequences and the calibrations necessary
-    to run them on an IBM backend.
+    to run them on an IBM backend target.
 
     Args:
         circuits (Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]):
             input QuantumCircuit or sequences thereof.
-        backend (Backend): Backend to run on; gate timing is required for this method.
+        target (Target): Backend to run on; gate timing is required for this method.
         dd_str (str): String describing DD sequence to use.
         scheduler (BaseScheduler, optional): Scheduler, defaults to ALAPScheduleAnalysis.
         add_pulse_cals (bool, optional): Add Pulse calibrations for non-basis
@@ -168,7 +168,7 @@ def add_pauli_twirls(
 @overload
 def scale_cr_pulses(
     circuits: List[QuantumCircuit],
-    backend: Backend,
+    target: Target,
     unroll_rzx_to_ecr: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
@@ -178,7 +178,7 @@ def scale_cr_pulses(
 @overload
 def scale_cr_pulses(
     circuits: QuantumCircuit,
-    backend: Backend,
+    target: Target,
     unroll_rzx_to_ecr: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
@@ -187,7 +187,7 @@ def scale_cr_pulses(
 
 def scale_cr_pulses(
     circuits,
-    backend,
+    target,
     unroll_rzx_to_ecr: Optional[bool] = True,
     force_zz_matches: Optional[bool] = True,
     param_bind: Optional[dict] = None,
@@ -203,7 +203,7 @@ def scale_cr_pulses(
     pass_manager = PassManager(
         list(
             cr_scaling_passes(
-                backend,
+                target,
                 templates,
                 unroll_rzx_to_ecr=unroll_rzx_to_ecr,
                 force_zz_matches=force_zz_matches,
@@ -216,7 +216,7 @@ def scale_cr_pulses(
 
 def attach_cr_pulses(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
-    backend: Backend,
+    target: Target,
     param_bind: dict,
 ) -> Union[QuantumCircuit, List[QuantumCircuit]]:
     """
@@ -224,7 +224,7 @@ def attach_cr_pulses(
     http://arxiv.org/abs/2012.11660. Binds parameters
     in param_bind and attaches pulse gates.
     """
-    pass_manager = PassManager(list(pulse_attaching_passes(backend, param_bind)))
+    pass_manager = PassManager(list(pulse_attaching_passes(target, param_bind)))
     return pass_manager.run(circuits)
 
 

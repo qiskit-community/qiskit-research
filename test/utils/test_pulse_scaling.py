@@ -17,10 +17,9 @@ from ddt import data, ddt
 from qiskit import schedule
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit.converters import circuit_to_dag
-from qiskit.providers import Backend
-from qiskit.pulse import Play
+from qiskit.pulse import ControlChannel, Play
 from qiskit.quantum_info import Operator
-from qiskit.transpiler import PassManager
+from qiskit.transpiler import PassManager, Target
 from qiskit.transpiler.passes import Optimize1qGatesDecomposition
 from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 
@@ -37,8 +36,8 @@ from qiskit_research.utils.pulse_scaling import (
 class TestPulseScaling(unittest.TestCase):
     """Test pulse scaling."""
 
-    @data(FakeSherbrooke())
-    def test_rzx_to_secr_forward(self, backend: Backend):
+    @data(FakeSherbrooke().target)
+    def test_rzx_to_secr_forward(self, target: Target):
         """Test pulse scaling RZX with forward SECR."""
         rng = np.random.default_rng()
 
@@ -61,14 +60,14 @@ class TestPulseScaling(unittest.TestCase):
         qc.rz(-2 * JJ * dt, 2)
         qc.cx(1, 2)
 
-        scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True)
+        scaled_qc = scale_cr_pulses(qc, target, unroll_rzx_to_ecr=True)
         scaled_qc.assign_parameters(param_bind, inplace=True)
         qc.assign_parameters(param_bind, inplace=True)
 
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    @data(FakeSherbrooke())
-    def test_rzx_to_secr_reverse(self, backend: Backend):
+    @data(FakeSherbrooke().target)
+    def test_rzx_to_secr_reverse(self, target: Target):
         """Test pulse scaling RZX with reverse SECR."""
         rng = np.random.default_rng()
 
@@ -92,14 +91,14 @@ class TestPulseScaling(unittest.TestCase):
         qc.cx(1, 0)
 
         scaled_qc = scale_cr_pulses(
-            qc, backend, unroll_rzx_to_ecr=True, param_bind=param_bind
+            qc, target, unroll_rzx_to_ecr=True, param_bind=param_bind
         )
         qc.assign_parameters(param_bind, inplace=True)
 
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    @data(FakeSherbrooke())
-    def test_rzx_to_secr(self, backend: Backend):
+    @data(FakeSherbrooke().target)
+    def test_rzx_to_secr(self, target: Target):
         """Test pulse scaling with RZX gates."""
         rng = np.random.default_rng()
         theta = rng.uniform(-np.pi, np.pi)
@@ -107,17 +106,17 @@ class TestPulseScaling(unittest.TestCase):
         qc = QuantumCircuit(2)
         qc.rzx(theta, 0, 1)
 
-        scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True, param_bind={})
+        scaled_qc = scale_cr_pulses(qc, target, unroll_rzx_to_ecr=True, param_bind={})
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
         qc = QuantumCircuit(2)
         qc.rzx(theta, 1, 0)
 
-        scaled_qc = scale_cr_pulses(qc, backend, unroll_rzx_to_ecr=True, param_bind={})
+        scaled_qc = scale_cr_pulses(qc, target, unroll_rzx_to_ecr=True, param_bind={})
         self.assertTrue(Operator(qc).equiv(Operator(scaled_qc)))
 
-    @data(FakeSherbrooke())
-    def test_forced_rzz_template_match(self, backend: Backend):
+    @data(FakeSherbrooke().target)
+    def test_forced_rzz_template_match(self, target: Target):
         """Test forced template optimization for CX-RZ(1)-CX matches"""
         theta = Parameter("$\\theta$")
         rng = np.random.default_rng(12345)
@@ -130,7 +129,7 @@ class TestPulseScaling(unittest.TestCase):
 
         scale_qc_no_match = scale_cr_pulses(
             qc,
-            backend,
+            target,
             unroll_rzx_to_ecr=False,
             force_zz_matches=False,
             param_bind=None,
@@ -139,7 +138,7 @@ class TestPulseScaling(unittest.TestCase):
         self.assertFalse(dag_no_match.collect_runs(["rzx"]))
 
         scale_qc_match = scale_cr_pulses(
-            qc, backend, unroll_rzx_to_ecr=False, force_zz_matches=True, param_bind=None
+            qc, target, unroll_rzx_to_ecr=False, force_zz_matches=True, param_bind=None
         )
         dag_match = circuit_to_dag(scale_qc_match)
         self.assertTrue(dag_match.collect_runs(["rzx"]))
@@ -171,16 +170,17 @@ class TestPulseScaling(unittest.TestCase):
         self.assertAlmostEqual(qc2_s.data[0].operation.params[0], -1.9822971502571)
         self.assertAlmostEqual(qc3_s.data[0].operation.params[0], -np.pi)
 
-    @data(FakeSherbrooke())
-    def test_secr_calibration_builder(self, backend: Backend):
+    @data(FakeSherbrooke().target)
+    def test_secr_calibration_builder(self, target: Target):
         """
         Test SECR Calibration Builder
 
         Note the circuit must first pass through the RZXtoEchoedCR pass to correct
         for the direction of the native CR operation.
         """
-        inst_sched_map = backend.defaults().instruction_schedule_map
-        ctrl_chans = backend.configuration().control_channels
+        inst_sched_map = target.instruction_schedule_map()
+        coupling_map = target.build_coupling_map()
+        ctrl_chans = [ControlChannel(idx) for idx in range(len(list(coupling_map)))]
 
         theta = -np.pi / 7
         qc = QuantumCircuit(2)
@@ -191,24 +191,26 @@ class TestPulseScaling(unittest.TestCase):
 
         pm = PassManager(
             [
-                RZXtoEchoedCR(backend),
+                RZXtoEchoedCR(target),
                 SECRCalibrationBuilder(inst_sched_map),
                 Optimize1qGatesDecomposition(BASIS_GATES),
             ]
         )
         qc_cal = pm.run(qc)
-        sched = schedule(qc_cal, backend)
+        sched = schedule(
+            qc_cal, inst_map=inst_sched_map, meas_map=[list(range(target.num_qubits))]
+        )
 
         crp_start_time = sched.filter(
-            channels=[chan[0] for chan in ctrl_chans.values()], instruction_types=[Play]
+            channels=ctrl_chans, instruction_types=[Play]
         ).instructions[0][0]
         crm_start_time = sched.filter(
-            channels=[chan[0] for chan in ctrl_chans.values()], instruction_types=[Play]
+            channels=ctrl_chans, instruction_types=[Play]
         ).instructions[1][0]
 
         crp_duration = (
             sched.filter(
-                channels=[chan[0] for chan in ctrl_chans.values()],
+                channels=ctrl_chans,
                 instruction_types=[Play],
             )
             .instructions[0][1]
@@ -216,7 +218,7 @@ class TestPulseScaling(unittest.TestCase):
         )
         crm_duration = (
             sched.filter(
-                channels=[chan[0] for chan in ctrl_chans.values()],
+                channels=ctrl_chans,
                 instruction_types=[Play],
             )
             .instructions[1][1]

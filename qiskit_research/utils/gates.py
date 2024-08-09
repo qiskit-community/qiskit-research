@@ -13,14 +13,13 @@
 from __future__ import annotations
 
 from typing import Optional
+from math import pi
 
 import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library import RZXGate, RZGate, U3Gate, XGate
 from qiskit.circuit.parameterexpression import ParameterValueType
-
-from math import pi
 
 
 class XpGate(Gate):
@@ -43,10 +42,6 @@ class XpGate(Gate):
             qc.append(instr, qargs, cargs)
 
         self.definition = qc
-
-    def inverse(self):
-        r"""Gate inverse."""
-        return XmGate()
 
     def __array__(self, dtype=None):
         """Gate matrix."""
@@ -74,10 +69,6 @@ class XmGate(Gate):
 
         self.definition = qc
 
-    def inverse(self):
-        r"""Gate inverse."""
-        return XpGate()
-
     def __array__(self, dtype=None):
         """Gate matrix"""
         return np.array([[0, 1], [1, 0]], dtype=dtype)
@@ -101,10 +92,6 @@ class YpGate(Gate):
 
         self.definition = qc
 
-    def inverse(self):
-        r"""Return inverted Yp gate (:math:`Y{\dagger} = Y`)"""
-        return YmGate()  # self-inverse
-
     def __array__(self, dtype=None):
         """Gate matrix."""
         return np.array([[0, -1j], [1j, 0]], dtype=dtype)
@@ -127,10 +114,6 @@ class YmGate(Gate):
             qc.append(instr, qargs, cargs)
 
         self.definition = qc
-
-    def inverse(self):
-        r"""Return inverted Ym gate (:math:`Y{\dagger} = Y`)"""
-        return YpGate()  # self-inverse
 
     def __array__(self, dtype=None):
         """Gate matrix."""
@@ -167,10 +150,6 @@ class PiPhiGate(Gate):
 
         self.definition = qc
 
-    def inverse(self):
-        r"""Return inverted PiPhi gate (:math:`\pi_\phi{\dagger}(\phi) = \pi_\phi(-\phi)`)"""
-        return PiPhiGate(-self.phi)  # self-inverse
-
     def __array__(self, dtype=None):
         """Gate matrix."""
         return np.cos(self.phi) * np.array([[0, 1], [1, 0]], dtype=dtype) + np.sin(
@@ -203,10 +182,6 @@ class SECRGate(Gate):
             qc.append(instr, qargs, cargs)
 
         self.definition = qc
-
-    def inverse(self):
-        r"""Gate inverse."""
-        return SECRGate(-self.params[0])
 
     def __array__(self, dtype=None):
         """Gate matrix."""
