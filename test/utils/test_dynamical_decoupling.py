@@ -12,8 +12,8 @@
 
 import unittest
 
-from qiskit import transpile
 from qiskit.circuit import QuantumCircuit
+from qiskit.transpiler.preset_passmanagers import generate_preset_pass_manager
 from qiskit_ibm_runtime.fake_provider import FakeSherbrooke
 
 from qiskit_research.utils.convenience import (
@@ -38,9 +38,11 @@ class TestDynamicalDecoupling(unittest.TestCase):
         circuit.rx(1.0, [0, 1, 2])
 
         backend = FakeSherbrooke()
-        transpiled = transpile(circuit, backend)
+        target = backend.target
+        pm = generate_preset_pass_manager(target=target, optimization_level=2)
+        transpiled = pm.run(circuit)
         transpiled_dd = add_dynamical_decoupling(
-            transpiled, backend, "XY4pm", add_pulse_cals=True
+            transpiled, target, "XY4pm", add_pulse_cals=True
         )
         self.assertIsInstance(transpiled_dd, QuantumCircuit)
         self.assertIn("xp", transpiled_dd.count_ops())
@@ -60,10 +62,12 @@ class TestDynamicalDecoupling(unittest.TestCase):
         circuit.rx(1.0, [0, 1, 2])
 
         backend = FakeSherbrooke()
-        transpiled = transpile(circuit, backend)
+        target = backend.target
+        pm = generate_preset_pass_manager(2, backend)
+        transpiled = pm.run(circuit)
         transpiled_urdd4 = add_dynamical_decoupling(
             transpiled,
-            backend,
+            target,
             "URDD",
             add_pulse_cals=True,
             urdd_pulse_num=4,
@@ -75,7 +79,7 @@ class TestDynamicalDecoupling(unittest.TestCase):
 
         transpiled_urdd8 = add_dynamical_decoupling(
             transpiled,
-            backend,
+            target,
             "URDD",
             add_pulse_cals=True,
             urdd_pulse_num=8,
@@ -89,7 +93,8 @@ class TestDynamicalDecoupling(unittest.TestCase):
         """Test adding dynamical decoupling."""
         circuit = QuantumCircuit(2)
         backend = FakeSherbrooke()
-        add_pulse_calibrations(circuit, backend)
+        target = backend.target
+        add_pulse_calibrations(circuit, target)
         for key in circuit.calibrations["xp"]:
             drag_xp = circuit.calibrations["xp"][key].instructions[0][1].operands[0]
             drag_xm = circuit.calibrations["xm"][key].instructions[0][1].operands[0]

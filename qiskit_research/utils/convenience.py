@@ -16,7 +16,7 @@ from qiskit.circuit import QuantumCircuit
 from qiskit.circuit import Gate
 from qiskit.circuit.library import XGate
 from qiskit.providers.backend import Backend
-from qiskit.transpiler import PassManager
+from qiskit.transpiler import PassManager, Target
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
 
@@ -37,7 +37,7 @@ from qiskit_research.utils.dynamical_decoupling import (
 
 def add_dynamical_decoupling(
     circuits: Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]],
-    backend: Backend,
+    target: Target,
     dd_str: str,
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
     add_pulse_cals: bool = False,
@@ -67,23 +67,22 @@ def add_dynamical_decoupling(
             single or sequence type of QuantumCircuit, shceduled with DD sequences
             inserted into idle times.
     """
-
     pass_manager = PassManager(
         list(
             dynamical_decoupling_passes(
-                backend, dd_str, scheduler, urdd_pulse_num=urdd_pulse_num
+                target, dd_str, scheduler, urdd_pulse_num=urdd_pulse_num
             )
         )
     )
     if isinstance(circuits, QuantumCircuit) or isinstance(circuits[0], QuantumCircuit):
         circuits_dd = pass_manager.run(circuits)
         if add_pulse_cals:
-            add_pulse_calibrations(circuits_dd, backend, pulse_method=pulse_method)
+            add_pulse_calibrations(circuits_dd, target, pulse_method=pulse_method)
     else:
         circuits_dd = [pass_manager.run(circs) for circs in circuits]
         if add_pulse_cals:
             for circs_dd in circuits_dd:
-                add_pulse_calibrations(circs_dd, backend, pulse_method=pulse_method)
+                add_pulse_calibrations(circs_dd, target, pulse_method=pulse_method)
 
     return circuits_dd
 
