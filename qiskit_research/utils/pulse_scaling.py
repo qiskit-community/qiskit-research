@@ -10,6 +10,7 @@
 
 """Pulse scaling."""
 
+from math import pi
 from typing import Iterable, List, Optional, Union
 
 from qiskit import pulse
@@ -19,17 +20,16 @@ from qiskit.circuit.library import CXGate, RZGate
 from qiskit.converters import circuit_to_dag, dag_to_circuit
 from qiskit.dagcircuit import DAGCircuit, DAGNode, DAGOpNode
 from qiskit.exceptions import QiskitError
-from qiskit.providers.backend import Backend
 from qiskit.pulse import (
     ControlChannel,
     Play,
     Schedule,
     ScheduleBlock,
 )
-from qiskit.qasm import pi
+from qiskit.transpiler import Target
 from qiskit.transpiler.basepasses import BasePass, TransformationPass
 from qiskit.transpiler.passes import (
-    CXCancellation,
+    CommutativeCancellation,
     Optimize1qGatesDecomposition,
     RZXCalibrationBuilder,
     RZXCalibrationBuilderNoEcho,
@@ -45,7 +45,7 @@ BASIS_GATES = ["sx", "rz", "rzx", "cx"]
 
 
 def cr_scaling_passes(
-    backend: Backend,
+    target: Target,
     templates: List[QuantumCircuit],
     unroll_rzx_to_ecr: bool = True,
     force_zz_matches: Optional[bool] = True,
@@ -58,27 +58,24 @@ def cr_scaling_passes(
     if force_zz_matches:
         yield ForceZZTemplateSubstitution()  # workaround for Terra Issue
     if unroll_rzx_to_ecr:
-        yield RZXtoEchoedCR(backend)
+        yield RZXtoEchoedCR(target)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
-    yield CXCancellation()
+    yield CommutativeCancellation()
     yield CombineRuns(["rz"])
     if param_bind is not None:
-        yield from pulse_attaching_passes(backend, param_bind)
+        yield from pulse_attaching_passes(target, param_bind)
 
 
 def pulse_attaching_passes(
-    backend: Backend,
+    target: Target,
     param_bind: dict,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for attaching pulse schedules."""
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    channel_map = backend.configuration().qubit_channel_mapping
-
     yield BindParameters(param_bind)
     yield Optimize1qGatesDecomposition(BASIS_GATES)
-    yield CXCancellation()
-    yield SECRCalibrationBuilder(inst_sched_map, channel_map)
-    yield RZXCalibrationBuilder(inst_sched_map, channel_map)
+    yield CommutativeCancellation()
+    yield SECRCalibrationBuilder(target=target)
+    yield RZXCalibrationBuilder(target=target)
 
 
 class CombineRuns(TransformationPass):
@@ -322,18 +319,18 @@ class SECRCalibrationBuilder(RZXCalibrationBuilderNoEcho):
         return secr_sched
 
 
-def get_ecr_pairs_from_backend(backend: Backend) -> List[List[int]]:
+def get_ecr_pairs_from_backend(target: Target) -> List[List[int]]:
     """
     Retrieve the coupling map of only CX defined be echoed cross resonance.
 
     Args:
-        backend (Backend): backend one desires the ECR coupling map from
+        target (Target): target one desires the ECR coupling map from
 
     Returns:
         List[List[int]]: coupling map consisting only of ECR pairs.
     """
-    coupling_map = backend.configuration().coupling_map
-    inst_sched_map = backend.defaults().instruction_schedule_map
+    coupling_map = target.build_coupling_map()
+    inst_sched_map = target.instruction_schedule_map()
 
     new_coupling_map = []
     for pair in coupling_map:

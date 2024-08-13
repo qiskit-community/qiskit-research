@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from math import pi
 
 from qiskit import QuantumRegister
 from qiskit.circuit import ControlledGate, Gate, Qubit
@@ -29,55 +30,10 @@ from qiskit.circuit.library import (
     XXPlusYYGate,
 )
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.exceptions import QiskitError
-from qiskit.providers.backend import Backend
-from qiskit.pulse import ControlChannel, InstructionScheduleMap, Play
-from qiskit.qasm import pi
+from qiskit.transpiler import Target
 from qiskit.transpiler.basepasses import TransformationPass
 
 from .gates import SECRGate
-
-
-def cr_forward_direction(
-    control: int,
-    target: int,
-    inst_sched_map: InstructionScheduleMap,
-    ctrl_chans: dict,
-) -> bool:
-    """
-    Determines if the direction of cross resonance is forward (True), applied on control qubit qc or
-    reverse (False), applied to target qubit qt.
-    """
-    if inst_sched_map.has("cx", qubits=[control, target]):
-        cr_sched = inst_sched_map.get("cx", qubits=[control, target])
-    elif inst_sched_map.has("ecr", qubits=[control, target]):
-        return True
-    elif inst_sched_map.has("ecr", qubits=[target, control]):
-        return False
-    else:
-        raise QiskitError(
-            f"Native direction cannot be determined between qubits {control} and {target}."
-        )
-    cr_ctrl_chan = (
-        cr_sched.filter(
-            channels=[
-                ControlChannel(idx)
-                for idx in range(len(inst_sched_map.qubits_with_instruction("cx")))
-            ],
-            instruction_types=Play,
-        )
-        .instructions[0][1]
-        .channel
-    )
-    forward_ctrl_chan = ctrl_chans[(control, target)][0]
-    reverse_ctrl_chan = ctrl_chans[(target, control)][0]
-
-    if cr_ctrl_chan == forward_ctrl_chan:
-        return True
-    if cr_ctrl_chan == reverse_ctrl_chan:
-        return False
-
-    raise ValueError(f"Qubits {control} and {target} are not a cross resonance pair.")
 
 
 class RZXtoEchoedCR(TransformationPass):
@@ -91,11 +47,10 @@ class RZXtoEchoedCR(TransformationPass):
 
     def __init__(
         self,
-        backend: Backend,
+        target: Target,
     ):
         super().__init__()
-        self._inst_map = backend.defaults().instruction_schedule_map
-        self._ctrl_chans = backend.configuration().control_channels
+        self._coupling_map = target.build_coupling_map()
 
     def run(
         self,
@@ -104,9 +59,13 @@ class RZXtoEchoedCR(TransformationPass):
         for rzx_run in dag.collect_runs(["rzx"]):
             control, _ = dag.find_bit(rzx_run[0].qargs[0])
             target, _ = dag.find_bit(rzx_run[0].qargs[1])
-            cr_forward_dir = cr_forward_direction(
-                control, target, self._inst_map, self._ctrl_chans
-            )
+            # cr_forward_dir = cr_forward_direction(
+            #     control, target, self._inst_map, self._ctrl_chans
+            # )
+            if (control, target) in self._coupling_map:
+                cr_forward_dir = (control, target)
+            else:
+                cr_forward_dir = (target, control)
 
             for node in rzx_run:
                 mini_dag = DAGCircuit()

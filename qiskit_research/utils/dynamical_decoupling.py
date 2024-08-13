@@ -13,11 +13,12 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Iterable, List, Optional, Sequence, Union
+from math import pi
+from typing import cast, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
 from qiskit import QuantumCircuit, pulse
-from qiskit.circuit import Gate, Qubit
+from qiskit.circuit import Gate, Parameter, Qubit
 from qiskit.circuit.delay import Delay
 from qiskit.circuit.library import U3Gate, UGate, XGate, YGate
 from qiskit.circuit.reset import Reset
@@ -25,12 +26,10 @@ from qiskit.converters import circuit_to_dag
 from qiskit.dagcircuit import DAGCircuit, DAGInNode, DAGNode, DAGOpNode
 from qiskit.providers.backend import Backend
 from qiskit.pulse import Drag, Waveform
-from qiskit.qasm import pi
 from qiskit.synthesis import OneQubitEulerDecomposer
-from qiskit.transpiler import InstructionDurations
+from qiskit.transpiler import InstructionDurations, Target
 from qiskit.transpiler.basepasses import BasePass
 from qiskit.transpiler.exceptions import TranspilerError
-from qiskit.transpiler.instruction_durations import InstructionDurationsType
 from qiskit.transpiler.passes import Optimize1qGates, PadDynamicalDecoupling
 from qiskit.transpiler.passes.scheduling import ALAPScheduleAnalysis
 from qiskit.transpiler.passes.scheduling.scheduling.base_scheduler import BaseScheduler
@@ -68,7 +67,7 @@ class PulseMethod(Enum):
 
 
 def dynamical_decoupling_passes(
-    backend: Backend,
+    target: Target,
     dd_str: str,
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
     urdd_pulse_num: int = 4,
@@ -77,7 +76,7 @@ def dynamical_decoupling_passes(
     Yield transpilation passes for dynamical decoupling.
 
     Args:
-        backend (Backend): Backend to run on; gate timing is required for this method.
+        target (Target): Backend to run on; gate timing is required for this method.
         dd_str (str): String describing DD sequence to use.
         scheduler (BaseScheduler, optional): Scheduler, defaults to ALAPScheduleAnalysis.
         urdd_pulse_num (int, optional): URDD pulse number must be even and at least 4.
@@ -86,18 +85,23 @@ def dynamical_decoupling_passes(
     Yields:
         Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.
     """
-    durations = get_instruction_durations(backend)
-    pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
+    for new_gate in [cast(Gate, gate) for gate in [Xp, Xm, Yp, Ym]]:
+        if new_gate.name not in target:
+            target.add_instruction(new_gate, target["x"])
 
     if dd_str in DD_SEQUENCE:
         sequence = DD_SEQUENCE[dd_str]
     elif dd_str == "URDD":
         phis = get_urdd_angles(urdd_pulse_num)
         sequence = tuple(PiPhiGate(phi) for phi in phis)
-    yield scheduler(durations)
-    yield PadDynamicalDecoupling(
-        durations, list(sequence), pulse_alignment=pulse_alignment
-    )
+        if "pi_phi" not in target:
+            phi = Parameter("φ")
+            target.add_instruction(PiPhiGate(phi), target["x"])
+    else:
+        raise AttributeError("No DD sequence specified")
+
+    yield scheduler(target.durations())
+    yield PadDynamicalDecoupling(target.durations(), list(sequence))
 
 
 def periodic_dynamical_decoupling(
@@ -109,7 +113,8 @@ def periodic_dynamical_decoupling(
     scheduler: BaseScheduler = ALAPScheduleAnalysis,
 ) -> Iterable[BasePass]:
     """Yields transpilation passes for periodic dynamical decoupling."""
-    durations = get_instruction_durations(backend)
+    target = backend.target
+    durations = target.durations()
     pulse_alignment = backend.configuration().timing_constraints["pulse_alignment"]
 
     if base_dd_sequence is None:
@@ -126,48 +131,10 @@ def periodic_dynamical_decoupling(
     )
 
 
-# TODO this should take instruction schedule map instead of backend
-def get_instruction_durations(backend: Backend) -> InstructionDurations:
-    """
-    Retrieves gate timing information for the backend from the instruction
-    schedule map, and returns the type InstructionDurations for use by
-    Qiskit's scheduler (i.e., ALAP) and DynamicalDecoupling passes.
-
-    This method relies on IBM backend knowledge such as
-
-      - all single qubit gates durations are the same
-      - the 'x' gate, used for echoed cross resonance, is also the basis for
-        all othe dynamical decoupling gates (currently)
-    """
-    inst_durs: InstructionDurationsType = []
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    num_qubits = backend.configuration().num_qubits
-
-    # single qubit gates
-    for qubit in range(num_qubits):
-        for inst_str in inst_sched_map.qubit_instructions(qubits=[qubit]):
-            inst = inst_sched_map.get(inst_str, qubits=[qubit])
-            inst_durs.append((inst_str, qubit, inst.duration))
-
-            # create DD pulses from CR echo 'x' pulse
-            if inst_str == "x":
-                for new_gate in ["xp", "xm", "y", "yp", "ym", "pi_phi"]:
-                    inst_durs.append((new_gate, qubit, inst.duration))
-
-    # two qubit gates
-    for qc in range(num_qubits):
-        for qt in range(num_qubits):
-            for inst_str in inst_sched_map.qubit_instructions(qubits=[qc, qt]):
-                inst = inst_sched_map.get(inst_str, qubits=[qc, qt])
-                inst_durs.append((inst_str, [qc, qt], inst.duration))
-
-    return InstructionDurations(inst_durs)
-
-
 # TODO refactor this as a CalibrationBuilder transpilation pass
 def add_pulse_calibrations(
     circuits: Union[QuantumCircuit, List[QuantumCircuit]],
-    backend: Backend,
+    target: Target,
     pulse_method: PulseMethod = PulseMethod.PHASESHIFT,
 ) -> None:
     """
@@ -184,8 +151,8 @@ def add_pulse_calibrations(
     Raises:
         ValueError: Not a defined method for implementing pulse schedules for URDD gates.
     """
-    inst_sched_map = backend.defaults().instruction_schedule_map
-    num_qubits = backend.configuration().num_qubits
+    inst_sched_map = target.instruction_schedule_map()
+    num_qubits = target.num_qubits
 
     if isinstance(circuits, QuantumCircuit):
         circuits = [circuits]
@@ -583,3 +550,11 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                     idle_after += gate_length
 
             dag.global_phase = self._mod_2pi(dag.global_phase + sequence_gphase)
+
+    @staticmethod
+    def _mod_2pi(angle: float, atol: float = 0):
+        """Wrap angle into interval [-π,π). If within atol of the endpoint, clamp to -π"""
+        wrapped = (angle + np.pi) % (2 * np.pi) - np.pi
+        if abs(wrapped - np.pi) < atol:
+            wrapped = -np.pi
+        return wrapped
