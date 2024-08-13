@@ -85,7 +85,7 @@ def dynamical_decoupling_passes(
     Yields:
         Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.
     """
-    for new_gate in [Xp, Xm, Yp, Ym]:
+    for new_gate in cast(List[Gate], [Xp, Xm, Yp, Ym]):
         if new_gate.name not in target:
             target.add_instruction(new_gate, target["x"])
 
