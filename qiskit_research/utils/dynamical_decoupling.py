@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from enum import Enum
 from math import pi
-from typing import Iterable, List, Optional, Sequence, Union
+from typing import cast, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
 from qiskit import QuantumCircuit, pulse
@@ -85,7 +85,7 @@ def dynamical_decoupling_passes(
     Yields:
         Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.
     """
-    for new_gate in cast(List[Gate], [Xp, Xm, Yp, Ym]):
+    for new_gate in [cast(Gate, gate) for gate in [Xp, Xm, Yp, Ym]]:
         if new_gate.name not in target:
             target.add_instruction(new_gate, target["x"])
 
