@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="prev" title="Qiskit Research API Reference" href="index.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.01.29 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
         <title>Utilities for running research experiments with Qiskit - Qiskit Research 0.0.2</title>
       <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=82a976d7" />
@@ -491,7 +491,7 @@ decomposition, this version accepts Parameter values.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="qiskit_research.utils.RZXtoEchoedCR">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RZXtoEchoedCR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RZXtoEchoedCR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/gate_decompositions.html#RZXtoEchoedCR"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.RZXtoEchoedCR" title="Link to this definition">¶</a></dt>
 <dd><p>Class for the RZXGate to echoed cross resonance gate pass. The RZXGate
 is equivalent to the SECR gate plus a second XGate on the control qubit
 to return it to the initial state.</p>
@@ -619,7 +619,7 @@ precedence and <code class="docutils literal notranslate"><span class="pre">inst
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.add_pulse_calibrations">
-<span class="sig-name descname"><span class="pre">add_pulse_calibrations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PulseMethod.PHASESHIFT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#add_pulse_calibrations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.add_pulse_calibrations" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">add_pulse_calibrations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pulse_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PulseMethod.PHASESHIFT</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#add_pulse_calibrations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.add_pulse_calibrations" title="Link to this definition">¶</a></dt>
 <dd><p>Add pulse calibrations for custom gates to circuits in-place.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -643,7 +643,7 @@ Defaults to PulseMethod.PHASESHIFT.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.cr_scaling_passes">
-<span class="sig-name descname"><span class="pre">cr_scaling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unroll_rzx_to_ecr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_zz_matches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#cr_scaling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.cr_scaling_passes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">cr_scaling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">templates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unroll_rzx_to_ecr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force_zz_matches</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#cr_scaling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.cr_scaling_passes" title="Link to this definition">¶</a></dt>
 <dd><p>Yields transpilation passes for CR pulse scaling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
@@ -654,12 +654,12 @@ Defaults to PulseMethod.PHASESHIFT.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.dynamical_decoupling_passes">
-<span class="sig-name descname"><span class="pre">dynamical_decoupling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dd_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=&lt;class</span> <span class="pre">'qiskit.transpiler.passes.scheduling.scheduling.alap.ALAPScheduleAnalysis'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urdd_pulse_num=4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#dynamical_decoupling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.dynamical_decoupling_passes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">dynamical_decoupling_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dd_str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheduler=&lt;class</span> <span class="pre">'qiskit.transpiler.passes.scheduling.scheduling.alap.ALAPScheduleAnalysis'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">urdd_pulse_num=4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/dynamical_decoupling.html#dynamical_decoupling_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.dynamical_decoupling_passes" title="Link to this definition">¶</a></dt>
 <dd><p>Yield transpilation passes for dynamical decoupling.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>backend</strong> (<em>Backend</em>) – Backend to run on; gate timing is required for this method.</p></li>
+<li><p><strong>target</strong> (<em>Target</em>) – Backend to run on; gate timing is required for this method.</p></li>
 <li><p><strong>dd_str</strong> (<em>str</em>) – String describing DD sequence to use.</p></li>
 <li><p><strong>scheduler</strong> (<em>BaseScheduler</em><em>, </em><em>optional</em>) – Scheduler, defaults to ALAPScheduleAnalysis.</p></li>
 <li><p><strong>urdd_pulse_num</strong> (<em>int</em><em>, </em><em>optional</em>) – URDD pulse number must be even and at least 4.
@@ -699,7 +699,7 @@ Defaults to 4.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="qiskit_research.utils.pulse_attaching_passes">
-<span class="sig-name descname"><span class="pre">pulse_attaching_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backend</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#pulse_attaching_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.pulse_attaching_passes" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pulse_attaching_passes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_bind</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/qiskit_research/utils/pulse_scaling.html#pulse_attaching_passes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#qiskit_research.utils.pulse_attaching_passes" title="Link to this definition">¶</a></dt>
 <dd><p>Yields transpilation passes for attaching pulse schedules.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>

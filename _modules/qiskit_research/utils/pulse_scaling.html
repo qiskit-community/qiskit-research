@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.01.29 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
         <title>qiskit_research.utils.pulse_scaling - Qiskit Research 0.0.2</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=82a976d7" />
@@ -244,6 +244,7 @@
 
 <span class="sd">&quot;&quot;&quot;Pulse scaling.&quot;&quot;&quot;</span>
 
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">pulse</span>
@@ -253,17 +254,16 @@
 <span class="kn">from</span> <span class="nn">qiskit.converters</span> <span class="kn">import</span> <span class="n">circuit_to_dag</span><span class="p">,</span> <span class="n">dag_to_circuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span><span class="p">,</span> <span class="n">DAGNode</span><span class="p">,</span> <span class="n">DAGOpNode</span>
 <span class="kn">from</span> <span class="nn">qiskit.exceptions</span> <span class="kn">import</span> <span class="n">QiskitError</span>
-<span class="kn">from</span> <span class="nn">qiskit.providers.backend</span> <span class="kn">import</span> <span class="n">Backend</span>
 <span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ControlChannel</span><span class="p">,</span>
     <span class="n">Play</span><span class="p">,</span>
     <span class="n">Schedule</span><span class="p">,</span>
     <span class="n">ScheduleBlock</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">qiskit.qasm</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler</span> <span class="kn">import</span> <span class="n">Target</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span><span class="p">,</span> <span class="n">TransformationPass</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">CXCancellation</span><span class="p">,</span>
+    <span class="n">CommutativeCancellation</span><span class="p">,</span>
     <span class="n">Optimize1qGatesDecomposition</span><span class="p">,</span>
     <span class="n">RZXCalibrationBuilder</span><span class="p">,</span>
     <span class="n">RZXCalibrationBuilderNoEcho</span><span class="p">,</span>
@@ -281,7 +281,7 @@
 <div class="viewcode-block" id="cr_scaling_passes">
 <a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.cr_scaling_passes">[docs]</a>
 <span class="k">def</span> <span class="nf">cr_scaling_passes</span><span class="p">(</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Target</span><span class="p">,</span>
     <span class="n">templates</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">],</span>
     <span class="n">unroll_rzx_to_ecr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">force_zz_matches</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -294,30 +294,27 @@
     <span class="k">if</span> <span class="n">force_zz_matches</span><span class="p">:</span>
         <span class="k">yield</span> <span class="n">ForceZZTemplateSubstitution</span><span class="p">()</span>  <span class="c1"># workaround for Terra Issue</span>
     <span class="k">if</span> <span class="n">unroll_rzx_to_ecr</span><span class="p">:</span>
-        <span class="k">yield</span> <span class="n">RZXtoEchoedCR</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">RZXtoEchoedCR</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">Optimize1qGatesDecomposition</span><span class="p">(</span><span class="n">BASIS_GATES</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">CXCancellation</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">CommutativeCancellation</span><span class="p">()</span>
     <span class="k">yield</span> <span class="n">CombineRuns</span><span class="p">([</span><span class="s2">&quot;rz&quot;</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">param_bind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">yield from</span> <span class="n">pulse_attaching_passes</span><span class="p">(</span><span class="n">backend</span><span class="p">,</span> <span class="n">param_bind</span><span class="p">)</span></div>
+        <span class="k">yield from</span> <span class="n">pulse_attaching_passes</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">param_bind</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="pulse_attaching_passes">
 <a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.pulse_attaching_passes">[docs]</a>
 <span class="k">def</span> <span class="nf">pulse_attaching_passes</span><span class="p">(</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Target</span><span class="p">,</span>
     <span class="n">param_bind</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yields transpilation passes for attaching pulse schedules.&quot;&quot;&quot;</span>
-    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
-    <span class="n">channel_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">qubit_channel_mapping</span>
-
     <span class="k">yield</span> <span class="n">BindParameters</span><span class="p">(</span><span class="n">param_bind</span><span class="p">)</span>
     <span class="k">yield</span> <span class="n">Optimize1qGatesDecomposition</span><span class="p">(</span><span class="n">BASIS_GATES</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">CXCancellation</span><span class="p">()</span>
-    <span class="k">yield</span> <span class="n">SECRCalibrationBuilder</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">,</span> <span class="n">channel_map</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">RZXCalibrationBuilder</span><span class="p">(</span><span class="n">inst_sched_map</span><span class="p">,</span> <span class="n">channel_map</span><span class="p">)</span></div>
+    <span class="k">yield</span> <span class="n">CommutativeCancellation</span><span class="p">()</span>
+    <span class="k">yield</span> <span class="n">SECRCalibrationBuilder</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">RZXCalibrationBuilder</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span></div>
 
 
 
@@ -583,18 +580,18 @@
 
 
 
-<span class="k">def</span> <span class="nf">get_ecr_pairs_from_backend</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="k">def</span> <span class="nf">get_ecr_pairs_from_backend</span><span class="p">(</span><span class="n">target</span><span class="p">:</span> <span class="n">Target</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieve the coupling map of only CX defined be echoed cross resonance.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        backend (Backend): backend one desires the ECR coupling map from</span>
+<span class="sd">        target (Target): target one desires the ECR coupling map from</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List[List[int]]: coupling map consisting only of ECR pairs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">coupling_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">coupling_map</span>
-    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
+    <span class="n">coupling_map</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">build_coupling_map</span><span class="p">()</span>
+    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">instruction_schedule_map</span><span class="p">()</span>
 
     <span class="n">new_coupling_map</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">coupling_map</span><span class="p">:</span>

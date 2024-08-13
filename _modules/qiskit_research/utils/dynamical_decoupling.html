@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2024.01.29 -->
+    <!-- Generated with Sphinx 7.4.7 and Furo 2024.01.29 -->
         <title>qiskit_research.utils.dynamical_decoupling - Qiskit Research 0.0.2</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=135e06be" />
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=82a976d7" />
@@ -247,11 +247,12 @@
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">qiskit</span> <span class="kn">import</span> <span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">pulse</span>
-<span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">Qubit</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">Parameter</span><span class="p">,</span> <span class="n">Qubit</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.delay</span> <span class="kn">import</span> <span class="n">Delay</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="n">U3Gate</span><span class="p">,</span> <span class="n">UGate</span><span class="p">,</span> <span class="n">XGate</span><span class="p">,</span> <span class="n">YGate</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.reset</span> <span class="kn">import</span> <span class="n">Reset</span>
@@ -259,12 +260,10 @@
 <span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span><span class="p">,</span> <span class="n">DAGInNode</span><span class="p">,</span> <span class="n">DAGNode</span><span class="p">,</span> <span class="n">DAGOpNode</span>
 <span class="kn">from</span> <span class="nn">qiskit.providers.backend</span> <span class="kn">import</span> <span class="n">Backend</span>
 <span class="kn">from</span> <span class="nn">qiskit.pulse</span> <span class="kn">import</span> <span class="n">Drag</span><span class="p">,</span> <span class="n">Waveform</span>
-<span class="kn">from</span> <span class="nn">qiskit.qasm</span> <span class="kn">import</span> <span class="n">pi</span>
 <span class="kn">from</span> <span class="nn">qiskit.synthesis</span> <span class="kn">import</span> <span class="n">OneQubitEulerDecomposer</span>
-<span class="kn">from</span> <span class="nn">qiskit.transpiler</span> <span class="kn">import</span> <span class="n">InstructionDurations</span>
+<span class="kn">from</span> <span class="nn">qiskit.transpiler</span> <span class="kn">import</span> <span class="n">InstructionDurations</span><span class="p">,</span> <span class="n">Target</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.exceptions</span> <span class="kn">import</span> <span class="n">TranspilerError</span>
-<span class="kn">from</span> <span class="nn">qiskit.transpiler.instruction_durations</span> <span class="kn">import</span> <span class="n">InstructionDurationsType</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes</span> <span class="kn">import</span> <span class="n">Optimize1qGates</span><span class="p">,</span> <span class="n">PadDynamicalDecoupling</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.scheduling</span> <span class="kn">import</span> <span class="n">ALAPScheduleAnalysis</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.passes.scheduling.scheduling.base_scheduler</span> <span class="kn">import</span> <span class="n">BaseScheduler</span>
@@ -304,7 +303,7 @@
 <div class="viewcode-block" id="dynamical_decoupling_passes">
 <a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.dynamical_decoupling_passes">[docs]</a>
 <span class="k">def</span> <span class="nf">dynamical_decoupling_passes</span><span class="p">(</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Target</span><span class="p">,</span>
     <span class="n">dd_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">scheduler</span><span class="p">:</span> <span class="n">BaseScheduler</span> <span class="o">=</span> <span class="n">ALAPScheduleAnalysis</span><span class="p">,</span>
     <span class="n">urdd_pulse_num</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
@@ -313,7 +312,7 @@
 <span class="sd">    Yield transpilation passes for dynamical decoupling.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        backend (Backend): Backend to run on; gate timing is required for this method.</span>
+<span class="sd">        target (Target): Backend to run on; gate timing is required for this method.</span>
 <span class="sd">        dd_str (str): String describing DD sequence to use.</span>
 <span class="sd">        scheduler (BaseScheduler, optional): Scheduler, defaults to ALAPScheduleAnalysis.</span>
 <span class="sd">        urdd_pulse_num (int, optional): URDD pulse number must be even and at least 4.</span>
@@ -322,18 +321,23 @@
 <span class="sd">    Yields:</span>
 <span class="sd">        Iterator[Iterable[BasePass]]: Transpiler passes used for adding DD sequences.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">durations</span> <span class="o">=</span> <span class="n">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
-    <span class="n">pulse_alignment</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">timing_constraints</span><span class="p">[</span><span class="s2">&quot;pulse_alignment&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">new_gate</span> <span class="ow">in</span> <span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Gate</span><span class="p">,</span> <span class="n">gate</span><span class="p">)</span> <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Xp</span><span class="p">,</span> <span class="n">Xm</span><span class="p">,</span> <span class="n">Yp</span><span class="p">,</span> <span class="n">Ym</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="n">new_gate</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
+            <span class="n">target</span><span class="o">.</span><span class="n">add_instruction</span><span class="p">(</span><span class="n">new_gate</span><span class="p">,</span> <span class="n">target</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">dd_str</span> <span class="ow">in</span> <span class="n">DD_SEQUENCE</span><span class="p">:</span>
         <span class="n">sequence</span> <span class="o">=</span> <span class="n">DD_SEQUENCE</span><span class="p">[</span><span class="n">dd_str</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">dd_str</span> <span class="o">==</span> <span class="s2">&quot;URDD&quot;</span><span class="p">:</span>
         <span class="n">phis</span> <span class="o">=</span> <span class="n">get_urdd_angles</span><span class="p">(</span><span class="n">urdd_pulse_num</span><span class="p">)</span>
         <span class="n">sequence</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">PiPhiGate</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span> <span class="k">for</span> <span class="n">phi</span> <span class="ow">in</span> <span class="n">phis</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">scheduler</span><span class="p">(</span><span class="n">durations</span><span class="p">)</span>
-    <span class="k">yield</span> <span class="n">PadDynamicalDecoupling</span><span class="p">(</span>
-        <span class="n">durations</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">sequence</span><span class="p">),</span> <span class="n">pulse_alignment</span><span class="o">=</span><span class="n">pulse_alignment</span>
-    <span class="p">)</span></div>
+        <span class="k">if</span> <span class="s2">&quot;pi_phi&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target</span><span class="p">:</span>
+            <span class="n">phi</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="s2">&quot;φ&quot;</span><span class="p">)</span>
+            <span class="n">target</span><span class="o">.</span><span class="n">add_instruction</span><span class="p">(</span><span class="n">PiPhiGate</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">target</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;No DD sequence specified&quot;</span><span class="p">)</span>
+
+    <span class="k">yield</span> <span class="n">scheduler</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">durations</span><span class="p">())</span>
+    <span class="k">yield</span> <span class="n">PadDynamicalDecoupling</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">durations</span><span class="p">(),</span> <span class="nb">list</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span></div>
 
 
 
@@ -346,7 +350,8 @@
     <span class="n">scheduler</span><span class="p">:</span> <span class="n">BaseScheduler</span> <span class="o">=</span> <span class="n">ALAPScheduleAnalysis</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">BasePass</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Yields transpilation passes for periodic dynamical decoupling.&quot;&quot;&quot;</span>
-    <span class="n">durations</span> <span class="o">=</span> <span class="n">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">)</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">target</span>
+    <span class="n">durations</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">durations</span><span class="p">()</span>
     <span class="n">pulse_alignment</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">timing_constraints</span><span class="p">[</span><span class="s2">&quot;pulse_alignment&quot;</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">base_dd_sequence</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -363,50 +368,12 @@
     <span class="p">)</span>
 
 
-<span class="c1"># TODO this should take instruction schedule map instead of backend</span>
-<span class="k">def</span> <span class="nf">get_instruction_durations</span><span class="p">(</span><span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InstructionDurations</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Retrieves gate timing information for the backend from the instruction</span>
-<span class="sd">    schedule map, and returns the type InstructionDurations for use by</span>
-<span class="sd">    Qiskit&#39;s scheduler (i.e., ALAP) and DynamicalDecoupling passes.</span>
-
-<span class="sd">    This method relies on IBM backend knowledge such as</span>
-
-<span class="sd">      - all single qubit gates durations are the same</span>
-<span class="sd">      - the &#39;x&#39; gate, used for echoed cross resonance, is also the basis for</span>
-<span class="sd">        all othe dynamical decoupling gates (currently)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">inst_durs</span><span class="p">:</span> <span class="n">InstructionDurationsType</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
-    <span class="n">num_qubits</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">num_qubits</span>
-
-    <span class="c1"># single qubit gates</span>
-    <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">inst_str</span> <span class="ow">in</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">qubit_instructions</span><span class="p">(</span><span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">]):</span>
-            <span class="n">inst</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">inst_str</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">])</span>
-            <span class="n">inst_durs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">inst_str</span><span class="p">,</span> <span class="n">qubit</span><span class="p">,</span> <span class="n">inst</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
-
-            <span class="c1"># create DD pulses from CR echo &#39;x&#39; pulse</span>
-            <span class="k">if</span> <span class="n">inst_str</span> <span class="o">==</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">new_gate</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;xp&quot;</span><span class="p">,</span> <span class="s2">&quot;xm&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;yp&quot;</span><span class="p">,</span> <span class="s2">&quot;ym&quot;</span><span class="p">,</span> <span class="s2">&quot;pi_phi&quot;</span><span class="p">]:</span>
-                    <span class="n">inst_durs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_gate</span><span class="p">,</span> <span class="n">qubit</span><span class="p">,</span> <span class="n">inst</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
-
-    <span class="c1"># two qubit gates</span>
-    <span class="k">for</span> <span class="n">qc</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">qt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">inst_str</span> <span class="ow">in</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">qubit_instructions</span><span class="p">(</span><span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qc</span><span class="p">,</span> <span class="n">qt</span><span class="p">]):</span>
-                <span class="n">inst</span> <span class="o">=</span> <span class="n">inst_sched_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">inst_str</span><span class="p">,</span> <span class="n">qubits</span><span class="o">=</span><span class="p">[</span><span class="n">qc</span><span class="p">,</span> <span class="n">qt</span><span class="p">])</span>
-                <span class="n">inst_durs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">inst_str</span><span class="p">,</span> <span class="p">[</span><span class="n">qc</span><span class="p">,</span> <span class="n">qt</span><span class="p">],</span> <span class="n">inst</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="n">InstructionDurations</span><span class="p">(</span><span class="n">inst_durs</span><span class="p">)</span>
-
-
 <span class="c1"># TODO refactor this as a CalibrationBuilder transpilation pass</span>
 <div class="viewcode-block" id="add_pulse_calibrations">
 <a class="viewcode-back" href="../../../apidocs/utils.html#qiskit_research.utils.add_pulse_calibrations">[docs]</a>
 <span class="k">def</span> <span class="nf">add_pulse_calibrations</span><span class="p">(</span>
     <span class="n">circuits</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">QuantumCircuit</span><span class="p">]],</span>
-    <span class="n">backend</span><span class="p">:</span> <span class="n">Backend</span><span class="p">,</span>
+    <span class="n">target</span><span class="p">:</span> <span class="n">Target</span><span class="p">,</span>
     <span class="n">pulse_method</span><span class="p">:</span> <span class="n">PulseMethod</span> <span class="o">=</span> <span class="n">PulseMethod</span><span class="o">.</span><span class="n">PHASESHIFT</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -423,8 +390,8 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: Not a defined method for implementing pulse schedules for URDD gates.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">defaults</span><span class="p">()</span><span class="o">.</span><span class="n">instruction_schedule_map</span>
-    <span class="n">num_qubits</span> <span class="o">=</span> <span class="n">backend</span><span class="o">.</span><span class="n">configuration</span><span class="p">()</span><span class="o">.</span><span class="n">num_qubits</span>
+    <span class="n">inst_sched_map</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">instruction_schedule_map</span><span class="p">()</span>
+    <span class="n">num_qubits</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">num_qubits</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">circuits</span><span class="p">,</span> <span class="n">QuantumCircuit</span><span class="p">):</span>
         <span class="n">circuits</span> <span class="o">=</span> <span class="p">[</span><span class="n">circuits</span><span class="p">]</span>
@@ -823,6 +790,14 @@
                     <span class="n">idle_after</span> <span class="o">+=</span> <span class="n">gate_length</span>
 
             <span class="n">dag</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mod_2pi</span><span class="p">(</span><span class="n">dag</span><span class="o">.</span><span class="n">global_phase</span> <span class="o">+</span> <span class="n">sequence_gphase</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_mod_2pi</span><span class="p">(</span><span class="n">angle</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap angle into interval [-π,π). If within atol of the endpoint, clamp to -π&quot;&quot;&quot;</span>
+        <span class="n">wrapped</span> <span class="o">=</span> <span class="p">(</span><span class="n">angle</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wrapped</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">atol</span><span class="p">:</span>
+            <span class="n">wrapped</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="k">return</span> <span class="n">wrapped</span>
 </pre></div>
         </article>
       </div>
