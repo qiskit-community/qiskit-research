@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "qiskit-research"
-version = "0.0.4"
+version = "0.0.5.dev"
 description = "Research using Qiskit, demonstrating best practices for running quantum computing experiments."
 readme = "README.md"
 license = { file = "LICENSE.txt" }
