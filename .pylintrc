@@ -82,7 +82,8 @@ disable=duplicate-code,
         too-many-instance-attributes,
         too-many-locals,
         too-many-nested-blocks,
-        too-many-statements
+        too-many-statements,
+        too-many-positional-arguments
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
