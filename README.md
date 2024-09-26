@@ -4,11 +4,7 @@ This repository contains useful software utilities for running quantum computing
 
 ## Installation
 
-Clone this repository and install from source. For example,
-
-    git clone https://github.com/qiskit-research/qiskit-research.git
-    cd qiskit-research
-    pip install .
+    pip install qiskit-research
 
 ## Documentation
 
