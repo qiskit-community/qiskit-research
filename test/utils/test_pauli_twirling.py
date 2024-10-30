@@ -14,7 +14,19 @@ import unittest
 
 import numpy as np
 from qiskit.circuit import Parameter, QuantumCircuit
-from qiskit.circuit.library import CXGate
+from qiskit.circuit.library import (
+    CXGate,
+    CYGate,
+    CZGate,
+    CHGate,
+    CSGate,
+    DCXGate,
+    CSXGate,
+    CSdgGate,
+    ECRGate,
+    iSwapGate,
+    SwapGate,
+)
 from qiskit.quantum_info import Operator
 from qiskit_research.utils.convenience import add_pauli_twirls
 from qiskit_research.utils.gates import SECRGate
@@ -33,6 +45,136 @@ class TestPauliTwirling(unittest.TestCase):
             circuit.append(a, [0])
             circuit.append(b, [1])
             circuit.append(CXGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_cy(self):
+        """Test twirling CY"""
+        twirl_gates = TWIRL_GATES["cy"]
+        operator = Operator(CYGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(CYGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_cz(self):
+        """Test twirling CZ."""
+        twirl_gates = TWIRL_GATES["cz"]
+        operator = Operator(CZGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(CZGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_ch(self):
+        """Test twirling CH."""
+        twirl_gates = TWIRL_GATES["ch"]
+        operator = Operator(CHGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(CHGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_cs(self):
+        """Test twirling CS."""
+        twirl_gates = TWIRL_GATES["cs"]
+        operator = Operator(CSGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(CSGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_dcx(self):
+        """Test twirling DCX."""
+        twirl_gates = TWIRL_GATES["dcx"]
+        operator = Operator(DCXGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(DCXGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_csx(self):
+        """Test twirling CSX."""
+        twirl_gates = TWIRL_GATES["csx"]
+        operator = Operator(CSXGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(CSXGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_csdg(self):
+        """Test twirling CSdg."""
+        twirl_gates = TWIRL_GATES["csdg"]
+        operator = Operator(CSdgGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(CSdgGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_ecr(self):
+        """Test twirling ECR."""
+        twirl_gates = TWIRL_GATES["ecr"]
+        operator = Operator(ECRGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(ECRGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_swap(self):
+        """Test twirling Swap."""
+        twirl_gates = TWIRL_GATES["swap"]
+        operator = Operator(SwapGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(SwapGate(), [0, 1])
+            circuit.append(c, [0])
+            circuit.append(d, [1])
+            self.assertTrue(Operator(circuit).equiv(operator))
+
+    def test_twirl_gates_iswap(self):
+        """Test twirling iSwap."""
+        twirl_gates = TWIRL_GATES["iswap"]
+        operator = Operator(iSwapGate())
+        for (a, b), (c, d) in twirl_gates:
+            circuit = QuantumCircuit(2)
+            circuit.append(a, [0])
+            circuit.append(b, [1])
+            circuit.append(iSwapGate(), [0, 1])
             circuit.append(c, [0])
             circuit.append(d, [1])
             self.assertTrue(Operator(circuit).equiv(operator))
