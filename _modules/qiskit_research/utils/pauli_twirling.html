@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../../genindex.html" /><link rel="search" title="Search" href="../../../search.html" />
 
-    <!-- Generated with Sphinx 8.0.2 and Furo 2024.08.06 -->
+    <!-- Generated with Sphinx 8.1.3 and Furo 2024.08.06 -->
         <title>qiskit_research.utils.pauli_twirling - Qiskit Research 0.0.5.dev0</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=82a976d7" />
@@ -262,14 +262,27 @@
 <span class="sd">&quot;&quot;&quot;Pauli twirling.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">cmath</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">QuantumRegister</span>
+<span class="kn">from</span> <span class="nn">qiskit.circuit</span> <span class="kn">import</span> <span class="n">QuantumRegister</span><span class="p">,</span> <span class="n">QuantumCircuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.circuit.library</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">IGate</span><span class="p">,</span>
     <span class="n">XGate</span><span class="p">,</span>
     <span class="n">YGate</span><span class="p">,</span>
     <span class="n">ZGate</span><span class="p">,</span>
+    <span class="n">CXGate</span><span class="p">,</span>
+    <span class="n">CYGate</span><span class="p">,</span>
+    <span class="n">CZGate</span><span class="p">,</span>
+    <span class="n">CHGate</span><span class="p">,</span>
+    <span class="n">CSGate</span><span class="p">,</span>
+    <span class="n">DCXGate</span><span class="p">,</span>
+    <span class="n">CSXGate</span><span class="p">,</span>
+    <span class="n">CSdgGate</span><span class="p">,</span>
+    <span class="n">ECRGate</span><span class="p">,</span>
+    <span class="n">iSwapGate</span><span class="p">,</span>
+    <span class="n">SwapGate</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">qiskit.dagcircuit</span> <span class="kn">import</span> <span class="n">DAGCircuit</span>
 <span class="kn">from</span> <span class="nn">qiskit.transpiler.basepasses</span> <span class="kn">import</span> <span class="n">BasePass</span><span class="p">,</span> <span class="n">TransformationPass</span>
@@ -277,13 +290,27 @@
     <span class="n">CXCancellation</span><span class="p">,</span>
     <span class="n">Optimize1qGatesDecomposition</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">qiskit.quantum_info</span> <span class="kn">import</span> <span class="n">Pauli</span><span class="p">,</span> <span class="n">pauli_basis</span>
+<span class="kn">from</span> <span class="nn">qiskit.quantum_info</span> <span class="kn">import</span> <span class="n">Pauli</span><span class="p">,</span> <span class="n">Operator</span><span class="p">,</span> <span class="n">pauli_basis</span>
 <span class="kn">from</span> <span class="nn">qiskit_research.utils.pulse_scaling</span> <span class="kn">import</span> <span class="n">BASIS_GATES</span>
 
+<span class="c1"># Single qubit Pauli gates</span>
 <span class="n">I</span> <span class="o">=</span> <span class="n">IGate</span><span class="p">()</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">XGate</span><span class="p">()</span>
 <span class="n">Y</span> <span class="o">=</span> <span class="n">YGate</span><span class="p">()</span>
 <span class="n">Z</span> <span class="o">=</span> <span class="n">ZGate</span><span class="p">()</span>
+
+<span class="c1"># 2Q entangling gates</span>
+<span class="n">CX</span> <span class="o">=</span> <span class="n">CXGate</span><span class="p">()</span>  <span class="c1"># cnot; controlled-X</span>
+<span class="n">CY</span> <span class="o">=</span> <span class="n">CYGate</span><span class="p">()</span>  <span class="c1"># controlled-Y</span>
+<span class="n">CZ</span> <span class="o">=</span> <span class="n">CZGate</span><span class="p">()</span>  <span class="c1"># controlled-Z</span>
+<span class="n">CH</span> <span class="o">=</span> <span class="n">CHGate</span><span class="p">()</span>  <span class="c1"># controlled-Hadamard</span>
+<span class="n">CS</span> <span class="o">=</span> <span class="n">CSGate</span><span class="p">()</span>  <span class="c1"># controlled-S</span>
+<span class="n">DCX</span> <span class="o">=</span> <span class="n">DCXGate</span><span class="p">()</span>  <span class="c1"># double cnot</span>
+<span class="n">CSX</span> <span class="o">=</span> <span class="n">CSXGate</span><span class="p">()</span>  <span class="c1"># controlled sqrt X</span>
+<span class="n">CSdg</span> <span class="o">=</span> <span class="n">CSdgGate</span><span class="p">()</span>  <span class="c1"># controlled S^dagger</span>
+<span class="n">ECR</span> <span class="o">=</span> <span class="n">ECRGate</span><span class="p">()</span>  <span class="c1"># echoed cross-resonance</span>
+<span class="n">Swap</span> <span class="o">=</span> <span class="n">SwapGate</span><span class="p">()</span>  <span class="c1"># swap</span>
+<span class="n">iSwap</span> <span class="o">=</span> <span class="n">iSwapGate</span><span class="p">()</span>  <span class="c1"># imaginary swap</span>
 
 <span class="c1"># this list consists of the 2-qubit rotation gates</span>
 <span class="n">TWO_QUBIT_PAULI_GENERATORS</span> <span class="o">=</span> <span class="p">{</span>
@@ -294,6 +321,74 @@
     <span class="s2">&quot;secr&quot;</span><span class="p">:</span> <span class="n">Pauli</span><span class="p">(</span><span class="s2">&quot;XZ&quot;</span><span class="p">),</span>
 <span class="p">}</span>
 
+
+<span class="k">def</span> <span class="nf">match_global_phase</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Phase the given arrays so that their phases match at one entry.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        a: A Numpy array.</span>
+<span class="sd">        b: Another Numpy array.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A pair of arrays (a&#39;, b&#39;) that are equal if and only if a == b * exp(i phi)</span>
+<span class="sd">        for some real number phi.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">b</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span>
+    <span class="c1"># use the largest entry of one of the matrices to maximize precision</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndindex</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+    <span class="n">phase_a</span> <span class="o">=</span> <span class="n">cmath</span><span class="o">.</span><span class="n">phase</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+    <span class="n">phase_b</span> <span class="o">=</span> <span class="n">cmath</span><span class="o">.</span><span class="n">phase</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">cmath</span><span class="o">.</span><span class="n">rect</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">phase_a</span><span class="p">),</span> <span class="n">b</span> <span class="o">*</span> <span class="n">cmath</span><span class="o">.</span><span class="n">rect</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="n">phase_b</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">allclose_up_to_global_phase</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-08</span><span class="p">,</span> <span class="n">equal_nan</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if two operators are close up to a global phase.&quot;&quot;&quot;</span>
+    <span class="c1"># Phase both operators to match their phases</span>
+    <span class="n">phased_op1</span><span class="p">,</span> <span class="n">phased_op2</span> <span class="o">=</span> <span class="n">match_global_phase</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">phased_op1</span><span class="p">,</span> <span class="n">phased_op2</span><span class="p">,</span> <span class="n">rtol</span><span class="p">,</span> <span class="n">atol</span><span class="p">,</span> <span class="n">equal_nan</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">two_qubit_gate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the Pauli twirling sets for a given 2Q gate.</span>
+
+<span class="sd">    Sets are ordered such that gate[0] and gate[1] are pre-rotations</span>
+<span class="sd">    applied to control and target, respectively. gate[2] and gate[3]</span>
+<span class="sd">    are post-rotations for control and target, respectively.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        two_qubit_gate (Gate): Input two-qubit gate</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: Tuple of all twirling gate sets</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">target_unitary</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">two_qubit_gate</span><span class="p">)</span>
+    <span class="n">twirling_sets</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Generate combinations of 4 gates from the operator list</span>
+    <span class="k">for</span> <span class="n">gates</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">([</span><span class="n">I</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">],</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="n">qc</span> <span class="o">=</span> <span class="n">_build_twirl_circuit</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">two_qubit_gate</span><span class="p">)</span>
+        <span class="n">qc_array</span> <span class="o">=</span> <span class="n">Operator</span><span class="o">.</span><span class="n">from_circuit</span><span class="p">(</span><span class="n">qc</span><span class="p">)</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">allclose_up_to_global_phase</span><span class="p">(</span><span class="n">qc_array</span><span class="p">,</span> <span class="n">target_unitary</span><span class="p">):</span>
+            <span class="n">twirling_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gates</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">twirling_sets</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_build_twirl_circuit</span><span class="p">(</span><span class="n">gates</span><span class="p">,</span> <span class="n">two_qubit_gate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the twirled quantum circuit with specified gates.&quot;&quot;&quot;</span>
+    <span class="n">qc</span> <span class="o">=</span> <span class="n">QuantumCircuit</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">qc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gates</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">qc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gates</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">qc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">two_qubit_gate</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">qc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gates</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">qc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gates</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">qc</span>
+
+
 <span class="c1"># this dictionary stores the twirl sets for each supported gate</span>
 <span class="c1"># each key is the name of a supported gate</span>
 <span class="c1"># each value is a tuple that represents the twirl set for the gate</span>
@@ -301,24 +396,17 @@
 <span class="c1"># &quot;before&quot; and &quot;after&quot; are tuples of single-qubit gates to be applied</span>
 <span class="c1"># before and after the gate to be twirled</span>
 <span class="n">TWIRL_GATES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;cx&quot;</span><span class="p">:</span> <span class="p">(</span>
-        <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">I</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Y</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Y</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Y</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Z</span><span class="p">,</span> <span class="n">I</span><span class="p">),</span> <span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">I</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Z</span><span class="p">,</span> <span class="n">X</span><span class="p">),</span> <span class="p">(</span><span class="n">Z</span><span class="p">,</span> <span class="n">X</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Z</span><span class="p">,</span> <span class="n">Y</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">Y</span><span class="p">)),</span>
-        <span class="p">((</span><span class="n">Z</span><span class="p">,</span> <span class="n">Z</span><span class="p">),</span> <span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">Z</span><span class="p">)),</span>
-    <span class="p">),</span>
+    <span class="s2">&quot;cx&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">CX</span><span class="p">),</span>
+    <span class="s2">&quot;cy&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">CY</span><span class="p">),</span>
+    <span class="s2">&quot;cz&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">CZ</span><span class="p">),</span>
+    <span class="s2">&quot;ch&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">CH</span><span class="p">),</span>
+    <span class="s2">&quot;cs&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">CS</span><span class="p">),</span>
+    <span class="s2">&quot;dcx&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">DCX</span><span class="p">),</span>
+    <span class="s2">&quot;csx&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">CSX</span><span class="p">),</span>
+    <span class="s2">&quot;csdg&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">CSdg</span><span class="p">),</span>
+    <span class="s2">&quot;ecr&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">ECR</span><span class="p">),</span>
+    <span class="s2">&quot;swap&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">Swap</span><span class="p">),</span>
+    <span class="s2">&quot;iswap&quot;</span><span class="p">:</span> <span class="n">create_pauli_twirling_sets</span><span class="p">(</span><span class="n">iSwap</span><span class="p">),</span>
 <span class="p">}</span>
 
 
@@ -447,7 +535,7 @@
     </aside>
   </div>
 </div><script src="../../../_static/documentation_options.js?v=6548ca8e"></script>
-    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/scripts/furo.js?v=5fa4622c"></script>
     <script src="../../../_static/thebelab-helper.js"></script>
