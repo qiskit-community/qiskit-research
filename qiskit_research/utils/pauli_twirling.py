@@ -11,7 +11,8 @@
 """Pauli twirling."""
 
 from typing import Any, Iterable, Optional
-from itertools import combinations
+import itertools
+import cmath
 
 import numpy as np
 from qiskit.circuit import QuantumRegister, QuantumCircuit
@@ -70,6 +71,36 @@ TWO_QUBIT_PAULI_GENERATORS = {
 }
 
 
+def match_global_phase(a, b):
+    """Phase the given arrays so that their phases match at one entry.
+
+    Args:
+        a: A Numpy array.
+        b: Another Numpy array.
+
+    Returns:
+        A pair of arrays (a', b') that are equal if and only if a == b * exp(i phi)
+        for some real number phi.
+    """
+    if a.shape != b.shape:
+        return a, b
+    # use the largest entry of one of the matrices to maximize precision
+    index = max(np.ndindex(*a.shape), key=lambda i: abs(b[i]))
+    phase_a = cmath.phase(a[index])
+    phase_b = cmath.phase(b[index])
+    return a * cmath.rect(1, -phase_a), b * cmath.rect(1, -phase_b)
+
+
+def allclose_up_to_global_phase(op1, op2, tol=1e-15):
+    """Check if two operators are close up to a global phase."""
+    # Phase both operators to match their phases
+    op1_array = op1.to_matrix()
+    op2_array = op2.to_matrix()
+
+    phased_op1, phased_op2 = match_global_phase(op1_array, op2_array)
+    return np.allclose(phased_op1, phased_op2, atol=tol)
+
+
 def create_pauli_twirling_sets(two_qubit_gate):
     """Generate the Pauli twirling sets for a given 2Q gate.
 
@@ -85,45 +116,28 @@ def create_pauli_twirling_sets(two_qubit_gate):
     """
 
     # Generate 16-element list of Pauli gates, each repeated 4 times
-    operator_list = [I, Z, X, Y] * 4
     target_unitary = Operator(two_qubit_gate.to_matrix())
     twirling_sets = []
 
     # Generate combinations of 4 gates from the operator list
-    for gates in combinations(operator_list, 4):
+    for gates in itertools.product(itertools.product([I, X, Y, Z], repeat=2), repeat=2):
         qc = QuantumCircuit(2)
         _build_twirl_circuit(qc, gates, two_qubit_gate)
-
-        norm = np.linalg.norm(Operator.from_circuit(qc) - target_unitary)
-        phase = _determine_phase(norm)
-
-        if phase is not None:
-            qc.global_phase += phase
+        if allclose_up_to_global_phase(Operator.from_circuit(qc), target_unitary):
             # Verify the twirled circuit against the target unitary
-            assert Operator.from_circuit(qc) == target_unitary
-            twirl_set = (gates[0], gates[1]), (gates[2], gates[3])
-            if twirl_set not in twirling_sets:
-                twirling_sets.append(twirl_set)
+            twirl_set = (gates[0][0], gates[0][1]), (gates[1][0], gates[1][1])
+            twirling_sets.append(twirl_set)
 
     return tuple(twirling_sets)
 
 
 def _build_twirl_circuit(qc, gates, two_qubit_gate):
     """Build the twirled quantum circuit with specified gates."""
-    qc.append(gates[0], [0])
-    qc.append(gates[1], [1])
+    qc.append(gates[0][0], [0])
+    qc.append(gates[0][1], [1])
     qc.append(two_qubit_gate, [0, 1])
-    qc.append(gates[2], [0])
-    qc.append(gates[3], [1])
-
-
-def _determine_phase(norm):
-    """Determine the phase based on the norm difference."""
-    if abs(norm) < 1e-15:
-        return 0
-    if abs(norm - 4) < 1e-15:
-        return np.pi
-    return None
+    qc.append(gates[1][0], [0])
+    qc.append(gates[1][1], [1])
 
 
 # this dictionary stores the twirl sets for each supported gate

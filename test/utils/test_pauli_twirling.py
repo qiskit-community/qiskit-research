@@ -39,6 +39,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_cnot(self):
         """Test twirling CNOT."""
         twirl_gates = TWIRL_GATES["cx"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(CXGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -52,6 +53,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_cy(self):
         """Test twirling CY"""
         twirl_gates = TWIRL_GATES["cy"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(CYGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -65,6 +67,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_cz(self):
         """Test twirling CZ."""
         twirl_gates = TWIRL_GATES["cz"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(CZGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -78,6 +81,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_ch(self):
         """Test twirling CH."""
         twirl_gates = TWIRL_GATES["ch"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(CHGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -91,6 +95,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_cs(self):
         """Test twirling CS."""
         twirl_gates = TWIRL_GATES["cs"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(CSGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -104,6 +109,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_dcx(self):
         """Test twirling DCX."""
         twirl_gates = TWIRL_GATES["dcx"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(DCXGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -117,6 +123,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_csx(self):
         """Test twirling CSX."""
         twirl_gates = TWIRL_GATES["csx"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(CSXGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -130,6 +137,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_csdg(self):
         """Test twirling CSdg."""
         twirl_gates = TWIRL_GATES["csdg"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(CSdgGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -143,6 +151,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_ecr(self):
         """Test twirling ECR."""
         twirl_gates = TWIRL_GATES["ecr"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(ECRGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -156,6 +165,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_swap(self):
         """Test twirling Swap."""
         twirl_gates = TWIRL_GATES["swap"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(SwapGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
@@ -169,6 +179,7 @@ class TestPauliTwirling(unittest.TestCase):
     def test_twirl_gates_iswap(self):
         """Test twirling iSwap."""
         twirl_gates = TWIRL_GATES["iswap"]
+        self.assertGreater(len(twirl_gates), 0)
         operator = Operator(iSwapGate())
         for (a, b), (c, d) in twirl_gates:
             circuit = QuantumCircuit(2)
