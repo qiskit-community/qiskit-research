@@ -91,14 +91,11 @@ def match_global_phase(a, b):
     return a * cmath.rect(1, -phase_a), b * cmath.rect(1, -phase_b)
 
 
-def allclose_up_to_global_phase(op1, op2, tol=1e-15):
+def allclose_up_to_global_phase(a, b, rtol=1e-05, atol=1e-08, equal_nan=False):
     """Check if two operators are close up to a global phase."""
     # Phase both operators to match their phases
-    op1_array = op1.to_matrix()
-    op2_array = op2.to_matrix()
-
-    phased_op1, phased_op2 = match_global_phase(op1_array, op2_array)
-    return np.allclose(phased_op1, phased_op2, atol=tol)
+    phased_op1, phased_op2 = match_global_phase(a, b)
+    return np.allclose(phased_op1, phased_op2, rtol, atol, equal_nan)
 
 
 def create_pauli_twirling_sets(two_qubit_gate):
@@ -115,29 +112,30 @@ def create_pauli_twirling_sets(two_qubit_gate):
         tuple: Tuple of all twirling gate sets
     """
 
-    # Generate 16-element list of Pauli gates, each repeated 4 times
-    target_unitary = Operator(two_qubit_gate.to_matrix())
+    target_unitary = np.array(two_qubit_gate)
     twirling_sets = []
 
     # Generate combinations of 4 gates from the operator list
     for gates in itertools.product(itertools.product([I, X, Y, Z], repeat=2), repeat=2):
-        qc = QuantumCircuit(2)
-        _build_twirl_circuit(qc, gates, two_qubit_gate)
-        if allclose_up_to_global_phase(Operator.from_circuit(qc), target_unitary):
-            # Verify the twirled circuit against the target unitary
-            twirl_set = (gates[0][0], gates[0][1]), (gates[1][0], gates[1][1])
-            twirling_sets.append(twirl_set)
+        qc = _build_twirl_circuit(gates, two_qubit_gate)
+        qc_array = Operator.from_circuit(qc).to_matrix()
+        if allclose_up_to_global_phase(qc_array, target_unitary):
+            twirling_sets.append(gates)
 
     return tuple(twirling_sets)
 
 
-def _build_twirl_circuit(qc, gates, two_qubit_gate):
+def _build_twirl_circuit(gates, two_qubit_gate):
     """Build the twirled quantum circuit with specified gates."""
+    qc = QuantumCircuit(2)
+
     qc.append(gates[0][0], [0])
     qc.append(gates[0][1], [1])
     qc.append(two_qubit_gate, [0, 1])
     qc.append(gates[1][0], [0])
     qc.append(gates[1][1], [1])
+
+    return qc
 
 
 # this dictionary stores the twirl sets for each supported gate
