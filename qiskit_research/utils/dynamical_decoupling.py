@@ -144,7 +144,7 @@ def add_pulse_calibrations(
         circuits (Union[QuantumCircuit, List[QuantumCircuit]]): Circuits which need pulse schedules
             attached to the non-basis gates.
         backend (Backend): Backend from which pulse information is obtained.
-        pulse_method (PulseMethod, optional): Exact method of implemeting pulse schedules given by
+        pulse_method (PulseMethod, optional): Exact method of implementing pulse schedules given by
             PulseMethod enumeration. These should all be equivalent but in practice they may differ.
             Defaults to PulseMethod.PHASESHIFT.
 
@@ -293,7 +293,7 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
     a number of URDD pulses specified by a sequence of num_pulses only when there
     is a delay greater than a sequence of min_delay_time. Each delay will be
     considered and the large number of sequence will be given by that delay
-    specificied max(min_delay_time) < delay.
+    specified max(min_delay_time) < delay.
     """
 
     def __init__(
@@ -323,7 +323,7 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 will be used [d/2, d, d, ..., d, d, d/2].
             skip_reset_qubits: If True, does not insert DD on idle periods that
                 immediately follow initialized/reset qubits
-                (as qubits in the ground state are less susceptile to decoherence).
+                (as qubits in the ground state are less susceptible to decoherence).
             pulse_alignment: The hardware constraints for gate timing allocation.
                 This is usually provided from ``backend.configuration().timing_constraints``.
                 If provided, the delay length, i.e. ``spacing``, is implicitly adjusted to
@@ -519,7 +519,7 @@ class URDDSequenceStrategy(PadDynamicalDecoupling):
                 taus[mid_ind] += to_middle
                 if extra_slack - to_middle:
                     # If to_middle is not a multiple value of the pulse alignment,
-                    # it is truncated to the nearlest multiple value and
+                    # it is truncated to the nearest multiple value and
                     # the rest of slack is added to the end.
                     taus[-1] += extra_slack - to_middle
             elif self._extra_slack_distribution == "edges":

@@ -138,7 +138,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
                 the ``avg_min_delay`` condition is met
             skip_reset_qubits: If True, does not insert DD on idle periods that
                 immediately follow initialized/reset qubits
-                (as qubits in the ground state are less susceptile to decoherence).
+                (as qubits in the ground state are less susceptible to decoherence).
             pulse_alignment: The hardware constraints for gate timing allocation.
                 This is usually provided from ``backend.configuration().timing_constraints``.
                 If provided, the delay length, i.e. ``spacing``, is implicitly adjusted to
@@ -272,8 +272,8 @@ class PeriodicDynamicalDecoupling(BasePadding):
         # relative spacing := [0.125, 0.25, 0.25, 0.25, 0.125]
         # slack = 992 dt - 4 x 160 dt = 352 dt
         #
-        # unconstraind sequence: 44dt-X1-88dt-Y2-88dt-X3-88dt-Y4-44dt
-        # constraind sequence  : 32dt-X1-80dt-Y2-80dt-X3-80dt-Y4-32dt + extra slack 48 dt
+        # unconstrained sequence: 44dt-X1-88dt-Y2-88dt-X3-88dt-Y4-44dt
+        # constrained sequence  : 32dt-X1-80dt-Y2-80dt-X3-80dt-Y4-32dt + extra slack 48 dt
         #
         # Now we evenly split extra slack into start and end of the sequence.
         # The distributed slack should be multiple of 16.
@@ -288,7 +288,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
         # Y3: 288 dt + 160 dt + 80 dt = 528 dt (33 x 16 dt)
         # Y4: 368 dt + 160 dt + 80 dt = 768 dt (48 x 16 dt)
         #
-        # As you can see, constraints on t0 are all satified without explicit scheduling.
+        # As you can see, constraints on t0 are all satisfied without explicit scheduling.
         time_interval = t_end - t_start
 
         if self._qubits and dag.qubits.index(qubit) not in self._qubits:
@@ -375,7 +375,7 @@ class PeriodicDynamicalDecoupling(BasePadding):
             taus[mid_ind] += to_middle
             if extra_slack - to_middle:
                 # If to_middle is not a multiple value of the pulse alignment,
-                # it is truncated to the nearlest multiple value and
+                # it is truncated to the nearest multiple value and
                 # the rest of slack is added to the end.
                 taus[-1] += extra_slack - to_middle
         elif self._extra_slack_distribution == "edges":

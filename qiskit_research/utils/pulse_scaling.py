@@ -90,7 +90,7 @@ class CombineRuns(TransformationPass):
         Args:
 
             gate_names: list of strings corresponding to the types
-                of singe-parameter gates to combine.
+                of single-parameter gates to combine.
         """
         super().__init__()
         self._gate_names = gate_names
@@ -142,7 +142,7 @@ class ReduceAngles(TransformationPass):
         Args:
 
             gate_names: list of strings corresponding to the types
-                of singe-parameter gates to reduce.
+                of single-parameter gates to reduce.
         """
         super().__init__()
         self._gate_names = gate_names

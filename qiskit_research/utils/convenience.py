@@ -64,7 +64,7 @@ def add_dynamical_decoupling(
 
     Returns:
         Union[QuantumCircuit, List[QuantumCircuit], List[List[QuantumCircuit]]]: Same
-            single or sequence type of QuantumCircuit, shceduled with DD sequences
+            single or sequence type of QuantumCircuit, scheduled with DD sequences
             inserted into idle times.
     """
     pass_manager = PassManager(
