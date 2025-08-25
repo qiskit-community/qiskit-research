@@ -1,5 +1,8 @@
 # Qiskit Research
 
+> [!WARNING]  
+> This repository contains outdated code and is no longer maintained.
+
 This repository contains useful software utilities for running quantum computing research experiments using Qiskit and the IBM Quantum Services.
 
 ## Installation
